@@ -1,0 +1,13 @@
+node_modules
+.next
+generated
+dist
+coverage
+playwright-report
+test-results
+package-lock.json
+public/geo
+prisma/migrations/**/*.sql
+tests/fixtures/feeds
+CLAUDE_CODE_MASTER_PROMPT.md
+reports

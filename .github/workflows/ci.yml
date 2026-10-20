@@ -1,0 +1,119 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  NODE_VERSION: '24.16.0'
+  DATABASE_URL: postgresql://frealgo:ci_only@localhost:5432/frealgo?schema=public
+  DATABASE_URL_TEST: postgresql://frealgo:ci_only@localhost:5432/frealgo_test?schema=public
+  REDIS_URL: redis://localhost:6379
+  SESSION_SECRET: ci-only-session-secret-not-used-anywhere-else-000
+  ADMIN_USER_IDS: dev:local-admin
+  AUTH_DEV_LOGIN: 'true'
+  APP_BASE_URL: http://localhost:3100
+  NEXT_TELEMETRY_DISABLED: '1'
+
+jobs:
+  static:
+    name: Format, lint, typecheck, unit tests
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+      - run: npm ci --no-audit
+      - run: npx prisma generate
+      - run: npm run format:check
+      - run: npm run lint
+      - run: npm run typecheck
+      - run: npm test
+      - name: Dependency audit (production deps, high+)
+        run: npm audit --omit=dev --audit-level=high
+
+  integration:
+    name: Integration tests (Postgres + Redis)
+    runs-on: ubuntu-24.04
+    services:
+      postgres:
+        image: postgres:17.11-alpine3.24
+        env:
+          POSTGRES_USER: frealgo
+          POSTGRES_PASSWORD: ci_only
+          POSTGRES_DB: frealgo
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd "pg_isready -U frealgo" --health-interval 5s --health-timeout 3s --health-retries 20
+      redis:
+        image: redis:8.10.2-alpine3.23
+        ports: ['6379:6379']
+        options: >-
+          --health-cmd "redis-cli ping" --health-interval 5s --health-timeout 3s --health-retries 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+      - run: npm ci --no-audit
+      - run: npx prisma generate
+      - name: Create test database
+        run: PGPASSWORD=ci_only psql -h localhost -U frealgo -d frealgo -c 'CREATE DATABASE frealgo_test'
+      - run: npm run test:integration
+
+  e2e:
+    name: Build + end-to-end (Playwright)
+    runs-on: ubuntu-24.04
+    services:
+      postgres:
+        image: postgres:17.11-alpine3.24
+        env:
+          POSTGRES_USER: frealgo
+          POSTGRES_PASSWORD: ci_only
+          POSTGRES_DB: frealgo
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd "pg_isready -U frealgo" --health-interval 5s --health-timeout 3s --health-retries 20
+      redis:
+        image: redis:8.10.2-alpine3.23
+        ports: ['6379:6379']
+        options: >-
+          --health-cmd "redis-cli ping" --health-interval 5s --health-timeout 3s --health-retries 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+      - run: npm ci --no-audit
+      - run: npx prisma generate
+      - run: npx prisma migrate deploy
+      - run: npm run db:seed
+      - run: npm run build
+      - run: npm run worker:build
+      - run: npx playwright install --with-deps chromium webkit firefox
+      - run: npm run test:e2e
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: playwright-report
+          path: playwright-report
+          retention-days: 7
+
+  docker:
+    name: Docker images build
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - run: docker compose build

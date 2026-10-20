@@ -1,0 +1,116 @@
+# One-command local stack: `docker compose up --build`
+# Services: postgres, redis, migrate (one-shot: migrations + seed), web, worker.
+# Ports bind to 127.0.0.1 only. Credentials here are local-development defaults; production
+# deployments must supply their own via environment/secret management (see docs/operations.md).
+
+name: frealgo
+
+x-app-env: &app-env
+  NODE_ENV: production
+  APP_BASE_URL: ${APP_BASE_URL:-http://localhost:3000}
+  DATABASE_URL: postgresql://frealgo:${POSTGRES_PASSWORD:-local_dev_only}@postgres:5432/frealgo?schema=public
+  REDIS_URL: redis://redis:6379
+  # Local-only fallback so `docker compose up` works on a fresh clone. lib/env.ts rejects any
+  # secret containing 'insecure' unless APP_BASE_URL is a localhost origin.
+  SESSION_SECRET: ${SESSION_SECRET:-insecure-local-compose-session-secret-0000000000}
+  ADMIN_API_TOKEN: ${ADMIN_API_TOKEN:-}
+  ADMIN_USER_IDS: ${ADMIN_USER_IDS:-dev:local-admin}
+  AUTH_DEV_LOGIN: ${AUTH_DEV_LOGIN:-true}
+  OIDC_ISSUER: ${OIDC_ISSUER:-}
+  OIDC_CLIENT_ID: ${OIDC_CLIENT_ID:-}
+  OIDC_CLIENT_SECRET: ${OIDC_CLIENT_SECRET:-}
+  SEED_FIXTURES: ${SEED_FIXTURES:-true}
+  SHOW_FIXTURES: ${SHOW_FIXTURES:-true}
+  LOG_LEVEL: ${LOG_LEVEL:-info}
+  CLIENT_TELEMETRY_ENABLED: ${CLIENT_TELEMETRY_ENABLED:-true}
+  METRICS_TOKEN: ${METRICS_TOKEN:-}
+
+services:
+  postgres:
+    image: postgres:17.11-alpine3.24
+    environment:
+      POSTGRES_USER: frealgo
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-local_dev_only}
+      POSTGRES_DB: frealgo
+    ports:
+      - '127.0.0.1:${POSTGRES_PORT:-5432}:5432'
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ./docker/postgres/init.sql:/docker-entrypoint-initdb.d/01-test-db.sql:ro
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U frealgo -d frealgo']
+      interval: 5s
+      timeout: 3s
+      retries: 20
+    restart: unless-stopped
+
+  redis:
+    image: redis:8.10.2-alpine3.23
+    # BullMQ requires noeviction; AOF keeps queue state across restarts.
+    command: ['redis-server', '--appendonly', 'yes', '--maxmemory-policy', 'noeviction']
+    ports:
+      - '127.0.0.1:${REDIS_PORT:-6379}:6379'
+    volumes:
+      - redisdata:/data
+    healthcheck:
+      test: ['CMD', 'redis-cli', 'ping']
+      interval: 5s
+      timeout: 3s
+      retries: 20
+    restart: unless-stopped
+
+  migrate:
+    build:
+      context: .
+      target: migrate
+    environment: *app-env
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: 'no'
+
+  web:
+    build:
+      context: .
+      target: web
+    environment: *app-env
+    ports:
+      - '127.0.0.1:${WEB_PORT:-3000}:3000'
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ['CMD-SHELL', 'wget -qO- http://127.0.0.1:3000/api/v1/health/live || exit 1']
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 20s
+    restart: unless-stopped
+
+  worker:
+    build:
+      context: .
+      target: worker
+    environment:
+      <<: *app-env
+      INGEST_CRON: ${INGEST_CRON:-0 */3 * * *}
+      INGEST_USER_AGENT: ${INGEST_USER_AGENT:-FreAlgoFeedReader/0.1 (personal non-commercial reader)}
+      WORKER_HEALTH_PORT: 9464
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ['CMD-SHELL', 'wget -qO- http://127.0.0.1:9464/healthz || exit 1']
+      interval: 15s
+      timeout: 5s
+      retries: 8
+      start_period: 20s
+    restart: unless-stopped
+
+volumes:
+  pgdata:
+  redisdata:

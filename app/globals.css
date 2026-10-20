@@ -1,0 +1,234 @@
+@import 'tailwindcss';
+
+/*
+ * Design tokens (docs/architecture.md#design-system). Contrast pairs are verified by
+ * tests/unit/design-tokens.test.ts against WCAG 2.2 AA.
+ */
+:root {
+  --bg: #000000;
+  --surface: #090d16;
+  --surface-raised: #101827;
+  --text: #f8fafc;
+  --muted: #a6b2c3;
+  --accent: #1d9bff;
+  --accent-hover: #65beff;
+  --border: #233044; /* decorative separators only (not a component boundary) */
+  --border-strong: #66768f; /* >= 3:1 boundary for inputs and controls */
+  --focus: #8cd1ff;
+  --danger: #ff6b75;
+  --warning: #f5c26b;
+  --success: #6fdc9a;
+
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 16px;
+  --header-h: 56px;
+  --rail-w: 320px;
+  --sheet-w: min(460px, 42vw);
+  --touch: 44px;
+  --measure: 68ch;
+  --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+  --dur-sheet: 220ms;
+
+  color-scheme: dark;
+}
+
+@theme inline {
+  --color-bg: var(--bg);
+  --color-surface: var(--surface);
+  --color-surface-raised: var(--surface-raised);
+  --color-text: var(--text);
+  --color-muted: var(--muted);
+  --color-accent: var(--accent);
+  --color-accent-hover: var(--accent-hover);
+  --color-border: var(--border);
+  --color-border-strong: var(--border-strong);
+  --color-focus: var(--focus);
+  --color-danger: var(--danger);
+  --color-warning: var(--warning);
+  --color-success: var(--success);
+  --font-sans:
+    ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, 'Noto Sans', 'Helvetica Neue',
+    Arial, 'Noto Sans Myanmar', 'Noto Sans JP', 'Noto Sans Arabic', sans-serif;
+  --font-mono: ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
+  --radius-sm: var(--radius-sm);
+  --radius-md: var(--radius-md);
+  --radius-lg: var(--radius-lg);
+}
+
+@layer base {
+  html {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--font-sans);
+    font-size: 100%;
+    -webkit-text-size-adjust: 100%;
+    text-rendering: optimizeLegibility;
+  }
+
+  body {
+    min-height: 100dvh;
+    background: var(--bg);
+    font-size: 1rem;
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  :focus-visible {
+    outline: 3px solid var(--focus);
+    outline-offset: 2px;
+    border-radius: 4px;
+  }
+
+  a {
+    color: var(--accent-hover);
+    text-underline-offset: 3px;
+  }
+  a:hover {
+    color: var(--text);
+  }
+
+  h1,
+  h2,
+  h3 {
+    line-height: 1.25;
+    text-wrap: balance;
+  }
+
+  ::selection {
+    background: #1d4f80;
+    color: var(--text);
+  }
+}
+
+/* --------------------------------------------------------------------------
+ * Reduced motion: honour the OS setting and the in-app preference
+ * (html[data-motion="reduce"], set before first paint by the head script).
+ * ------------------------------------------------------------------------ */
+@media (prefers-reduced-motion: reduce) {
+  html:not([data-motion='full']) *,
+  html:not([data-motion='full']) *::before,
+  html:not([data-motion='full']) *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+html[data-motion='reduce'] *,
+html[data-motion='reduce'] *::before,
+html[data-motion='reduce'] *::after {
+  animation-duration: 0.01ms !important;
+  animation-iteration-count: 1 !important;
+  transition-duration: 0.01ms !important;
+  scroll-behavior: auto !important;
+}
+
+/* --------------------------------------------------------------------------
+ * Intro (<= 1.5s total). Shown only when the head script sets data-intro="play"
+ * (first visit in a session, motion allowed, not disabled in preferences).
+ * Without JavaScript it never appears, so it can never block content.
+ * ------------------------------------------------------------------------ */
+.intro {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  display: none;
+  place-items: center;
+  background: var(--bg);
+  animation: intro-out 300ms ease-in 1200ms forwards;
+}
+html[data-intro='play'] .intro {
+  display: grid;
+}
+html[data-motion='reduce'] .intro {
+  display: none !important;
+}
+@media (prefers-reduced-motion: reduce) {
+  html:not([data-motion='full']) .intro {
+    display: none !important;
+  }
+}
+.intro__line {
+  height: 1px;
+  width: min(320px, 60vw);
+  background: var(--muted);
+  transform-origin: left center;
+  transform: scaleX(0);
+  animation: intro-line 600ms var(--ease-out) 100ms forwards;
+}
+.intro__title {
+  opacity: 0;
+  animation: intro-fade 500ms ease-out 350ms forwards;
+}
+.intro__tagline {
+  opacity: 0;
+  animation: intro-fade 500ms ease-out 600ms forwards;
+}
+@keyframes intro-line {
+  to {
+    transform: scaleX(1);
+  }
+}
+@keyframes intro-fade {
+  to {
+    opacity: 1;
+  }
+}
+@keyframes intro-out {
+  to {
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+  }
+}
+
+/* --------------------------------------------------------------------------
+ * Small utilities that Tailwind does not provide directly.
+ * ------------------------------------------------------------------------ */
+.measure {
+  max-width: var(--measure);
+}
+
+.safe-bottom {
+  padding-bottom: max(1rem, env(safe-area-inset-bottom));
+}
+
+.prose-body p + p {
+  margin-top: 0.9em;
+}
+.prose-body h2 {
+  margin-top: 2rem;
+  margin-bottom: 0.5rem;
+  font-size: 1.25rem;
+  font-weight: 650;
+}
+.prose-body h3 {
+  margin-top: 1.4rem;
+  margin-bottom: 0.4rem;
+  font-size: 1.05rem;
+  font-weight: 650;
+}
+.prose-body ul {
+  list-style: disc;
+  padding-left: 1.25rem;
+  margin-top: 0.5rem;
+}
+.prose-body li + li {
+  margin-top: 0.3rem;
+}
+
+.map-country {
+  fill: #1a2638;
+  stroke: #3a4a62;
+  stroke-width: 0.4;
+  vector-effect: non-scaling-stroke;
+  transition: fill 120ms ease;
+}
+.map-country[data-has-news='true'] {
+  fill: #23415f;
+}
+a:hover > .map-country,
+.map-country[data-selected='true'] {
+  fill: var(--accent);
+}

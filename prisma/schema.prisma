@@ -1,0 +1,393 @@
+// FreAlgo data model (Prisma ORM 7, PostgreSQL 16+).
+// Connection URLs live in prisma.config.ts. Objects Prisma cannot express (pg_trgm extension,
+// CHECK constraints, the search-vector trigger) are added as raw SQL inside migrations; see
+// docs/architecture.md#database and prisma/migrations/*/migration.sql.
+
+generator client {
+  provider     = "prisma-client"
+  output       = "../generated/prisma"
+  moduleFormat = "esm"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+/// Directional spectrum position of an outlet (source-level, never article-level by default).
+/// MIXED / UNRATED / DISPUTED are deliberately non-positional states, not points on the line.
+enum Orientation {
+  LEFT
+  CENTER_LEFT
+  CENTER
+  CENTER_RIGHT
+  RIGHT
+  MIXED
+  UNRATED
+  DISPUTED
+}
+
+enum LabelStatus {
+  REVIEWED
+  PROVISIONAL
+  DISPUTED
+  UNRATED
+}
+
+enum ArticleStatus {
+  PUBLISHED
+  QUARANTINED
+  REMOVED
+}
+
+enum FeedStatus {
+  ACTIVE
+  PAUSED
+  ERROR
+}
+
+enum FeedKind {
+  RSS
+  ATOM
+  LICENSED_API
+}
+
+enum PaywallPolicy {
+  NONE
+  METERED
+  HARD
+  UNKNOWN
+}
+
+enum OwnershipType {
+  PRIVATE
+  PUBLIC_SERVICE
+  STATE
+  NONPROFIT
+  COOPERATIVE
+  UNKNOWN
+}
+
+/// Why an article is linked to a country. Stored so every tag is auditable.
+enum CountryTagBasis {
+  SOURCE_COUNTRY
+  FEED_DEFAULT
+  TEXT_MATCH
+  MANUAL
+}
+
+/// Why an article carries a sector tag. Stored so every tag is auditable.
+enum SectorTagBasis {
+  FEED_CATEGORY
+  KEYWORD_RULE
+  FEED_DEFAULT
+  MANUAL
+}
+
+enum IngestionRunStatus {
+  RUNNING
+  SUCCESS
+  NOT_MODIFIED
+  PARTIAL
+  FAILED
+  SKIPPED
+}
+
+enum AppealStatus {
+  OPEN
+  RESOLVED
+  REJECTED
+}
+
+model Country {
+  id                String           @id @default(cuid())
+  iso2              String           @unique @db.VarChar(2)
+  iso3              String           @unique @db.VarChar(3)
+  isoNumeric        String?          @unique @db.VarChar(3)
+  name              String
+  region            String?
+  subregion         String?
+  /// BCP-47 language codes with official status (Unicode CLDR territoryInfo).
+  officialLanguages String[]         @default([])
+  outlets           MediaOutlet[]
+  articles          ArticleCountry[]
+  createdAt         DateTime         @default(now())
+  updatedAt         DateTime         @updatedAt
+
+  @@index([region])
+}
+
+model MediaOutlet {
+  id               String               @id @default(cuid())
+  name             String
+  slug             String               @unique
+  homepageUrl      String
+  countryId        String?
+  country          Country?             @relation(fields: [countryId], references: [id])
+  primaryLanguage  String?
+  ownershipType    OwnershipType        @default(UNKNOWN)
+  ownershipNotes   String?
+  paywall          PaywallPolicy        @default(UNKNOWN)
+  /// Directional spectrum field. Descriptive ideology lives in ideologyTags (context-dependent).
+  orientation      Orientation          @default(UNRATED)
+  ideologyTags     String[]             @default([])
+  labelStatus      LabelStatus          @default(UNRATED)
+  /// 0..1, enforced by SQL CHECK constraint.
+  labelConfidence  Float?
+  labelMethodology String?
+  labelSourceUrl   String?
+  labelReviewedAt  DateTime?
+  /// National/political context the label applies to (e.g. "US two-party context").
+  labelContext     String?
+  /// True when a label was produced by an automated classifier (never shown as verified).
+  labelIsMachine   Boolean              @default(false)
+  /// Fixture rows exist only for local/demo mode and are always badged in the UI.
+  isFixture        Boolean              @default(false)
+  feeds            FeedSource[]
+  articles         Article[]
+  labelHistory     OutletLabelHistory[]
+  appeals          LabelAppeal[]
+  createdAt        DateTime             @default(now())
+  updatedAt        DateTime             @updatedAt
+
+  @@index([countryId, orientation])
+  @@index([name(ops: raw("gin_trgm_ops"))], type: Gin, map: "MediaOutlet_name_trgm_idx")
+}
+
+model FeedSource {
+  id                   String               @id @default(cuid())
+  outletId             String
+  outlet               MediaOutlet          @relation(fields: [outletId], references: [id], onDelete: Cascade)
+  name                 String?
+  url                  String               @unique
+  kind                 FeedKind             @default(RSS)
+  status               FeedStatus           @default(PAUSED)
+  language             String?
+  /// ISO2 codes every item from this feed is relevant to (e.g. a "Myanmar" section feed).
+  defaultCountryIso2   String[]             @default([])
+  defaultSectorSlugs   String[]             @default([])
+  fetchIntervalMinutes Int                  @default(180)
+  /// Whether publisher terms allow showing the feed-provided summary as an excerpt.
+  excerptAllowed       Boolean              @default(true)
+  licenseNotes         String?
+  termsUrl             String?
+  termsReviewedAt      DateTime?
+  etag                 String?
+  lastModifiedHeader   String?
+  lastAttemptAt        DateTime?
+  lastSuccessfulSyncAt DateTime?
+  lastNewItemAt        DateTime?
+  lastHttpStatus       Int?
+  lastError            String?
+  failureCount         Int                  @default(0)
+  nextEligibleFetchAt  DateTime?
+  isFixture            Boolean              @default(false)
+  articles             Article[]
+  runs                 IngestionRun[]
+  quarantine           IngestionQuarantine[]
+  createdAt            DateTime             @default(now())
+  updatedAt            DateTime             @updatedAt
+
+  @@index([status, nextEligibleFetchAt])
+  @@index([outletId])
+}
+
+model Sector {
+  id          String          @id @default(cuid())
+  slug        String          @unique
+  name        String
+  description String?
+  sortOrder   Int             @default(0)
+  articles    ArticleSector[]
+  createdAt   DateTime        @default(now())
+}
+
+model Article {
+  id                     String           @id @default(cuid())
+  outletId               String
+  outlet                 MediaOutlet      @relation(fields: [outletId], references: [id])
+  feedSourceId           String?
+  feedSource             FeedSource?      @relation(fields: [feedSourceId], references: [id], onDelete: SetNull)
+  externalId             String?
+  canonicalUrl           String
+  canonicalUrlHash       String           @unique @db.VarChar(64)
+  title                  String
+  excerpt                String?          @db.Text
+  language               String?
+  author                 String?
+  imageUrl               String?
+  /// UTC-normalized publication time.
+  publishedAt            DateTime
+  /// Timestamp string exactly as the publisher sent it.
+  publishedAtRaw         String?
+  /// Offset (minutes east of UTC) declared by the publisher, when present.
+  publishedOffsetMinutes Int?
+  /// True when the feed had no usable date and firstSeenAt was used instead.
+  publishedAtEstimated   Boolean          @default(false)
+  firstSeenAt            DateTime         @default(now())
+  updatedAt              DateTime         @updatedAt
+  /// sha256 of the normalized title+excerpt, used to detect publisher edits.
+  contentHash            String?          @db.VarChar(64)
+  status                 ArticleStatus    @default(PUBLISHED)
+  statusReason           String?
+  /// Optional article-level label. Null means "not classified"; never inferred from the outlet.
+  articleLabel           Orientation?
+  articleLabelNote       String?
+  isFixture              Boolean          @default(false)
+  /// Maintained by trigger "Article_search_vector_trg" (raw SQL migration).
+  searchVector           Unsupported("tsvector")?
+  countries              ArticleCountry[]
+  sectors                ArticleSector[]
+
+  @@unique([outletId, externalId])
+  @@index([publishedAt(sort: Desc), id])
+  @@index([outletId, publishedAt(sort: Desc)])
+  @@index([status, publishedAt(sort: Desc)])
+  @@index([searchVector], type: Gin, map: "Article_searchVector_idx")
+  @@index([title(ops: raw("gin_trgm_ops"))], type: Gin, map: "Article_title_trgm_idx")
+}
+
+/// publishedAt is denormalized from Article so country pages can be served by an ordered index scan.
+model ArticleCountry {
+  articleId   String
+  countryId   String
+  basis       CountryTagBasis
+  matchedTerm String?
+  publishedAt DateTime
+  article     Article         @relation(fields: [articleId], references: [id], onDelete: Cascade)
+  country     Country         @relation(fields: [countryId], references: [id], onDelete: Cascade)
+
+  @@id([articleId, countryId])
+  @@index([countryId, publishedAt(sort: Desc), articleId(sort: Desc)])
+}
+
+/// publishedAt is denormalized from Article so sector filters can use an ordered index scan.
+model ArticleSector {
+  articleId    String
+  sectorId     String
+  basis        SectorTagBasis
+  ruleId       String?
+  rulesVersion Int?
+  publishedAt  DateTime
+  article      Article        @relation(fields: [articleId], references: [id], onDelete: Cascade)
+  sector       Sector         @relation(fields: [sectorId], references: [id], onDelete: Cascade)
+
+  @@id([articleId, sectorId])
+  @@index([sectorId, publishedAt(sort: Desc), articleId(sort: Desc)])
+}
+
+/// Opt-in server-side preferences. Only for authenticated users; anonymous preferences stay in
+/// the browser. Never store fingerprints, IPs or behavioural data here.
+model UserPreference {
+  id                   String        @id @default(cuid())
+  userId               String        @unique
+  selectedCountryIso2  String[]      @default([])
+  selectedOutletIds    String[]      @default([])
+  selectedSectorSlugs  String[]      @default([])
+  selectedOrientations Orientation[] @default([])
+  selectedLanguages    String[]      @default([])
+  preferredSort        String        @default("newest")
+  reducedMotion        Boolean       @default(false)
+  globeEnabled         Boolean       @default(true)
+  updatedAt            DateTime      @updatedAt
+  createdAt            DateTime      @default(now())
+}
+
+model IngestionRun {
+  id               String             @id @default(cuid())
+  feedSourceId     String
+  feedSource       FeedSource         @relation(fields: [feedSourceId], references: [id], onDelete: Cascade)
+  jobId            String?
+  attempt          Int                @default(1)
+  trigger          String             @default("schedule")
+  startedAt        DateTime           @default(now())
+  finishedAt       DateTime?
+  durationMs       Int?
+  status           IngestionRunStatus @default(RUNNING)
+  httpStatus       Int?
+  fetchedCount     Int                @default(0)
+  insertedCount    Int                @default(0)
+  updatedCount     Int                @default(0)
+  quarantinedCount Int                @default(0)
+  errorCode        String?
+  errorDetail      String?
+
+  @@index([feedSourceId, startedAt(sort: Desc)])
+  @@index([startedAt])
+}
+
+/// Items or payloads rejected by validation. Kept for audit/review, cleaned by retention job.
+model IngestionQuarantine {
+  id             String     @id @default(cuid())
+  feedSourceId   String
+  feedSource     FeedSource @relation(fields: [feedSourceId], references: [id], onDelete: Cascade)
+  runId          String?
+  reason         String
+  detail         String?
+  itemExternalId String?
+  itemUrl        String?
+  payloadExcerpt String?    @db.Text
+  createdAt      DateTime   @default(now())
+  resolvedAt     DateTime?
+  resolution     String?
+
+  @@index([feedSourceId, createdAt(sort: Desc)])
+  @@index([createdAt])
+}
+
+/// Append-only provenance trail for outlet labels.
+model OutletLabelHistory {
+  id               String      @id @default(cuid())
+  outletId         String
+  outlet           MediaOutlet @relation(fields: [outletId], references: [id], onDelete: Cascade)
+  orientation      Orientation
+  ideologyTags     String[]    @default([])
+  labelStatus      LabelStatus
+  labelConfidence  Float?
+  labelMethodology String?
+  labelSourceUrl   String?
+  labelReviewedAt  DateTime?
+  labelContext     String?
+  labelIsMachine   Boolean     @default(false)
+  changedBy        String
+  changeReason     String?
+  createdAt        DateTime    @default(now())
+
+  @@index([outletId, createdAt(sort: Desc)])
+}
+
+/// Public label correction / appeal requests. Contact details are optional and purged on resolution.
+model LabelAppeal {
+  id             String       @id @default(cuid())
+  outletId       String
+  outlet         MediaOutlet  @relation(fields: [outletId], references: [id], onDelete: Cascade)
+  message        String       @db.Text
+  contactEmail   String?
+  status         AppealStatus @default(OPEN)
+  resolutionNote String?
+  createdAt      DateTime     @default(now())
+  resolvedAt     DateTime?
+
+  @@index([status, createdAt(sort: Desc)])
+}
+
+/// Privileged actions (source changes, re-fetches, label edits, quarantine decisions).
+model AdminAuditLog {
+  id         String   @id @default(cuid())
+  actor      String
+  action     String
+  targetType String
+  targetId   String?
+  detail     Json?
+  createdAt  DateTime @default(now())
+
+  @@index([createdAt])
+}
+
+/// Aggregate, anonymous client health counters (e.g. WebGL unavailable). No identifiers.
+model ClientEventCounter {
+  day   DateTime @db.Date
+  event String   @db.VarChar(64)
+  count Int      @default(0)
+
+  @@id([day, event])
+}
