@@ -23,7 +23,10 @@ The registry lives in `prisma/data/sources.ts` (real publishers) and `prisma/dat
 1. Only official publisher RSS/Atom feeds or APIs we hold a licence for. No scraping of HTML
    pages, and no bypassing paywalls, logins, bot protection or robots rules.
 2. Real feeds are registered **paused**. An operator activates a feed only after reading the
-   publisher's terms and recording `termsReviewedAt` and `licenseNotes`.
+   publisher's terms and recording `termsReviewedAt` and `licenseNotes`, using the admin console or:
+   `npm run sources:activate -- --slug <outlet> --reviewer "<name>" --notes "<terms summary>"`.
+   The worker refuses to fetch any real feed without a recorded review (ADR-014).
+   `npm run sources:dry-run` checks feeds live without storing anything.
 3. We store and display only headline, link, publication time, author, language, categories and,
    where `excerptAllowed`, the feed-provided summary as plain text (truncated). We never copy
    full articles, and story links always go to the original publisher.

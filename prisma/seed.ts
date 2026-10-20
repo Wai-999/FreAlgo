@@ -4,8 +4,10 @@
  *  2. Sectors                                            — always
  *  3. Fixture outlets/feeds/articles (isFixture = true)  — only when SEED_FIXTURES=true
  *
- * Real publisher sources are registered separately by `npm run sources:sync` (Milestone 2) so
- * fixture data can never be mistaken for, or silently replace, real feeds.
+ *  4. Real publisher registry (prisma/data/sources.ts)  — always, as PAUSED + UNRATED
+ *
+ * Re-seeding never changes a real feed's status, terms review or an outlet's label: those are
+ * operator decisions recorded through the admin tools with an audit trail.
  */
 import { readFileSync } from 'node:fs';
 import path from 'node:path';
@@ -20,6 +22,7 @@ import {
   FIXTURE_OUTLETS,
   buildFixtureArticles,
 } from './data/fixtures';
+import { REAL_SOURCES } from './data/sources';
 import type { PrismaClient } from '../generated/prisma/client';
 
 interface CountryRow {
@@ -225,6 +228,73 @@ export async function seedFixtures(prisma: PrismaClient, now = new Date()): Prom
   return articles.length;
 }
 
+export async function seedRealSources(prisma: PrismaClient): Promise<number> {
+  const countries = new Map(
+    (await prisma.country.findMany({ select: { id: true, iso2: true } })).map((c) => [
+      c.iso2,
+      c.id,
+    ]),
+  );
+  let feeds = 0;
+  for (const o of REAL_SOURCES) {
+    const descriptive = {
+      name: o.name,
+      homepageUrl: o.homepageUrl,
+      countryId: countries.get(o.countryIso2) ?? null,
+      primaryLanguage: o.language,
+      ownershipType: o.ownershipType,
+      ownershipNotes: o.ownershipNotes,
+      paywall: o.paywall,
+    };
+    const existing = await prisma.mediaOutlet.findUnique({ where: { slug: o.slug } });
+    const outlet = existing
+      ? await prisma.mediaOutlet.update({ where: { id: existing.id }, data: descriptive })
+      : await prisma.mediaOutlet.create({
+          data: {
+            slug: o.slug,
+            ...descriptive,
+            orientation: 'UNRATED',
+            labelStatus: 'UNRATED',
+            isFixture: false,
+            labelHistory: {
+              create: {
+                orientation: 'UNRATED',
+                labelStatus: 'UNRATED',
+                changedBy: 'seed',
+                changeReason: 'Registry entry created; not yet reviewed',
+              },
+            },
+          },
+        });
+    for (const f of o.feeds) {
+      await prisma.feedSource.upsert({
+        where: { url: f.url },
+        create: {
+          outletId: outlet.id,
+          name: f.name,
+          url: f.url,
+          kind: 'RSS',
+          status: 'PAUSED',
+          language: f.language ?? o.language,
+          defaultCountryIso2: f.defaultCountryIso2 ?? [],
+          defaultSectorSlugs: f.defaultSectorSlugs ?? [],
+          licenseNotes: 'Publisher RSS feed. Terms not yet reviewed by an operator.',
+          isFixture: false,
+        },
+        update: {
+          outletId: outlet.id,
+          name: f.name,
+          language: f.language ?? o.language,
+          defaultCountryIso2: f.defaultCountryIso2 ?? [],
+          defaultSectorSlugs: f.defaultSectorSlugs ?? [],
+        },
+      });
+      feeds += 1;
+    }
+  }
+  return feeds;
+}
+
 async function main() {
   const url = process.env.DATABASE_URL;
   if (!url) throw new Error('DATABASE_URL is not set');
@@ -237,6 +307,7 @@ async function main() {
       String(process.env.SEED_FIXTURES ?? 'true').toLowerCase(),
     );
     const fixtures = seedFixturesFlag ? await seedFixtures(prisma) : 0;
+    const realFeeds = await seedRealSources(prisma);
     console.log(
       JSON.stringify({
         msg: 'seed complete',
@@ -244,6 +315,7 @@ async function main() {
         sectors,
         fixtureArticles: fixtures,
         fixturesSeeded: seedFixturesFlag,
+        realFeedsRegistered: realFeeds,
         ms: Date.now() - started,
       }),
     );

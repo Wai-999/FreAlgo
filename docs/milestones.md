@@ -17,10 +17,20 @@ Status legend: ✅ done with evidence · ⏳ in progress · ⛔ blocked by an ex
 
 ## Milestone 2 — Reliable ingestion and source governance
 
-- ⏳ Source registry, RSS/Atom adapter, licensed-API adapter interface
-- ⏳ BullMQ scheduler (3 h), worker, conditional HTTP, retry/backoff/jitter, DLQ, circuit breaker
-- ⏳ SSRF-safe fetch, sanitization, canonicalization, dedupe, auditable country/sector tagging
-- ⏳ Ingestion metrics, quarantine, admin operations, label provenance
+- ✅ Curated registry: 27 verified real publisher feeds (seeded PAUSED + UNRATED) + fixtures
+- ✅ RSS 2.0 / RSS 1.0 (RDF) / Atom adapter; licensed JSON API adapter (key from env, external gate)
+- ✅ BullMQ job schedulers (cron `0 */3 * * *` UTC, idempotent across replicas), per-window job ids
+- ✅ SSRF-safe fetch (DNS pinning, private ranges, redirect re-validation, size/time limits),
+  conditional HTTP (ETag/If-Modified-Since), robots.txt (RFC 9309), per-host concurrency
+- ✅ Retry with jittered backoff, dead-letter queue, circuit breaker (8 failures → ERROR)
+- ✅ Validation, HTML sanitisation to text, URL canonicalisation, dedupe, quarantine
+- ✅ Auditable country (gazetteer, 20 languages) and sector (rules v1) tagging with stored basis
+- ✅ Freshness API/page, worker /metrics, admin API + console, label history, appeals, audit log
+- ✅ Terms review enforced before any real fetch (ADR-014)
+- **Evidence:** 47 integration tests (fixture feeds ingest once despite retries; changed entries
+  upsert; malformed/DTD payloads quarantine; SSRF literal/redirect/rebind/robots blocked; mocked
+  clock proves 3 h cadence; failing source isolated; freshness truthful). Live dry-run: 27/27 real
+  feeds fetched and parsed through the production path without writing data.
 
 ## Milestone 3 — News APIs, search, and country workspace
 

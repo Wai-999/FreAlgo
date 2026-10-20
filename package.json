@@ -22,13 +22,16 @@
     "test:integration": "vitest run --project integration",
     "test:e2e": "playwright test",
     "db:generate": "prisma generate",
-    "db:migrate": "prisma migrate dev",
+    "db:migrate": "prisma migrate dev && prisma generate",
     "db:deploy": "prisma migrate deploy",
     "db:seed": "node --env-file-if-exists=.env --import tsx prisma/seed.ts",
     "infra:up": "docker compose up -d postgres redis",
     "infra:down": "docker compose down",
     "up": "docker compose up --build",
-    "ci": "npm run format:check && npm run lint && npm run typecheck && npm test && npm run test:integration && npm run build"
+    "ci": "npm run format:check && npm run lint && npm run typecheck && npm test && npm run test:integration && npm run build",
+    "postinstall": "prisma generate",
+    "sources:activate": "node --env-file-if-exists=.env --import tsx scripts/activate-sources.ts",
+    "sources:dry-run": "node --env-file-if-exists=.env --import tsx scripts/dry-run-feeds.ts"
   },
   "dependencies": {
     "@prisma/adapter-pg": "7.10.1",
@@ -66,6 +69,7 @@
     "@types/three": "0.186.0",
     "@types/topojson-client": "3.1.5",
     "cldr-core": "48.2.0",
+    "cron-parser": "4.9.0",
     "esbuild": "0.28.2",
     "eslint": "10.13.0",
     "eslint-config-next": "16.4.2",

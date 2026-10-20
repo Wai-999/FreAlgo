@@ -4,6 +4,8 @@ import { NavLinks } from './nav-links';
 
 export const NAV_ITEMS = [
   { href: '/', label: 'Explore' },
+  { href: '/sources', label: 'Sources' },
+  { href: '/status', label: 'Freshness' },
   { href: '/methodology', label: 'Methodology' },
   { href: '/about', label: 'About' },
 ] as const;

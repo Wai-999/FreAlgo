@@ -168,6 +168,9 @@ model FeedSource {
   fetchIntervalMinutes Int                  @default(180)
   /// Whether publisher terms allow showing the feed-provided summary as an excerpt.
   excerptAllowed       Boolean              @default(true)
+  /// Adapter settings for LICENSED_API sources (field mapping, name of the env var holding the
+  /// key). Never contains the key itself.
+  providerConfig       Json?
   licenseNotes         String?
   termsUrl             String?
   termsReviewedAt      DateTime?

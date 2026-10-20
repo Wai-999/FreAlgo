@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- SYNTHETIC TEST FEED (RSS 1.0 / RDF) -->
+<rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" xmlns="http://purl.org/rss/1.0/" xmlns:dc="http://purl.org/dc/elements/1.1/">
+  <channel rdf:about="https://feeds.test/rdf">
+    <title>RDF Fixture Wire</title>
+    <link>https://feeds.test/</link>
+    <dc:language>de</dc:language>
+  </channel>
+  <item rdf:about="https://feeds.test/rdf/1">
+    <title>Testdaten: Wirtschaft in Deutschland</title>
+    <link>https://feeds.test/rdf/1</link>
+    <description>Synthetischer Testtext.</description>
+    <dc:date>2026-10-19T06:00:00+02:00</dc:date>
+    <dc:subject>Wirtschaft</dc:subject>
+  </item>
+</rdf:RDF>

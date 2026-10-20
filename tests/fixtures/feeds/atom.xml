@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- SYNTHETIC TEST FEED (Atom 1.0) -->
+<feed xmlns="http://www.w3.org/2005/Atom" xml:lang="ja">
+  <title>アトム試験フィード</title>
+  <link rel="alternate" href="https://feeds.test/atom"/>
+  <id>urn:test:atom</id>
+  <updated>2026-10-19T09:00:00+09:00</updated>
+  <entry>
+    <title type="html">テスト用データ：日本の科学技術</title>
+    <link rel="self" href="https://feeds.test/atom/1.xml"/>
+    <link rel="alternate" type="text/html" href="https://feeds.test/atom/1"/>
+    <id>urn:test:atom:1</id>
+    <published>2026-10-19T09:00:00+09:00</published>
+    <updated>2026-10-19T10:00:00+09:00</updated>
+    <author><name>試験 記者</name></author>
+    <category term="technology" label="科学"/>
+    <summary>合成されたテスト用の要約です。</summary>
+  </entry>
+</feed>

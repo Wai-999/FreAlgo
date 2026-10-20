@@ -115,3 +115,39 @@ second scheduler cannot duplicate work within a window. Cron inside the web proc
 HMAC-signed HttpOnly cookie issued after OpenID Connect sign-in (`OIDC_*`, an external gate) or,
 for localhost only, a password-less dev login. Admin access requires a session user listed in
 `ADMIN_USER_IDS` or a bearer `ADMIN_API_TOKEN`. Both are checked server-side.
+
+## ADR-013 robots.txt: exact product-token groups, transient failures retry
+
+**Context.** A live dry-run against 28 real feeds surfaced two bugs. (1) Substring group matching
+let short agent names in a publisher's robots.txt capture our crawler and wrongly block a feed.
+(2) A momentary network error fetching robots.txt was treated as "disallowed", which opened the
+circuit and cached the result for 24 hours.
+
+**Decision.** Groups are matched by exact, case-insensitive product token (RFC 9309 §2.2.1), with
+fallback to `*`. "Unreachable" (5xx/network) raises the retryable `ROBOTS_UNREACHABLE` and is
+cached for 10 minutes only. "Disallowed" stays a non-retryable `ROBOTS_DISALLOWED`.
+
+## ADR-014 Terms review is enforced in code, not just policy
+
+**Decision.** A real (non-fixture) feed cannot be activated, manually re-fetched or processed by
+the worker until `termsReviewedAt` is recorded. This is checked in the admin service and again in
+`runSource` as defence in depth. Activation goes through the admin console or
+`npm run sources:activate` (both audit-logged).
+
+## ADR-015 Job outcome semantics and the dead-letter queue
+
+**Decision.**
+
+- A transient error with attempts remaining throws `RetryableJobError`, and BullMQ retries it with
+  jittered exponential backoff. Only the final attempt counts toward the source's circuit breaker.
+- Any final failure throws `UnrecoverableError`, so the job is marked failed and copied to
+  `frealgo-ingest-dlq`.
+- The failure is always recorded on `IngestionRun` and `FeedSource` first, so freshness reporting
+  never depends on queue state.
+
+## ADR-016 Publisher-friendly User-Agent
+
+**Context.** One publisher's CDN drops connections whose User-Agent contains a code-hosting URL.
+
+**Decision.** The default UA is `FreAlgoFeedReader/0.1 (personal non-commercial reader)`. Operators
+may append their own contact URL. We never spoof browser UAs.
