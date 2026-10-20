@@ -1,3 +1,4 @@
+import { swr } from '@/lib/cache/swr';
 import { getPrisma } from './client';
 
 export interface CountrySummary {
@@ -10,16 +11,24 @@ export interface CountrySummary {
   officialLanguages: string[];
   articleCount: number;
   outletCount: number;
+  activeSourceCount: number;
   latestPublishedAt: Date | null;
+  lastSuccessfulSyncAt: Date | null;
 }
 
 /**
- * Every ISO country with its published-article and outlet counts. Countries with zero sources are
- * returned too so gaps in coverage are visible rather than hidden.
+ * Every ISO country with article/outlet/source counts and freshness. Countries with zero sources
+ * are returned too so coverage gaps are visible rather than hidden. Cached briefly (SWR).
  */
 export async function listCountrySummaries(opts: {
   includeFixtures: boolean;
 }): Promise<CountrySummary[]> {
+  return swr(`countries:${opts.includeFixtures}`, 30_000, 300_000, () =>
+    loadCountrySummaries(opts),
+  );
+}
+
+async function loadCountrySummaries(opts: { includeFixtures: boolean }): Promise<CountrySummary[]> {
   const prisma = getPrisma();
   return prisma.$queryRaw<CountrySummary[]>`
     WITH counts AS (
@@ -30,15 +39,20 @@ export async function listCountrySummaries(opts: {
       GROUP BY ac."countryId"
     ),
     outlets AS (
-      SELECT o."countryId", count(*)::int AS n
+      SELECT o."countryId", count(DISTINCT o.id)::int AS n,
+             count(f.id) FILTER (WHERE f.status = 'ACTIVE')::int AS active,
+             max(f."lastSuccessfulSyncAt") AS "lastSync"
       FROM "MediaOutlet" o
+      LEFT JOIN "FeedSource" f ON f."outletId" = o.id
       WHERE (${opts.includeFixtures} OR NOT o."isFixture")
       GROUP BY o."countryId"
     )
     SELECT c.iso2, c.iso3, c."isoNumeric", c.name, c.region, c.subregion, c."officialLanguages",
            coalesce(counts.n, 0) AS "articleCount",
            coalesce(outlets.n, 0) AS "outletCount",
-           counts.latest AS "latestPublishedAt"
+           coalesce(outlets.active, 0) AS "activeSourceCount",
+           counts.latest AS "latestPublishedAt",
+           outlets."lastSync" AS "lastSuccessfulSyncAt"
     FROM "Country" c
     LEFT JOIN counts ON counts."countryId" = c.id
     LEFT JOIN outlets ON outlets."countryId" = c.id

@@ -27,7 +27,9 @@ test.describe('application shell', () => {
 
   test('deep link selects a country', async ({ page }) => {
     await page.goto('/?country=MM&intro=0');
-    await expect(page.getByTestId('country-summary')).toContainText('Myanmar');
+    await expect(
+      page.getByTestId('country-sheet').getByRole('heading', { name: 'Myanmar' }),
+    ).toBeVisible();
   });
 
   test('country picker filters by name and ISO code with keyboard navigation', async ({
@@ -102,6 +104,9 @@ test.describe('without JavaScript', () => {
     await expect(page.getByTestId('intro')).toBeHidden();
     await page.locator('a[data-country="KE"]').first().click();
     await expect(page).toHaveURL(/country=KE/);
-    await expect(page.getByTestId('country-summary')).toContainText('Kenya');
+    await expect(
+      page.getByTestId('country-sheet').getByRole('heading', { name: 'Kenya' }),
+    ).toBeVisible();
+    expect(await page.getByTestId('story-card').count()).toBeGreaterThan(0);
   });
 });

@@ -12,6 +12,12 @@ export function SiteFooter() {
           <Link href="/methodology#corrections" className="inline-flex min-h-11 items-center">
             Corrections &amp; takedowns
           </Link>
+          <Link href="/settings" className="inline-flex min-h-11 items-center">
+            Settings
+          </Link>
+          <Link href="/account" className="inline-flex min-h-11 items-center">
+            Account
+          </Link>
           <Link href="/privacy" className="inline-flex min-h-11 items-center">
             Privacy
           </Link>

@@ -80,8 +80,12 @@
     border-radius: 4px;
   }
 
+  /* Links are underlined so they are distinguishable without colour (WCAG 1.4.1);
+     navigation/buttons opt out with the no-underline utility. */
   a {
     color: var(--accent-hover);
+    text-decoration-line: underline;
+    text-decoration-thickness: 1px;
     text-underline-offset: 3px;
   }
   a:hover {

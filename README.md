@@ -41,7 +41,7 @@ npm run worker:dev              # ingestion worker (separate terminal)
 
 ## Documentation
 
-- [Architecture](docs/architecture.md) · [Decisions (ADRs)](docs/decisions.md)
+- [Architecture](docs/architecture.md) · [Decisions (ADRs)](docs/decisions.md) · [HTTP API](docs/api.md)
 - [Source & editorial policy](docs/source-policy.md) · [Milestones](docs/milestones.md)
 - [Operations runbook](docs/operations.md) (Milestone 5)
 

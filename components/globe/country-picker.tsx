@@ -3,6 +3,8 @@
 import Link from 'next/link';
 import { useDeferredValue, useId, useMemo, useRef, useState } from 'react';
 import { SearchIcon } from '@/components/ui/icons';
+import { FOCUS_SHEET_KEY } from '@/components/news/country-sheet';
+import { usePreferences } from '@/lib/preferences/store';
 
 export interface PickerCountry {
   iso2: string;
@@ -51,6 +53,7 @@ export function CountryPicker({
     });
   }, [countries, deferred, onlyCovered]);
 
+  const [prefs] = usePreferences();
   const groups = useMemo(() => {
     const map = new Map<string, PickerCountry[]>();
     for (const c of filtered) {
@@ -58,8 +61,15 @@ export function CountryPicker({
       if (!map.has(key)) map.set(key, []);
       map.get(key)!.push(c);
     }
-    return [...map.entries()].sort(([a], [b]) => a.localeCompare(b));
-  }, [filtered]);
+    const sorted = [...map.entries()].sort(([a], [b]) => a.localeCompare(b));
+    // Explicitly pinned countries (local preference) are listed first; they also stay in place.
+    const pinned = prefs.pinnedCountries
+      .map((iso2) => filtered.find((c) => c.iso2 === iso2))
+      .filter((c): c is PickerCountry => !!c);
+    return pinned.length
+      ? ([['Pinned', pinned], ...sorted] as [string, PickerCountry[]][])
+      : sorted;
+  }, [filtered, prefs.pinnedCountries]);
 
   const covered = countries.filter((c) => c.outletCount > 0).length;
 
@@ -71,7 +81,7 @@ export function CountryPicker({
 
   function focusItem(delta: number, from?: HTMLElement) {
     const items = Array.from(
-      listRef.current?.querySelectorAll<HTMLAnchorElement>('a[data-country]') ?? [],
+      listRef.current?.querySelectorAll<HTMLAnchorElement>('a[data-picker-item]') ?? [],
     );
     if (!items.length) return;
     const idx = from ? items.indexOf(from as HTMLAnchorElement) : -1;
@@ -155,14 +165,23 @@ export function CountryPicker({
               </h3>
               <ul>
                 {items.map((c) => {
+                  const itemKey = `${region}-${c.iso2}`;
                   const selected = c.iso2 === selectedIso2;
                   return (
-                    <li key={c.iso2}>
+                    <li key={itemKey}>
                       <Link
                         href={href(c.iso2)}
                         scroll={false}
                         prefetch={false}
-                        data-country={c.iso2}
+                        data-picker-item
+                        data-country={region === 'Pinned' ? undefined : c.iso2}
+                        onClick={() => {
+                          try {
+                            sessionStorage.setItem(FOCUS_SHEET_KEY, '1');
+                          } catch {
+                            // storage unavailable: focus simply stays put
+                          }
+                        }}
                         aria-current={selected ? 'true' : undefined}
                         className={`flex min-h-11 items-center justify-between gap-3 rounded-md px-2 py-2 no-underline ${
                           selected

@@ -151,3 +151,20 @@ the worker until `termsReviewedAt` is recorded. This is checked in the admin ser
 
 **Decision.** The default UA is `FreAlgoFeedReader/0.1 (personal non-commercial reader)`. Operators
 may append their own contact URL. We never spoof browser UAs.
+
+## ADR-017 Country sheet without a portal
+
+**Decision.** The sheet is a custom component, not a portal-based dialog library. Portals render
+only after hydration, which would break the no-JavaScript path. On mobile it gets dialog semantics
+(`role=dialog`, `aria-modal`, focus trap, inert background, Escape, focus return). On desktop it
+stays a non-modal `region` so the map remains usable. Only the title row is fixed: notices,
+sectors, filters and stories scroll together so nothing is pushed off-screen on short viewports.
+Sector switching uses links with `aria-current`, not an ARIA tabs widget, because each sector is
+its own URL.
+
+## ADR-018 Relevance is textual only
+
+**Decision.** `sort=relevance` ranks by `ts_rank_cd` over headline (A) and excerpt (B), plus
+0.3 × trigram word similarity on the headline and a small bonus when the outlet name matches. The
+score is rounded to 6 decimal places so keyset cursors are exact. No popularity, recency boost,
+engagement or political signal is involved, and the UI and API say so.

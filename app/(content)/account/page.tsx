@@ -71,7 +71,7 @@ export default async function AccountPage() {
                 <input
                   name="name"
                   required
-                  pattern="[a-z0-9-]{2,32}"
+                  pattern="[a-z0-9\-]{2,32}"
                   defaultValue="local-admin"
                   className="mt-1 min-h-11 w-full rounded-md border border-border-strong bg-surface px-3 text-base text-text"
                 />

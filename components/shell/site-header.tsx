@@ -4,15 +4,20 @@ import { NavLinks } from './nav-links';
 
 export const NAV_ITEMS = [
   { href: '/', label: 'Explore' },
+  { href: '/search', label: 'Search' },
   { href: '/sources', label: 'Sources' },
   { href: '/status', label: 'Freshness' },
   { href: '/methodology', label: 'Methodology' },
   { href: '/about', label: 'About' },
+  { href: '/settings', label: 'Settings' },
 ] as const;
 
 export function SiteHeader() {
   return (
-    <header className="sticky top-0 z-40 h-[var(--header-h)] border-b border-border bg-bg/95 backdrop-blur supports-[backdrop-filter]:bg-bg/80">
+    <header
+      data-inert-under-sheet
+      className="sticky top-0 z-40 h-[var(--header-h)] border-b border-border bg-bg/95 backdrop-blur supports-[backdrop-filter]:bg-bg/80"
+    >
       <div className="mx-auto flex h-full max-w-[1600px] items-center gap-4 px-4 lg:px-6">
         <Link
           href="/"

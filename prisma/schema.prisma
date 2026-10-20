@@ -242,9 +242,11 @@ model Article {
   sectors                ArticleSector[]
 
   @@unique([outletId, externalId])
-  @@index([publishedAt(sort: Desc), id])
-  @@index([outletId, publishedAt(sort: Desc)])
-  @@index([status, publishedAt(sort: Desc)])
+  // Keyset pagination orders by (publishedAt, id) in the same direction; matching index
+  // directions let Postgres serve both newest-first (forward) and oldest-first (backward) scans.
+  @@index([publishedAt(sort: Desc), id(sort: Desc)])
+  @@index([outletId, publishedAt(sort: Desc), id(sort: Desc)])
+  @@index([status, publishedAt(sort: Desc), id(sort: Desc)])
   @@index([searchVector], type: Gin, map: "Article_searchVector_idx")
   @@index([title(ops: raw("gin_trgm_ops"))], type: Gin, map: "Article_title_trgm_idx")
 }

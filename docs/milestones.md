@@ -34,9 +34,19 @@ Status legend: ✅ done with evidence · ⏳ in progress · ⛔ blocked by an ex
 
 ## Milestone 3 — News APIs, search, and country workspace
 
-- ⏳ Versioned API contracts, cursor pagination, FTS/trigram search, filters
-- ⏳ Country side sheet / bottom sheet, finite pages, deep links, empty/error states
-- ⏳ Opt-in preference sync (auth), local-only default
+- ✅ Versioned Zod contracts (docs/api.md), stable error envelope, rate limits, SWR cache headers
+- ✅ Keyset cursor pagination (newest/oldest/outlet/relevance) with Previous/Next, page numbers,
+  capped totals and an explicit "You are caught up" end; index-driven country pages
+- ✅ Postgres FTS (language-stemmed + simple) + trigram typo tolerance + CJK substring fallback;
+  relevance explained as textual match only
+- ✅ Country sheet: anchored desktop panel / mobile modal bottom sheet (drag handle, close button,
+  focus trap, inert background, Escape, focus return), sector navigation, transparent filters,
+  coverage notices (no sources, paused, stale, paywalls, language gaps), deep links
+- ✅ Search page, settings (local-first), opt-in server sync (GET/PUT/DELETE/export), OIDC sign-in
+- **Evidence:** 81 integration tests (filter intersection, search, deterministic order with ties,
+  full forward/backward cursor walks, concurrent insert, invalid params, SQL-injection inputs,
+  auth boundaries, OIDC with mock IdP); 73 e2e tests incl. keyboard flow, no-JS flows, axe scans
+  with zero serious/critical violations on 6 pages.
 
 ## Milestone 4 — Interactive globe and polished responsive UX
 
