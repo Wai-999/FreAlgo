@@ -1,0 +1,36 @@
+# dependencies
+node_modules/
+
+# build output
+.next/
+out/
+dist/
+build/
+*.tsbuildinfo
+next-env.d.ts
+
+# generated
+/generated/
+
+# env & secrets (only .env.example is committed)
+.env
+.env.*
+!.env.example
+
+# tests
+/test-results/
+/playwright-report/
+/blob-report/
+/playwright/.cache/
+/coverage/
+/reports/tmp/
+
+# backups
+/backups/
+
+# os / editor
+.DS_Store
+*.log
+.vscode/*
+!.vscode/extensions.json
+.idea/
