@@ -14,14 +14,14 @@ clearly badged fixture data; real feeds are registered but paused.
 
 ## 2. Commits
 
-| Commit      | Scope                                                                                        |
-| ----------- | -------------------------------------------------------------------------------------------- |
-| `86305a1`   | Implementation specification                                                                 |
-| `b3cf992`   | M1: foundation, data model, design system, one-command boot                                  |
-| `df0a43e`   | M2: reliable ingestion and source governance                                                 |
-| `c1fb436`   | M3: news APIs, search, country workspace                                                     |
-| `516b2fc`   | M4: interactive globe and polished responsive UX                                             |
-| _M5 commit_ | M5: production hardening, release and handover (hash recorded in the follow-up commit below) |
+| Commit    | Scope                                                       |
+| --------- | ----------------------------------------------------------- |
+| `86305a1` | Implementation specification                                |
+| `b3cf992` | M1: foundation, data model, design system, one-command boot |
+| `df0a43e` | M2: reliable ingestion and source governance                |
+| `c1fb436` | M3: news APIs, search, country workspace                    |
+| `516b2fc` | M4: interactive globe and polished responsive UX            |
+| `f521cb5` | M5: production hardening, release and handover              |
 
 ## 3. Milestone 5 acceptance
 
