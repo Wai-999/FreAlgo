@@ -50,8 +50,20 @@ Status legend: ✅ done with evidence · ⏳ in progress · ⛔ blocked by an ex
 
 ## Milestone 4 — Interactive globe and polished responsive UX
 
-- ⏳ Dynamically imported R3F globe, picking, gestures, adaptive quality, WebGL fallback
-- ⏳ Playwright coverage, Lighthouse, frame-time profiling
+- ✅ React Three Fiber globe behind `next/dynamic({ ssr: false })`, started only when visible,
+  idle and WebGL-capable; render-on-demand (0 frames when idle); disposes resources on unmount
+- ✅ ISO boundary picking (UV → lon/lat → geoContains), verified against three.js geometry;
+  uncoded areas (Somaliland, N. Cyprus) explained rather than merged
+- ✅ Gestures: one-finger/mouse rotate, bounded pinch/wheel zoom, tap-vs-drag, no pan; keyboard
+  rotate/zoom/Enter with live announcements; focus returns to the globe or list
+- ✅ Adaptive quality (device memory/cores/Save-Data/pointer; DPR ≤ 1.5 on touch; frame-time
+  downgrade); software-renderer opt-in; context-loss recovery then 2D fallback; anonymous counters
+- ✅ Flat map moved to a static cacheable SVG (works without JS); HTML 478 KB → 167 KB
+- **Evidence:** 14 globe e2e tests (click/drag, keyboard, touch tap, context loss, toggle, no-WebGL
+  on all engines, software opt-in, axe with globe active); Lighthouse home 71 → 92, TBT 944 →
+  214 ms; frame-time profile in docs/performance.md (SwiftShader, emulated devices).
+- ⛔ Physical low-end Android / iOS Safari device testing (needs real devices); simulated mobile
+  LCP 2.8 s vs 2.5 s target (documented with next steps).
 
 ## Milestone 5 — Production hardening, release, and handover
 

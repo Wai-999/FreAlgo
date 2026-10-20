@@ -1,4 +1,4 @@
-import { expect, test } from '@playwright/test';
+import { expect, test } from './fixtures';
 
 test.describe('application shell', () => {
   test('desktop shows header, country list and map @cross', async ({ page, isMobile }) => {
@@ -108,5 +108,30 @@ test.describe('without JavaScript', () => {
       page.getByTestId('country-sheet').getByRole('heading', { name: 'Kenya' }),
     ).toBeVisible();
     expect(await page.getByTestId('story-card').count()).toBeGreaterThan(0);
+  });
+});
+
+test.describe('flat map links', () => {
+  test('clicking a country in the map opens it (client navigation)', async ({ page, isMobile }) => {
+    test.skip(isMobile, 'desktop');
+    await page.goto('/?intro=0');
+    await page.frameLocator('[data-testid="world-map-svg"]').locator('a[data-iso2="KE"]').click();
+    await expect(page).toHaveURL(/country=KE/);
+    await expect(
+      page.getByTestId('country-sheet').getByRole('heading', { name: 'Kenya' }),
+    ).toBeVisible();
+  });
+});
+
+test.describe('flat map without JavaScript', () => {
+  test.use({ javaScriptEnabled: false });
+  test('map links navigate the whole page', async ({ page, isMobile }) => {
+    test.skip(isMobile, 'desktop');
+    await page.goto('/');
+    await page.frameLocator('[data-testid="world-map-svg"]').locator('a[data-iso2="BR"]').click();
+    await expect(page).toHaveURL(/country=BR/);
+    await expect(
+      page.getByTestId('country-sheet').getByRole('heading', { name: 'Brazil' }),
+    ).toBeVisible();
   });
 });

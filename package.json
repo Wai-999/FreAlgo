@@ -31,12 +31,15 @@
     "ci": "npm run format:check && npm run lint && npm run typecheck && npm test && npm run test:integration && npm run build",
     "postinstall": "prisma generate",
     "sources:activate": "node --env-file-if-exists=.env --import tsx scripts/activate-sources.ts",
-    "sources:dry-run": "node --env-file-if-exists=.env --import tsx scripts/dry-run-feeds.ts"
+    "sources:dry-run": "node --env-file-if-exists=.env --import tsx scripts/dry-run-feeds.ts",
+    "start:standalone": "sh scripts/start-standalone.sh",
+    "perf:lighthouse": "node scripts/perf/lighthouse.mjs",
+    "perf:globe": "node scripts/perf/profile-globe.mjs",
+    "generate:map": "node --import tsx scripts/generate-world-map.ts"
   },
   "dependencies": {
     "@prisma/adapter-pg": "7.10.1",
     "@prisma/client": "7.10.1",
-    "@radix-ui/react-dialog": "1.3.1",
     "@react-three/fiber": "9.8.2",
     "bullmq": "5.81.5",
     "d3-geo": "3.1.1",

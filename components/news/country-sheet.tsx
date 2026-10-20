@@ -1,13 +1,6 @@
 'use client';
 
-import {
-  AnimatePresence,
-  LazyMotion,
-  domMax,
-  m,
-  useDragControls,
-  useReducedMotion,
-} from 'motion/react';
+import { AnimatePresence, LazyMotion, m, useDragControls, useReducedMotion } from 'motion/react';
 import { useEffect, useId, useRef, useSyncExternalStore, type ReactNode } from 'react';
 import { CloseIcon } from '@/components/ui/icons';
 import { NavAnchor, useWorkspaceNav } from './nav-anchor';
@@ -30,10 +23,12 @@ function useMediaQuery(query: string, serverValue: boolean): boolean {
 const FOCUSABLE =
   'a[href], button:not([disabled]), input:not([disabled]), select, textarea, summary, [tabindex]:not([tabindex="-1"])';
 
+const loadMotionFeatures = () => import('./motion-features').then((mod) => mod.default);
+
 /** Keeps the sheet mounted across country changes (spatial memory) and runs exit transitions. */
 export function SheetPresence({ children }: { children: ReactNode }) {
   return (
-    <LazyMotion features={domMax} strict>
+    <LazyMotion features={loadMotionFeatures} strict>
       <AnimatePresence>{children}</AnimatePresence>
     </LazyMotion>
   );

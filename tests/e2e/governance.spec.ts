@@ -1,4 +1,4 @@
-import { expect, test } from '@playwright/test';
+import { expect, test } from './fixtures';
 
 test.describe('source governance pages', () => {
   test('freshness page is truthful about paused, fixture and never-synced sources @cross', async ({

@@ -115,3 +115,38 @@ pages. Orientation is shown with a marker on a five-tick line plus text, never w
   `/api/v1/health/freshness` (per-source freshness, public).
 - Anonymous client counters (e.g. WebGL unavailable or context lost), aggregated per day with no
   identifiers.
+
+## Globe (Milestone 4)
+
+```text
+page.tsx (server) ──▶ GlobeStage (client) ──┬─▶ children: server-rendered SVG map (SSR, no-JS, fallback)
+                                            └─▶ next/dynamic(GlobeCanvas, { ssr: false })   ← loaded only when:
+                                                  stage visible (IntersectionObserver) ∧ preference on
+                                                  ∧ WebGL ok (failIfMajorPerformanceCaveat probe) or user opt-in
+```
+
+- **Rendering.** React Three Fiber with `frameloop="demand"`, so an idle globe schedules no
+  frames (verified: 0 requestAnimationFrame calls in 2 s idle). One unlit sphere uses a
+  CanvasTexture drawn from the Natural Earth vectors, so no raster is downloaded. Selected and
+  hovered countries are drawn as line overlays. A thin back-face rim makes the edge readable.
+  Texture, geometries and OrbitControls are disposed on unmount.
+- **Picking.** R3F raycast → `uv` → lon/lat → bounding-box prefilter → `d3.geoContains`. The UV
+  mapping is unit-tested against three.js `SphereGeometry` vertices.
+- **Gestures.** One finger or mouse rotates. Pinch or wheel zooms, bounded between 1.35 and
+  ~1.35× the fitted distance. There is no pan. A press counts as a tap only if it moves less than
+  8 px within 600 ms; multi-touch never selects. `touch-action: none` applies inside the globe
+  only.
+- **Accessibility.**
+  - The globe group is focusable once drawn. Arrow keys rotate (Shift for bigger steps), +/−
+    zoom, and Enter opens the centred country. The new centre is announced politely.
+  - The searchable country list remains the fully equivalent alternative.
+  - Focus returns to the globe or list item that opened a country.
+- **Adaptive quality.**
+  - The initial tier comes from device memory, cores, Save-Data, connection type and pointer
+    coarseness, so phones are not all treated the same.
+  - DPR is capped at 1.5 on touch devices.
+  - A frame-time monitor downgrades the tier (texture size, DPR, segments) when the median frame
+    time stays above 34 ms.
+- **Fallback.** WebGL unsupported → flat map with a notice. Software renderer → flat map with a
+  "Try the 3D globe anyway" opt-in. Context loss → wait 3 s for a restore. A second loss → flat
+  map. Every case sends one anonymous counter (`/api/v1/telemetry/client`).

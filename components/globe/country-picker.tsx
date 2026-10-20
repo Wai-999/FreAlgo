@@ -1,9 +1,10 @@
 'use client';
 
-import Link from 'next/link';
 import { useDeferredValue, useId, useMemo, useRef, useState } from 'react';
 import { SearchIcon } from '@/components/ui/icons';
 import { FOCUS_SHEET_KEY } from '@/components/news/country-sheet';
+import { useWorkspaceNav } from '@/components/news/nav-anchor';
+import { useRouter } from 'next/navigation';
 import { usePreferences } from '@/lib/preferences/store';
 
 export interface PickerCountry {
@@ -54,6 +55,8 @@ export function CountryPicker({
   }, [countries, deferred, onlyCovered]);
 
   const [prefs] = usePreferences();
+  const nav = useWorkspaceNav();
+  const router = useRouter();
   const groups = useMemo(() => {
     const map = new Map<string, PickerCountry[]>();
     for (const c of filtered) {
@@ -135,6 +138,22 @@ export function CountryPicker({
       <div
         ref={listRef}
         className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-2 pb-6"
+        // One delegated handler instead of ~250 link components: plain <a> elements work without
+        // JavaScript; with it, a click becomes a client navigation that keeps the globe mounted.
+        onClick={(e) => {
+          const link = (e.target as HTMLElement).closest<HTMLAnchorElement>('a[data-picker-item]');
+          if (!link || e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
+          e.preventDefault();
+          try {
+            sessionStorage.setItem(FOCUS_SHEET_KEY, '1');
+            sessionStorage.setItem('frealgo:restore-target', 'list');
+          } catch {
+            // storage unavailable: focus simply stays put
+          }
+          const target = link.getAttribute('href')!;
+          if (nav) nav.navigate(target);
+          else router.push(target, { scroll: false });
+        }}
         onKeyDown={(e) => {
           const target = e.target as HTMLElement;
           if (e.key === 'ArrowDown') {
@@ -169,19 +188,10 @@ export function CountryPicker({
                   const selected = c.iso2 === selectedIso2;
                   return (
                     <li key={itemKey}>
-                      <Link
+                      <a
                         href={href(c.iso2)}
-                        scroll={false}
-                        prefetch={false}
                         data-picker-item
                         data-country={region === 'Pinned' ? undefined : c.iso2}
-                        onClick={() => {
-                          try {
-                            sessionStorage.setItem(FOCUS_SHEET_KEY, '1');
-                          } catch {
-                            // storage unavailable: focus simply stays put
-                          }
-                        }}
                         aria-current={selected ? 'true' : undefined}
                         className={`flex min-h-11 items-center justify-between gap-3 rounded-md px-2 py-2 no-underline ${
                           selected
@@ -198,7 +208,7 @@ export function CountryPicker({
                             ? 'No sources'
                             : `${c.articleCount} ${c.articleCount === 1 ? 'story' : 'stories'}`}
                         </span>
-                      </Link>
+                      </a>
                     </li>
                   );
                 })}

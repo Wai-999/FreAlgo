@@ -1,7 +1,8 @@
 import Link from 'next/link';
 import { Suspense } from 'react';
 import { CountryPicker } from '@/components/globe/country-picker';
-import { WorldMapSvg } from '@/components/globe/world-map-svg';
+import { GlobeStage } from '@/components/globe/globe-stage';
+import { WorldMapFrame } from '@/components/globe/world-map-frame';
 import { SheetPresence } from '@/components/news/country-sheet';
 import { CountryWorkspace } from '@/components/news/country-workspace';
 import { ApplyPreferredSort } from '@/components/news/apply-preferred-sort';
@@ -9,7 +10,7 @@ import { FocusRestorer } from '@/components/news/focus-restorer';
 import { WorkspaceNavProvider } from '@/components/news/nav-anchor';
 import { GlobeIcon, ListIcon } from '@/components/ui/icons';
 import { toSearchParams } from '@/lib/api/contracts';
-import { listCountrySummaries, numericToIso2Map } from '@/lib/db/countries';
+import { listCountrySummaries } from '@/lib/db/countries';
 import { getEnv } from '@/lib/env';
 import { exploreHref, parseExploreQuery, type RawSearchParams } from '@/lib/explore/params';
 
@@ -28,7 +29,6 @@ export default async function ExplorePage({
   // Switching country keeps the sector and filters (spatial memory) but starts at page 1.
   const carry = { ...query, country: undefined, cursor: undefined };
   const hrefBase = toSearchParams(carry).toString();
-  const hrefForCountry = (iso2: string) => exploreHref(carry, { country: iso2 });
   const viewHref = (v: 'map' | 'list') =>
     exploreHref({ ...query, cursor: undefined }, { view: v === 'list' ? 'list' : null });
 
@@ -40,7 +40,13 @@ export default async function ExplorePage({
     articleCount: c.articleCount,
     outletCount: c.outletCount,
   }));
-  const counts = new Map(countries.map((c) => [c.iso2, c.articleCount]));
+  const countriesWithNews = countries.filter((c) => c.articleCount > 0).map((c) => c.iso2);
+  const globeCountries = countries.map((c) => ({
+    iso2: c.iso2,
+    isoNumeric: c.isoNumeric,
+    name: c.name,
+    articleCount: c.articleCount,
+  }));
   const covered = countries.filter((c) => c.outletCount > 0).length;
   const switchClass = (active: boolean) =>
     `flex min-h-11 flex-1 items-center justify-center gap-2 rounded-md border text-sm no-underline ${
@@ -103,18 +109,24 @@ export default async function ExplorePage({
           data-inert-under-sheet
           className={`relative min-h-[60dvh] overflow-hidden outline-none lg:h-[calc(100dvh-var(--header-h))] ${view === 'list' ? 'hidden lg:block' : ''}`}
         >
-          <div
-            className={`absolute inset-0 flex items-center justify-center p-4 lg:p-8 ${selected ? 'lg:pr-[calc(var(--sheet-w)+1rem)]' : ''}`}
+          <GlobeStage
+            countries={globeCountries}
+            selectedIso2={selected?.iso2 ?? null}
+            hrefBase={hrefBase}
+            insetRight={!!selected}
           >
-            <WorldMapSvg
-              numericToIso2={numericToIso2Map(countries)}
-              countsByIso2={counts}
-              selectedIso2={selected?.iso2 ?? null}
-              hrefForCountry={hrefForCountry}
-              className="h-full max-h-full w-full max-w-[1200px]"
-            />
-          </div>
-          <p className="absolute bottom-4 left-4 max-w-md text-sm text-muted">
+            <div
+              className={`absolute inset-0 flex items-center justify-center p-4 lg:p-8 ${selected ? 'lg:pr-[calc(var(--sheet-w)+1rem)]' : ''}`}
+            >
+              <WorldMapFrame
+                selectedIso2={selected?.iso2 ?? null}
+                countriesWithNews={countriesWithNews}
+                hrefBase={hrefBase}
+                className="aspect-[96/50] max-h-full w-full max-w-[1200px] border-0 bg-transparent"
+              />
+            </div>
+          </GlobeStage>
+          <p className="pointer-events-none absolute bottom-4 left-4 max-w-md text-sm text-muted">
             {covered} of {countries.length} countries have registered sources. Boundaries: Natural
             Earth (public domain).
           </p>

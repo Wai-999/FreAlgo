@@ -1,6 +1,7 @@
 import { NextResponse, type NextRequest } from 'next/server';
 import { ZodError, type ZodType } from 'zod';
 import { getLogger } from '@/lib/log';
+import { recordApiLatency } from './metrics';
 import { checkRateLimit, clientKey } from './rate-limit';
 
 /**
@@ -67,12 +68,16 @@ export function apiHandler<P = Record<string, never>>(
 ) {
   return async (req: NextRequest, routeCtx: { params: Promise<P> }) => {
     const requestId = crypto.randomUUID();
+    const started = performance.now();
     let response: NextResponse;
     try {
       const rlHeaders: Record<string, string> = {};
       if (opts.rateLimit) {
-        const rl = await checkRateLimit(opts.rateLimit, clientKey(req));
-        rlHeaders['RateLimit-Limit'] = String(opts.rateLimit.limit);
+        // RATE_LIMIT_SCALE (default 1) exists only for controlled load tests; see operations.md.
+        const scale = Math.max(1, Math.min(10_000, Number(process.env.RATE_LIMIT_SCALE ?? 1) || 1));
+        const rule = { ...opts.rateLimit, limit: opts.rateLimit.limit * scale };
+        const rl = await checkRateLimit(rule, clientKey(req));
+        rlHeaders['RateLimit-Limit'] = String(rule.limit);
         rlHeaders['RateLimit-Remaining'] = String(Math.max(0, rl.remaining));
         rlHeaders['RateLimit-Reset'] = String(rl.resetSec);
         if (!rl.ok) {
@@ -128,6 +133,14 @@ export function apiHandler<P = Record<string, never>>(
       }
     }
     response.headers.set('X-Request-Id', requestId);
+    // Structured access log: route, status and latency only (no IPs, cookies, bodies or queries).
+    const ms = Math.round(performance.now() - started);
+    response.headers.set('Server-Timing', `app;dur=${ms}`);
+    recordApiLatency(req.nextUrl.pathname, response.status, ms);
+    getLogger().info(
+      { requestId, method: req.method, path: req.nextUrl.pathname, status: response.status, ms },
+      'api',
+    );
     response.headers.set('X-Content-Type-Options', 'nosniff');
     response.headers.set('Content-Security-Policy', "default-src 'none'; frame-ancestors 'none'");
     response.headers.set('Referrer-Policy', 'no-referrer');

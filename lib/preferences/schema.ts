@@ -1,42 +1,94 @@
-import { z } from 'zod';
-import { ORIENTATIONS } from '../domain/orientation';
+import { ORIENTATIONS, type Orientation } from '../domain/orientation';
 import { SECTOR_SLUGS } from '../domain/sectors';
 
 /**
  * Personal preferences. Stored in the browser (localStorage) by default; copied to the server
- * only when an authenticated user explicitly turns on sync. Contains explicit choices only —
+ * only when an authenticated user explicitly turns on sync. Contains explicit choices only:
  * never reading history, dwell time or other behavioural signals.
+ *
+ * Validation is hand-written (no schema library) because this module ships to every browser;
+ * the server-side sync endpoint validates with Zod (lib/preferences/server.ts).
  */
 export const PREFS_STORAGE_KEY = 'frealgo:prefs:v1';
 export const SORT_OPTIONS = ['newest', 'oldest', 'outlet'] as const;
 export type SortOption = (typeof SORT_OPTIONS)[number];
+const MOTION = ['system', 'reduce', 'full'] as const;
 
-const iso2 = z
-  .string()
-  .regex(/^[A-Za-z]{2}$/)
-  .transform((s) => s.toUpperCase());
-const lang = z.string().regex(/^[a-z]{2,3}(-[A-Za-z0-9]{2,8})*$/);
+export interface Preferences {
+  version: 1;
+  showIntro: boolean;
+  motion: (typeof MOTION)[number];
+  globeEnabled: boolean;
+  preferredSort: SortOption;
+  pinnedCountries: string[];
+  sectors: string[];
+  orientations: Orientation[];
+  languages: string[];
+  outletIds: string[];
+  syncToAccount: boolean;
+}
 
-export const preferencesSchema = z.object({
-  version: z.literal(1).default(1),
-  showIntro: z.boolean().default(true),
-  motion: z.enum(['system', 'reduce', 'full']).default('system'),
-  globeEnabled: z.boolean().default(true),
-  preferredSort: z.enum(SORT_OPTIONS).default('newest'),
-  pinnedCountries: z.array(iso2).max(50).default([]),
-  sectors: z
-    .array(z.enum(SECTOR_SLUGS as [string, ...string[]]))
-    .max(7)
-    .default([]),
-  orientations: z.array(z.enum(ORIENTATIONS)).max(8).default([]),
-  languages: z.array(lang).max(20).default([]),
-  outletIds: z.array(z.string().min(1).max(64)).max(50).default([]),
-  syncToAccount: z.boolean().default(false),
-});
+export const DEFAULT_PREFERENCES: Preferences = Object.freeze({
+  version: 1,
+  showIntro: true,
+  motion: 'system',
+  globeEnabled: true,
+  preferredSort: 'newest',
+  pinnedCountries: [],
+  sectors: [],
+  orientations: [],
+  languages: [],
+  outletIds: [],
+  syncToAccount: false,
+}) as Preferences;
 
-export type Preferences = z.infer<typeof preferencesSchema>;
+const LANG = /^[a-z]{2,3}(-[A-Za-z0-9]{2,8})*$/;
+const ISO2 = /^[A-Za-z]{2}$/;
 
-export const DEFAULT_PREFERENCES: Preferences = preferencesSchema.parse({});
+const isBool = (v: unknown): v is boolean => typeof v === 'boolean';
+const oneOf =
+  <T extends string>(allowed: readonly T[]) =>
+  (v: unknown): v is T =>
+    typeof v === 'string' && (allowed as readonly string[]).includes(v);
+
+/** Validates every element; an invalid element rejects the whole list (falls back to default). */
+function list<T>(
+  v: unknown,
+  max: number,
+  ok: (x: unknown) => boolean,
+  map: (x: unknown) => T = (x) => x as T,
+): T[] | undefined {
+  if (!Array.isArray(v) || v.length > max || !v.every(ok)) return undefined;
+  return v.map(map);
+}
+
+function validate(data: Record<string, unknown>): Preferences {
+  const d = DEFAULT_PREFERENCES;
+  return {
+    version: 1,
+    showIntro: isBool(data.showIntro) ? data.showIntro : d.showIntro,
+    motion: oneOf(MOTION)(data.motion) ? data.motion : d.motion,
+    globeEnabled: isBool(data.globeEnabled) ? data.globeEnabled : d.globeEnabled,
+    preferredSort: oneOf(SORT_OPTIONS)(data.preferredSort) ? data.preferredSort : d.preferredSort,
+    pinnedCountries:
+      list(
+        data.pinnedCountries,
+        50,
+        (x) => typeof x === 'string' && ISO2.test(x),
+        (x) => String(x).toUpperCase(),
+      ) ?? [],
+    sectors: list<string>(data.sectors, 7, oneOf(SECTOR_SLUGS)) ?? [],
+    orientations: list<Orientation>(data.orientations, 8, oneOf(ORIENTATIONS)) ?? [],
+    languages: list<string>(data.languages, 20, (x) => typeof x === 'string' && LANG.test(x)) ?? [],
+    outletIds:
+      list<string>(
+        data.outletIds,
+        50,
+        (x) => typeof x === 'string' && x.length >= 1 && x.length <= 64,
+      ) ?? [],
+    syncToAccount: isBool(data.syncToAccount) ? data.syncToAccount : d.syncToAccount,
+  };
+}
 
 /** Tolerant parse: unknown keys are dropped, invalid fields fall back to defaults. */
 export function parsePreferences(raw: string | null | undefined): Preferences {
@@ -47,21 +99,12 @@ export function parsePreferences(raw: string | null | undefined): Preferences {
   } catch {
     return { ...DEFAULT_PREFERENCES };
   }
-  if (!data || typeof data !== 'object') return { ...DEFAULT_PREFERENCES };
-  const strict = preferencesSchema.safeParse(data);
-  if (strict.success) return strict.data;
-  // Salvage valid fields individually so one bad value does not reset everything.
-  const out: Record<string, unknown> = { ...DEFAULT_PREFERENCES };
-  const shape = preferencesSchema.shape;
-  for (const key of Object.keys(shape) as (keyof typeof shape)[]) {
-    const field = shape[key].safeParse((data as Record<string, unknown>)[key]);
-    if (field.success) out[key] = field.data;
-  }
-  return preferencesSchema.parse(out);
+  if (!data || typeof data !== 'object' || Array.isArray(data)) return { ...DEFAULT_PREFERENCES };
+  return validate(data as Record<string, unknown>);
 }
 
 export function serializePreferences(prefs: Preferences): string {
-  return JSON.stringify(preferencesSchema.parse(prefs));
+  return JSON.stringify(validate(prefs as unknown as Record<string, unknown>));
 }
 
 /**

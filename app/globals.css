@@ -221,18 +221,3 @@ html[data-motion='reduce'] .intro {
 .prose-body li + li {
   margin-top: 0.3rem;
 }
-
-.map-country {
-  fill: #1a2638;
-  stroke: #3a4a62;
-  stroke-width: 0.4;
-  vector-effect: non-scaling-stroke;
-  transition: fill 120ms ease;
-}
-.map-country[data-has-news='true'] {
-  fill: #23415f;
-}
-a:hover > .map-country,
-.map-country[data-selected='true'] {
-  fill: var(--accent);
-}
