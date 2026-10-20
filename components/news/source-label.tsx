@@ -8,6 +8,7 @@ import {
   type Orientation,
 } from '@/lib/domain/orientation';
 import { formatUtc } from '@/lib/format';
+import { safeHref } from '@/lib/security/safe-url';
 import { Badge } from '@/components/ui/badge';
 import { OrientationSpectrum } from './orientation-spectrum';
 
@@ -87,12 +88,12 @@ export function SourceLabel({
           </dd>
           <dt>Methodology</dt>
           <dd className="text-text">{label.labelMethodology ?? 'None cited (unrated).'}</dd>
-          {label.labelSourceUrl ? (
+          {safeHref(label.labelSourceUrl) ? (
             <>
               <dt>Source</dt>
               <dd>
                 <a
-                  href={label.labelSourceUrl}
+                  href={safeHref(label.labelSourceUrl)!}
                   target="_blank"
                   rel="noopener noreferrer"
                   referrerPolicy="no-referrer"

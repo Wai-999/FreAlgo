@@ -18,6 +18,7 @@ import { cappedDpr, chooseQuality, type QualityTier } from '@/lib/geo/globe-math
 import { usePreferences } from '@/lib/preferences/store';
 import { sendClientEvent } from '@/lib/telemetry/client';
 import type { GlobeApi } from './globe-canvas';
+import { GlobeErrorBoundary } from './globe-error-boundary';
 
 /**
  * Stage that progressively enhances the server-rendered flat map into the 3D globe.
@@ -27,6 +28,7 @@ import type { GlobeApi } from './globe-canvas';
  *    the stage is visible and a capability check passes; hidden stages unmount the canvas.
  *  - Software renderers (major performance caveat) fall back to 2D unless the user opts in.
  *  - Context loss: wait for a restore once; a second loss or no restore → 2D fallback.
+ *  - A globe chunk that fails to download, or a crash inside it, → 2D fallback (error boundary).
  */
 const GlobeCanvas = dynamic(() => import('./globe-canvas'), { ssr: false, loading: () => null });
 
@@ -263,6 +265,16 @@ export function GlobeStage({
       sendClientEvent('globe_fallback');
     }, 3000);
   }, []);
+  const onGlobeError = useCallback((error: unknown) => {
+    const text = error instanceof Error ? `${error.name} ${error.message}` : String(error);
+    setFailure(
+      /chunk|import|fetch|load/i.test(text)
+        ? 'The 3D globe could not be downloaded (network problem).'
+        : 'The 3D view stopped working.',
+    );
+    sendClientEvent('globe_load_error');
+    sendClientEvent('globe_fallback');
+  }, []);
   const onContextRestored = useCallback(() => {
     if (restoreTimer.current) window.clearTimeout(restoreTimer.current);
   }, []);
@@ -349,21 +361,23 @@ export function GlobeStage({
           }}
         >
           <div className="absolute inset-0" aria-hidden="true">
-            <GlobeCanvas
-              countries={countries}
-              selectedIso2={selectedIso2}
-              quality={tier}
-              dpr={dpr}
-              reducedMotion={reducedMotion}
-              apiRef={apiRef}
-              onReady={onReady}
-              onSelect={select}
-              onHover={onHover}
-              onContextLost={onContextLost}
-              onContextRestored={onContextRestored}
-              onSlowFrames={onSlowFrames}
-              onCenterChange={onCenterChange}
-            />
+            <GlobeErrorBoundary onError={onGlobeError}>
+              <GlobeCanvas
+                countries={countries}
+                selectedIso2={selectedIso2}
+                quality={tier}
+                dpr={dpr}
+                reducedMotion={reducedMotion}
+                apiRef={apiRef}
+                onReady={onReady}
+                onSelect={select}
+                onHover={onHover}
+                onContextLost={onContextLost}
+                onContextRestored={onContextRestored}
+                onSlowFrames={onSlowFrames}
+                onCenterChange={onCenterChange}
+              />
+            </GlobeErrorBoundary>
           </div>
           <p className="sr-only" aria-live="polite">
             {announce}

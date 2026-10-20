@@ -168,3 +168,43 @@ its own URL.
 0.3 × trigram word similarity on the headline and a small bonus when the outlet name matches. The
 score is rounded to 6 decimal places so keyset cursors are exact. No popularity, recency boost,
 engagement or political signal is involved, and the UI and API say so.
+
+## ADR-019 Steering text-search plans (Milestone 5)
+
+**Context.** At 200 000 articles, broad and selective searches took 340–590 ms. The planner chose
+full scans: it cannot estimate values hidden behind joins or InitPlans, it ignores the per-row
+cost of pg_trgm's `<%`, and `ts_rank_cd` is expensive on rows that do not match.
+
+**Decision.**
+
+- Resolve outlet-name, sector and region filters to ids in small queries first.
+- Keep the tsquery inline in `WHERE` (estimable), and evaluate it once (InitPlan) for scoring.
+- Guard `ts_rank_cd` with `@@`.
+- Run the two text-search statements in a transaction with `SET LOCAL enable_seqscan = off`.
+  Every match branch is index-backed, so this only removes the bad option, and only for those
+  statements.
+
+**Consequences.** Selective search runs in ~3 ms and broad search in ~200 ms. Ranking semantics
+are unchanged, except that negated terms no longer leak a rank. If a future Postgres version or
+extension makes the planner cost-aware for trigram operators, drop the `SET LOCAL`. Re-run
+`scripts/perf/explain-plans.ts` after any change to `lib/search/articles.ts`.
+
+## ADR-020 No response cache for article lists
+
+**Decision.** Only aggregate, non-editorial reads (country summaries, sectors, outlet registry)
+use the in-process SWR cache, with single-flight cold loads. Article lists and search hit the
+database on every request.
+
+**Why.** Takedowns and story removals must disappear from every page and API immediately. A
+per-instance cache would delay them by up to its TTL on other instances. The measured uncached
+latency meets the budget except for broad search under sustained concurrency (see
+`docs/performance.md`). A shared Redis cache with explicit invalidation is the next step if
+traffic requires it.
+
+## ADR-021 Versioned immutable static assets
+
+**Decision.** Static map assets carry a version in the file name (`world-map.v2.svg`) and are
+served `immutable` for a week. Any change to the generated output bumps the version: an in-place
+change would leave cached browsers on the old file. v2 declares `color-scheme: dark`, because
+browsers paint an opaque white backdrop behind an iframe whose color scheme differs from the
+page's.

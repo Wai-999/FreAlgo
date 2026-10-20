@@ -1,0 +1,9 @@
+backup written: /var/folders/pq/cm3rh72d5qgfg_4112x8l_nh0000gn/T/tmp.KpvmOHbKyn/frealgo-20261020T144442Z.dump (   99781 bytes)
+/var/folders/pq/cm3rh72d5qgfg_4112x8l_nh0000gn/T/tmp.KpvmOHbKyn/frealgo-20261020T144442Z.dump: OK
+NOTICE:  database "frealgo_restore_drill" does not exist, skipping
+DROP DATABASE
+CREATE DATABASE
+restored /var/folders/pq/cm3rh72d5qgfg_4112x8l_nh0000gn/T/tmp.KpvmOHbKyn/frealgo-20261020T144442Z.dump into database frealgo_restore_drill
+live:     AdminAuditLog=0 Article=168 ArticleCountry=204 ArticleSector=216 Country=250 FeedSource=39 IngestionRun=0 MediaOutlet=38 OutletLabelHistory=38 Sector=7 _prisma_migrations=3 searchVector_nonnull=168
+restored: AdminAuditLog=0 Article=168 ArticleCountry=204 ArticleSector=216 Country=250 FeedSource=39 IngestionRun=0 MediaOutlet=38 OutletLabelHistory=38 Sector=7 _prisma_migrations=3 searchVector_nonnull=168
+RESTORE DRILL PASSED

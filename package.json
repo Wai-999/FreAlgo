@@ -35,6 +35,8 @@
     "start:standalone": "sh scripts/start-standalone.sh",
     "perf:lighthouse": "node scripts/perf/lighthouse.mjs",
     "perf:globe": "node scripts/perf/profile-globe.mjs",
+    "perf:explain": "node --env-file-if-exists=.env --import tsx scripts/perf/explain-plans.ts",
+    "perf:load": "node scripts/perf/load-test.mjs",
     "generate:map": "node --import tsx scripts/generate-world-map.ts"
   },
   "dependencies": {

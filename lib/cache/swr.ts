@@ -10,6 +10,8 @@ interface Entry<T> {
 }
 
 const store = new Map<string, Entry<unknown>>();
+/** Cold loads in flight, so concurrent misses share one query instead of stampeding the DB. */
+const pending = new Map<string, Promise<unknown>>();
 
 export async function swr<T>(
   key: string,
@@ -32,9 +34,16 @@ export async function swr<T>(
     }
     return hit.value;
   }
-  const value = await load();
-  store.set(key, { value, at: Date.now() });
-  return value;
+  const inflight = pending.get(key) as Promise<T> | undefined;
+  if (inflight) return inflight;
+  const p = load()
+    .then((value) => {
+      store.set(key, { value, at: Date.now() });
+      return value;
+    })
+    .finally(() => pending.delete(key));
+  pending.set(key, p);
+  return p;
 }
 
 export function invalidate(prefix = ''): void {

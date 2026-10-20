@@ -1,7 +1,7 @@
 import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 
-const svg = readFileSync('public/geo/world-map.v1.svg', 'utf8');
+const svg = readFileSync('public/geo/world-map.v2.svg', 'utf8');
 
 describe('static flat-map asset', () => {
   const links = [...svg.matchAll(/<a ([^>]*)>/g)].map((m) => m[1]!);
@@ -20,6 +20,12 @@ describe('static flat-map asset', () => {
 
   it('contains no scripts or external references', () => {
     expect(svg).not.toMatch(/<script|javascript:|https?:\/\/(?!www\.w3\.org)/i);
+  });
+
+  it('declares the same color scheme as the app, so the iframe stays transparent', () => {
+    // Browsers paint an opaque (white) backdrop behind an iframe whose document's color-scheme
+    // differs from the embedding page's (the app is dark-only).
+    expect(svg).toContain(':root{color-scheme:dark}');
   });
 
   it('labels uncoded areas transparently instead of merging them', () => {

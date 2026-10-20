@@ -151,13 +151,39 @@ export async function listArticles(
         : Prisma.sql`EXISTS (SELECT 1 FROM "ArticleCountry" acx WHERE acx."articleId" = a.id AND acx."countryId" = ${countryId})`,
     );
   }
-  if (query.region) {
-    where.push(Prisma.sql`EXISTS (SELECT 1 FROM "ArticleCountry" acr JOIN "Country" cr ON cr.id = acr."countryId"
-      WHERE acr."articleId" = a.id AND (cr.region = ${query.region} OR cr.subregion = ${query.region}))`);
+  // Region and sector filters are resolved to ids first (both tables are tiny). Filtering the tag
+  // tables by id lets the planner use column statistics; a join on slug/region hides the value
+  // and led to a 70x misestimate and a scan of every tag for that sector (docs/performance.md).
+  const [regionCountryIds, sectorIds] = await Promise.all([
+    query.region
+      ? prisma.country
+          .findMany({
+            where: { OR: [{ region: query.region }, { subregion: query.region }] },
+            select: { id: true },
+          })
+          .then((rows) => rows.map((r) => r.id))
+      : null,
+    query.sector?.length
+      ? prisma.sector
+          .findMany({ where: { slug: { in: query.sector } }, select: { id: true } })
+          .then((rows) => rows.map((r) => r.id))
+      : null,
+  ]);
+  if (regionCountryIds) {
+    where.push(
+      regionCountryIds.length
+        ? Prisma.sql`EXISTS (SELECT 1 FROM "ArticleCountry" acr
+            WHERE acr."articleId" = a.id AND acr."countryId" IN (${Prisma.join(regionCountryIds)}))`
+        : Prisma.sql`FALSE`,
+    );
   }
-  if (query.sector?.length) {
-    where.push(Prisma.sql`EXISTS (SELECT 1 FROM "ArticleSector" s JOIN "Sector" sc ON sc.id = s."sectorId"
-      WHERE s."articleId" = a.id AND sc.slug IN (${Prisma.join(query.sector)}))`);
+  if (sectorIds) {
+    where.push(
+      sectorIds.length
+        ? Prisma.sql`EXISTS (SELECT 1 FROM "ArticleSector" s
+            WHERE s."articleId" = a.id AND s."sectorId" IN (${Prisma.join(sectorIds)}))`
+        : Prisma.sql`FALSE`,
+    );
   }
   if (query.outlet?.length) where.push(Prisma.sql`o.slug IN (${Prisma.join(query.outlet)})`);
   if (query.orientation?.length)
@@ -174,16 +200,34 @@ export async function listArticles(
   let scoreExpr = Prisma.sql`0::numeric`;
   if (query.q) {
     const lang = query.language?.[0] ?? 'en';
-    const tsq = Prisma.sql`(websearch_to_tsquery('simple', ${query.q}) || websearch_to_tsquery(frealgo_ts_config(${lang}), ${query.q}))`;
+    // Plan notes (docs/performance.md, measured at 200k articles):
+    // - Outlet-name matches are resolved first (the outlet table is tiny), so every OR branch is on
+    //   "Article" with known values: the planner can estimate each one and BitmapOr the GIN/btree
+    //   indexes instead of scanning the table. The branch is dropped when no outlet matches.
+    // - The WHERE keeps the tsquery inline so the planner can estimate it from statistics. In the
+    //   score, a scalar subquery (InitPlan) builds it once, since websearch_to_tsquery is STABLE
+    //   and a bare call is re-evaluated per row.
+    // - ts_rank_cd searches for covers even in documents that do not match (~45 µs/row); guarded,
+    //   non-matching rows score 0, which is also correct for negated terms ("storm -flood").
+    const tsqInline = Prisma.sql`(websearch_to_tsquery('simple', ${query.q}) || websearch_to_tsquery(frealgo_ts_config(${lang}), ${query.q}))`;
+    const tsqOnce = Prisma.sql`(SELECT ${tsqInline})`;
     const pattern = `%${escapeLike(query.q)}%`;
-    where.push(Prisma.sql`(a."searchVector" @@ ${tsq}
+    const matchedOutlets = (
+      await prisma.$queryRaw<
+        { id: string }[]
+      >`SELECT id FROM "MediaOutlet" WHERE name ILIKE ${pattern}`
+    ).map((r) => r.id);
+    const byOutlet = matchedOutlets.length
+      ? Prisma.sql`OR a."outletId" IN (${Prisma.join(matchedOutlets)})`
+      : Prisma.empty;
+    where.push(Prisma.sql`(a."searchVector" @@ ${tsqInline}
       OR a.title ILIKE ${pattern}
-      OR o.name ILIKE ${pattern}
+      ${byOutlet}
       OR ${query.q} <% a.title)`);
     scoreExpr = Prisma.sql`round((
-      ts_rank_cd(coalesce(a."searchVector", ''::tsvector), ${tsq}, 32)
+      CASE WHEN a."searchVector" @@ ${tsqOnce} THEN ts_rank_cd(a."searchVector", ${tsqOnce}, 32) ELSE 0 END
       + 0.3 * word_similarity(${query.q}, a.title)
-      + CASE WHEN o.name ILIKE ${pattern} THEN 0.05 ELSE 0 END
+      + ${matchedOutlets.length ? Prisma.sql`CASE WHEN a."outletId" IN (${Prisma.join(matchedOutlets)}) THEN 0.05 ELSE 0 END` : Prisma.sql`0`}
     )::numeric, 6)`;
   }
 
@@ -241,14 +285,25 @@ export async function listArticles(
       break;
   }
 
-  const [rows, countRow] = await Promise.all([
-    prisma.$queryRaw<
-      Row[]
-    >`SELECT * FROM (${inner}) x WHERE ${keyset} ORDER BY ${order} LIMIT ${limit + 1}`,
-    prisma.$queryRaw<
-      { n: number }[]
-    >`SELECT count(*)::int AS n FROM (${inner} LIMIT ${COUNT_CAP + 1}) t`,
-  ]);
+  const rowsSql = Prisma.sql`SELECT * FROM (${inner}) x WHERE ${keyset} ORDER BY ${order} LIMIT ${limit + 1}`;
+  const countSql = Prisma.sql`SELECT count(*)::int AS n FROM (${inner} LIMIT ${COUNT_CAP + 1}) t`;
+  let rows: Row[];
+  let countRow: { n: number }[];
+  if (query.q) {
+    // Every text-match branch is index-backed, but the planner does not charge for the per-row
+    // cost of trigram similarity and can choose a full scan for broad terms (country-scoped count:
+    // 329 ms vs 21 ms at 200k articles, docs/performance.md). Steer only these two statements.
+    [, rows, countRow] = await prisma.$transaction([
+      prisma.$executeRaw`SET LOCAL enable_seqscan = off`,
+      prisma.$queryRaw<Row[]>(rowsSql),
+      prisma.$queryRaw<{ n: number }[]>(countSql),
+    ]);
+  } else {
+    [rows, countRow] = await Promise.all([
+      prisma.$queryRaw<Row[]>(rowsSql),
+      prisma.$queryRaw<{ n: number }[]>(countSql),
+    ]);
+  }
 
   const hasExtra = rows.length > limit;
   let page = rows.slice(0, limit);

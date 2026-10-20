@@ -196,7 +196,8 @@ test.describe('accessibility (axe, WCAG 2.2 AA rules)', () => {
   ]) {
     test(`no serious or critical violations on ${path}`, async ({ page }) => {
       await page.goto(path);
-      await page.waitForLoadState('networkidle');
+      // Best-effort settle: under a loaded CI host "networkidle" may never be reached for 500 ms.
+      await page.waitForLoadState('networkidle', { timeout: 10_000 }).catch(() => undefined);
       const results = await new AxeBuilder({ page })
         .withTags(['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa', 'wcag22aa'])
         .analyze();

@@ -8,6 +8,7 @@ import { classifyFreshness, FRESHNESS_LABEL } from '@/lib/db/freshness';
 import { getOutletLabelHistory } from '@/lib/db/outlets';
 import { ORIENTATION_INFO, LABEL_STATUS_INFO } from '@/lib/domain/orientation';
 import { formatAge, formatUtc, languageName } from '@/lib/format';
+import { safeHref } from '@/lib/security/safe-url';
 
 export async function generateMetadata({
   params,
@@ -48,7 +49,7 @@ export default async function OutletPage({
         <p className="mt-2 text-muted">
           {outlet.country?.name ?? 'No country'} · {languageName(outlet.primaryLanguage)} ·{' '}
           <a
-            href={outlet.homepageUrl}
+            href={safeHref(outlet.homepageUrl) ?? undefined}
             target="_blank"
             rel="noopener noreferrer"
             referrerPolicy="no-referrer"

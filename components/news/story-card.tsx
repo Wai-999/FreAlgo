@@ -1,5 +1,6 @@
 import type { ArticleListItem } from '@/lib/search/articles';
 import { formatPublisherLocal, formatUtc, languageName } from '@/lib/format';
+import { safeHref } from '@/lib/security/safe-url';
 import { Badge, FixtureBadge } from '@/components/ui/badge';
 import { ExternalIcon } from '@/components/ui/icons';
 import { LocalTime } from './local-time';
@@ -60,7 +61,7 @@ export function StoryCard({
         dir="auto"
       >
         <a
-          href={article.url}
+          href={safeHref(article.url) ?? undefined}
           target="_blank"
           rel="noopener noreferrer"
           referrerPolicy="no-referrer"

@@ -1,0 +1,150 @@
+# Production recipe (single host). Usage:
+#   cp deploy/env.production.example deploy/.env.production   # fill in real secrets (never commit)
+#   docker compose -f deploy/docker-compose.prod.yml --env-file deploy/.env.production up -d --build
+#
+# Differences from the local stack:
+#   - Only Caddy publishes ports (80/443, automatic HTTPS for $DOMAIN). Postgres/Redis are private.
+#   - The app connects as a least-privilege role (frealgo_app); migrations run as the owner role.
+#   - Redis requires a password; fixtures and dev login are off; log rotation and memory limits.
+# External gates: a domain pointing at the host, and a host with Docker. See docs/operations.md.
+
+name: frealgo-prod
+
+x-logging: &logging
+  driver: json-file
+  options: { max-size: '20m', max-file: '5' }
+
+x-app-env: &app-env
+  NODE_ENV: production
+  APP_BASE_URL: https://${DOMAIN:?set DOMAIN}
+  DATABASE_URL: postgresql://frealgo_app:${APP_DB_PASSWORD:?set APP_DB_PASSWORD}@postgres:5432/frealgo?schema=public
+  REDIS_URL: redis://:${REDIS_PASSWORD:?set REDIS_PASSWORD}@redis:6379
+  SESSION_SECRET: ${SESSION_SECRET:?set SESSION_SECRET}
+  ADMIN_API_TOKEN: ${ADMIN_API_TOKEN:-}
+  ADMIN_USER_IDS: ${ADMIN_USER_IDS:-}
+  AUTH_DEV_LOGIN: 'false'
+  OIDC_ISSUER: ${OIDC_ISSUER:-}
+  OIDC_CLIENT_ID: ${OIDC_CLIENT_ID:-}
+  OIDC_CLIENT_SECRET: ${OIDC_CLIENT_SECRET:-}
+  SEED_FIXTURES: 'false'
+  SHOW_FIXTURES: 'false'
+  LOG_LEVEL: ${LOG_LEVEL:-info}
+  CLIENT_TELEMETRY_ENABLED: ${CLIENT_TELEMETRY_ENABLED:-true}
+  METRICS_TOKEN: ${METRICS_TOKEN:-}
+
+services:
+  postgres:
+    image: postgres:17.11-alpine3.24
+    # Parallel queries use dynamic shared memory in /dev/shm; Docker's 64 MB default fails under
+    # concurrent load with SQLSTATE 53100 (found by scripts/perf/load-test.mjs).
+    shm_size: 256mb
+    environment:
+      POSTGRES_USER: frealgo
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD}
+      POSTGRES_DB: frealgo
+      APP_DB_PASSWORD: ${APP_DB_PASSWORD}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ../docker/postgres/init-roles.sh:/docker-entrypoint-initdb.d/02-roles.sh:ro
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U frealgo -d frealgo']
+      interval: 10s
+      timeout: 5s
+      retries: 12
+    mem_limit: 1g
+    logging: *logging
+    restart: unless-stopped
+
+  redis:
+    image: redis:8.10.2-alpine3.23
+    command:
+      [
+        'redis-server',
+        '--appendonly',
+        'yes',
+        '--maxmemory-policy',
+        'noeviction',
+        '--requirepass',
+        '${REDIS_PASSWORD}',
+      ]
+    volumes:
+      - redisdata:/data
+    healthcheck:
+      test: ['CMD-SHELL', 'redis-cli -a "$$REDIS_PASSWORD" --no-auth-warning ping | grep PONG']
+      interval: 10s
+      timeout: 5s
+      retries: 12
+    environment:
+      REDIS_PASSWORD: ${REDIS_PASSWORD}
+    mem_limit: 512m
+    logging: *logging
+    restart: unless-stopped
+
+  migrate:
+    build: { context: .., target: migrate }
+    environment:
+      <<: *app-env
+      # Migrations need DDL rights: owner role, used only by this one-shot job.
+      DATABASE_URL: postgresql://frealgo:${POSTGRES_PASSWORD}@postgres:5432/frealgo?schema=public
+      SEED_FIXTURES: 'false'
+    depends_on:
+      postgres: { condition: service_healthy }
+    logging: *logging
+    restart: 'no'
+
+  web:
+    build: { context: .., target: web }
+    environment: *app-env
+    depends_on:
+      migrate: { condition: service_completed_successfully }
+      redis: { condition: service_healthy }
+    healthcheck:
+      test: ['CMD-SHELL', 'wget -qO- http://127.0.0.1:3000/api/v1/health/live || exit 1']
+      interval: 15s
+      timeout: 5s
+      retries: 8
+      start_period: 30s
+    mem_limit: 768m
+    logging: *logging
+    restart: unless-stopped
+    # Scale horizontally with: docker compose ... up -d --scale web=2 (Caddy load-balances)
+
+  worker:
+    build: { context: .., target: worker }
+    environment:
+      <<: *app-env
+      INGEST_CRON: ${INGEST_CRON:-0 */3 * * *}
+      INGEST_USER_AGENT: ${INGEST_USER_AGENT:-FreAlgoFeedReader/0.1 (personal non-commercial reader)}
+      WORKER_HEALTH_PORT: 9464
+    depends_on:
+      migrate: { condition: service_completed_successfully }
+      redis: { condition: service_healthy }
+    healthcheck:
+      test: ['CMD-SHELL', 'wget -qO- http://127.0.0.1:9464/healthz || exit 1']
+      interval: 30s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    mem_limit: 512m
+    logging: *logging
+    restart: unless-stopped
+
+  caddy:
+    image: caddy:2.10.2-alpine
+    ports: ['80:80', '443:443']
+    environment:
+      DOMAIN: ${DOMAIN}
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    depends_on:
+      web: { condition: service_healthy }
+    logging: *logging
+    restart: unless-stopped
+
+volumes:
+  pgdata:
+  redisdata:
+  caddy_data:
+  caddy_config:

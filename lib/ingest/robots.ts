@@ -38,7 +38,13 @@ function parseGroups(txt: string): Map<string, Rule[]> {
   return groups;
 }
 
-function patternToRegex(pattern: string): RegExp {
+/** Limits keep a hostile robots.txt from causing pathological regex backtracking. */
+const MAX_PATTERN_LENGTH = 512;
+const MAX_WILDCARDS = 8;
+
+function patternToRegex(pattern: string): RegExp | null {
+  if (pattern.length > MAX_PATTERN_LENGTH || (pattern.match(/\*/g)?.length ?? 0) > MAX_WILDCARDS)
+    return null;
   const anchored = pattern.endsWith('$');
   const body = (anchored ? pattern.slice(0, -1) : pattern)
     .split('*')
@@ -58,7 +64,8 @@ export function isAllowedByRobots(
   let best: { len: number; allow: boolean } | null = null;
   for (const rule of rules) {
     if (rule.pattern === '') continue; // empty Disallow = allow all
-    if (!patternToRegex(rule.pattern).test(pathAndQuery)) continue;
+    const re = patternToRegex(rule.pattern);
+    if (!re || !re.test(pathAndQuery)) continue;
     const len = rule.pattern.length;
     if (!best || len > best.len || (len === best.len && rule.allow))
       best = { len, allow: rule.allow };

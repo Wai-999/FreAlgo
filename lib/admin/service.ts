@@ -1,4 +1,7 @@
 import { z } from 'zod';
+
+/** Only http(s) URLs may be stored for rendering as links (blocks javascript:/data: XSS). */
+const httpUrl = () => z.url({ protocol: /^https?$/, hostname: z.regexes.domain }).max(500);
 import type { Prisma, PrismaClient } from '@/generated/prisma/client';
 import { ApiError, notFound } from '@/lib/api/handler';
 import {
@@ -31,7 +34,7 @@ export const sourceUpdateSchema = z
     termsReviewed: z
       .object({
         licenseNotes: z.string().trim().min(10).max(1000),
-        termsUrl: z.url().max(500).nullable().optional(),
+        termsUrl: httpUrl().nullable().optional(),
         excerptAllowed: z.boolean(),
       })
       .optional(),
@@ -198,7 +201,7 @@ export const labelUpdateSchema = z.object({
   confidence: z.number().min(0).max(1).nullable(),
   ideologyTags: z.array(z.enum(IDEOLOGY_TAGS)).max(6).default([]),
   methodology: z.string().trim().max(2000).nullable(),
-  sourceUrl: z.url().max(500).nullable(),
+  sourceUrl: httpUrl().nullable(),
   reviewedAt: z.iso.date().nullable(),
   context: z.string().trim().max(300).nullable(),
   isMachine: z.boolean().default(false),

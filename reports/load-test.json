@@ -1,0 +1,74 @@
+{
+  "measuredAt": "2026-10-20T14:30:52.321Z",
+  "base": "http://127.0.0.1:3000",
+  "seconds": "15",
+  "connections": "20",
+  "rows": [
+    {
+      "endpoint": "countries",
+      "reqPerSec": 2696,
+      "p50ms": 6,
+      "p90ms": 9,
+      "p97_5ms": 10,
+      "p99ms": 12,
+      "maxMs": 182,
+      "non2xx": 0,
+      "errors": 0
+    },
+    {
+      "endpoint": "country articles (MM)",
+      "reqPerSec": 804,
+      "p50ms": 24,
+      "p90ms": 27,
+      "p97_5ms": 30,
+      "p99ms": 32,
+      "maxMs": 91,
+      "non2xx": 0,
+      "errors": 0
+    },
+    {
+      "endpoint": "country articles + filters",
+      "reqPerSec": 590,
+      "p50ms": 33,
+      "p90ms": 37,
+      "p97_5ms": 40,
+      "p99ms": 42,
+      "maxMs": 54,
+      "non2xx": 0,
+      "errors": 0
+    },
+    {
+      "endpoint": "search (relevance)",
+      "reqPerSec": 49,
+      "p50ms": 413,
+      "p90ms": 475,
+      "p97_5ms": 545,
+      "p99ms": 610,
+      "maxMs": 694,
+      "non2xx": 0,
+      "errors": 0
+    },
+    {
+      "endpoint": "freshness",
+      "reqPerSec": 3047,
+      "p50ms": 6,
+      "p90ms": 7,
+      "p97_5ms": 8,
+      "p99ms": 9,
+      "maxMs": 20,
+      "non2xx": 0,
+      "errors": 0
+    },
+    {
+      "endpoint": "explore page (HTML)",
+      "reqPerSec": 100,
+      "p50ms": 193,
+      "p90ms": 208,
+      "p97_5ms": 218,
+      "p99ms": 318,
+      "maxMs": 392,
+      "non2xx": 0,
+      "errors": 0
+    }
+  ]
+}

@@ -19,7 +19,15 @@ const nextConfig: NextConfig = {
     return [
       {
         source: '/geo/:file*',
-        headers: [{ key: 'Cache-Control', value: 'public, max-age=604800, immutable' }],
+        headers: [
+          { key: 'Cache-Control', value: 'public, max-age=604800, immutable' },
+          // Static map asset: no scripts, no external loads, embeddable only by our own pages.
+          {
+            key: 'Content-Security-Policy',
+            value: "default-src 'none'; style-src 'unsafe-inline'; frame-ancestors 'self'",
+          },
+          { key: 'X-Content-Type-Options', value: 'nosniff' },
+        ],
       },
     ];
   },

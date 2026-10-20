@@ -67,5 +67,28 @@ Status legend: ✅ done with evidence · ⏳ in progress · ⛔ blocked by an ex
 
 ## Milestone 5 — Production hardening, release, and handover
 
-- ⏳ Security/licence/privacy/accessibility audits, load tests, backup/restore drill
-- ⏳ Production deployment recipe, runbook, release report
+- ✅ Security review with threat model; fixed stored XSS via admin URLs (http(s)-only + `safeHref`),
+  robots.txt ReDoS caps, CSP on the map asset ([security-review.md](security-review.md))
+- ✅ Licence audit of 256 production packages (no GPL/AGPL; four reviewed exceptions) and data
+  sources ([licenses.md](licenses.md)); `npm audit --omit=dev`: 0 vulnerabilities; CI audits
+- ✅ Observability: per-request latency logs, `Server-Timing`, token-protected web metrics, worker
+  metrics and health, alert table in the runbook
+- ✅ Production Compose recipe: Caddy TLS, private network, least-privilege DB role, Redis auth,
+  memory limits, log rotation, `shm_size` ([operations.md](operations.md),
+  [deployment-checklist.md](deployment-checklist.md))
+- ✅ Backups with checksums; **restore drill passed** (row counts and migration state identical)
+- ✅ **Scheduled worker observed** on real feeds (throwaway DB): cron tick → 4 feeds → 193 real
+  articles, 0 failures, no duplicate enqueue within the window
+- ✅ Query plans at 200 000 articles; search 590 → ~200 ms broad, 518 → 3 ms selective; filtered
+  list 48 → 14 ms (ADR-019)
+- ✅ Load test (autocannon): found and fixed Postgres `/dev/shm` exhaustion and a cold-cache
+  stampede; 107 876 requests, 0 errors ([performance.md](performance.md))
+- ✅ Privacy and accessibility audit: axe sweep of every page; fixed 320 px reflow on Settings
+  and the white backdrop behind the 2D map ([privacy-accessibility-audit.md](privacy-accessibility-audit.md))
+- ✅ Resilience: globe download failure now falls back to the flat map instead of crashing the
+  page (error boundary); slow-network e2e (works before scripts load) on all engines
+- ✅ Smoke test passes against the Compose stack; release report with screenshots
+  ([release-report.md](release-report.md))
+- ⛔ External gates: hosting and domain, GitHub remote and hosted CI, OIDC provider, publisher
+  terms review before activating real feeds, physical-device and screen-reader testing,
+  independent penetration test

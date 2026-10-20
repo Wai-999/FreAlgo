@@ -80,6 +80,15 @@
     border-radius: 4px;
   }
 
+  /* Browsers give fieldsets min-inline-size: min-content, so a select listing long country
+     names forced Settings 115px wider than a 320px screen (WCAG 1.4.10 reflow). */
+  fieldset {
+    min-inline-size: 0;
+  }
+  select {
+    max-inline-size: 100%;
+  }
+
   /* Links are underlined so they are distinguishable without colour (WCAG 1.4.1);
      navigation/buttons opt out with the no-underline utility. */
   a {

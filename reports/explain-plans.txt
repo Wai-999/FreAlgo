@@ -1,0 +1,1729 @@
+# EXPLAIN (ANALYZE, BUFFERS) at 200011 articles, 277695 country tags, 140167 sector tags
+# 2026-10-20T14:28:57.878Z; synthetic rows on synthetic.invalid in a *_test database
+
+## country MM, newest (page 1)  (end-to-end 17 ms, 7 statements)
+
+```sql
+SELECT "public"."Country"."id" FROM "public"."Country" WHERE ("public"."Country"."iso2" = $1 AND 1=1) LIMIT $2 OFFSET $3
+```
+```
+Limit  (cost=0.00..8.12 rows=1 width=26) (actual time=0.007..0.007 rows=1 loops=1)
+  Buffers: shared hit=4
+  ->  Seq Scan on "Country"  (cost=0.00..8.12 rows=1 width=26) (actual time=0.007..0.007 rows=1 loops=1)
+        Filter: ((iso2)::text = 'MM'::text)
+        Rows Removed by Filter: 145
+        Buffers: shared hit=4
+Planning Time: 0.015 ms
+Execution Time: 0.010 ms
+```
+
+```sql
+SELECT * FROM ( SELECT ac."articleId" AS id, ac."publishedAt" AS pub, lower(o.name) AS oname, 0::numeric AS score, a.title, a.excerpt, a."canonicalUrl", a.language, a.author, a."publishedAtRaw", a."publishedOffsetMinutes", a."publishedAtEstimated", a."firstSeenAt", a."isFixture", a."articleLabel", a."articleLabelNote", o.id AS "outletId", o.slug AS "outletSlug", o.name AS "outletName", o.paywall, o.orientation, o."ideologyTags", o."labelStatus", o."labelConfidence", o."labelMethodology", o."labelSourceUrl", o."labelReviewedAt", o."labelContext", o."labelIsMachine", oc.iso2 AS "outletCountryIso
+```
+```
+Limit  (cost=1.28..200.07 rows=25 width=577) (actual time=0.055..0.162 rows=25 loops=1)
+  Buffers: shared hit=141
+  ->  Nested Loop Left Join  (cost=1.28..41365.28 rows=5202 width=577) (actual time=0.055..0.160 rows=25 loops=1)
+        Buffers: shared hit=141
+        ->  Nested Loop  (cost=1.00..41134.48 rows=5202 width=531) (actual time=0.039..0.135 rows=25 loops=1)
+              Buffers: shared hit=135
+              ->  Nested Loop  (cost=0.84..41004.21 rows=5202 width=272) (actual time=0.024..0.112 rows=25 loops=1)
+                    Buffers: shared hit=129
+                    ->  Index Only Scan using "ArticleCountry_countryId_publishedAt_articleId_idx" on "ArticleCountry" ac  (cost=0.42..14491.33 rows=5202 width=17) (actual time=0.014..0.025 rows=25 loops=1)
+                          Index Cond: ("countryId" = 'cmvgrrprr0041g8m66ipj87t7'::text)
+                          Heap Fetches: 25
+                          Buffers: shared hit=29
+                    ->  Index Scan using "Article_pkey" on "Article" a  (cost=0.42..5.10 rows=1 width=264) (actual time=0.003..0.003 rows=1 loops=25)
+                          Index Cond: (id = ac."articleId")
+                          Filter: ((NOT "isFixture") AND (status = 'PUBLISHED'::"ArticleStatus"))
+                          Buffers: shared hit=100
+              ->  Memoize  (cost=0.15..0.17 rows=1 width=285) (actual time=0.001..0.001 rows=1 loops=25)
+                    Cache Key: a."outletId"
+                    Cache Mode: logical
+                    Hits: 22  Misses: 3  Evictions: 0  Overflows: 0  Memory Usage: 1kB
+                    Buffers: shared hit=6
+                    ->  Index Scan using "MediaOutlet_pkey" on "MediaOutlet" o  (cost=0.14..0.16 rows=1 width=285) (actual time=0.004..0.004 rows=1 loops=3)
+                          Index Cond: (id = a."outletId")
+                          Buffers: shared hit=6
+        ->  Memoize  (cost=0.28..0.50 rows=1 width=40) (actual time=0.001..0.001 rows=1 loops=25)
+              Cache Key: o."countryId"
+              Cache Mode: logical
+              Hits: 23  Misses: 2  Evictions: 0  Overflows: 0  Memory Usage: 1kB
+              Buffers: shared hit=6
+              ->  Index Scan using "Country_pkey" on "Country" oc  (cost=0.27..0.49 rows=1 width=40) (actual time=0.005..0.005 rows=1 loops=2)
+                    Index Cond: (id = o."countryId")
+                    Buffers: shared hit=6
+Planning:
+  Buffers: shared hit=40
+Planning Time: 0.404 ms
+Execution Time: 0.202 ms
+```
+
+```sql
+SELECT count(*)::int AS n FROM ( SELECT ac."articleId" AS id, ac."publishedAt" AS pub, lower(o.name) AS oname, 0::numeric AS score, a.title, a.excerpt, a."canonicalUrl", a.language, a.author, a."publishedAtRaw", a."publishedOffsetMinutes", a."publishedAtEstimated", a."firstSeenAt", a."isFixture", a."articleLabel", a."articleLabelNote", o.id AS "outletId", o.slug AS "outletSlug", o.name AS "outletName", o.paywall, o.orientation, o."ideologyTags", o."labelStatus", o."labelConfidence", o."labelMethodology", o."labelSourceUrl", o."labelReviewedAt", o."labelContext", o."labelIsMachine", oc.iso2 AS 
+```
+```
+Aggregate  (cost=4883.33..4883.34 rows=1 width=4) (actual time=4.200..5.293 rows=1 loops=1)
+  Buffers: shared hit=7168 read=7 written=6
+  ->  Limit  (cost=1581.31..4870.82 rows=1001 width=643) (actual time=1.535..5.263 rows=1001 loops=1)
+        Buffers: shared hit=7168 read=7 written=6
+        ->  Nested Loop  (cost=1581.31..18676.23 rows=5202 width=643) (actual time=1.534..5.224 rows=1001 loops=1)
+              Buffers: shared hit=7168 read=7 written=6
+              ->  Gather  (cost=1581.16..18545.96 rows=5202 width=26) (actual time=1.526..5.006 rows=1001 loops=1)
+                    Workers Planned: 2
+                    Workers Launched: 2
+                    Buffers: shared hit=7162 read=7 written=6
+                    ->  Nested Loop  (cost=581.16..17025.76 rows=2168 width=26) (actual time=0.752..2.408 rows=356 loops=3)
+                          Buffers: shared hit=7162 read=7 written=6
+                          ->  Parallel Bitmap Heap Scan on "ArticleCountry" ac  (cost=580.74..5976.18 rows=2168 width=9) (actual time=0.734..1.399 rows=357 loops=3)
+                                Recheck Cond: ("countryId" = 'cmvgrrprr0041g8m66ipj87t7'::text)
+                                Heap Blocks: exact=2158
+                                Buffers: shared hit=2875 read=4 written=4
+                                ->  Bitmap Index Scan on "ArticleCountry_countryId_publishedAt_articleId_idx"  (cost=0.00..579.44 rows=5202 width=0) (actual time=1.011..1.011 rows=10864 loops=1)
+                                      Index Cond: ("countryId" = 'cmvgrrprr0041g8m66ipj87t7'::text)
+                                      Buffers: shared hit=134
+                          ->  Index Scan using "Article_pkey" on "Article" a  (cost=0.42..5.10 rows=1 width=35) (actual time=0.003..0.003 rows=1 loops=1072)
+                                Index Cond: (id = ac."articleId")
+                                Filter: ((NOT "isFixture") AND (status = 'PUBLISHED'::"ArticleStatus"))
+                                Rows Removed by Filter: 0
+                                Buffers: shared hit=4287 read=3 written=2
+              ->  Memoize  (cost=0.15..0.17 rows=1 width=64) (actual time=0.000..0.000 rows=1 loops=1001)
+                    Cache Key: a."outletId"
+                    Cache Mode: logical
+                    Hits: 998  Misses: 3  Evictions: 0  Overflows: 0  Memory Usage: 1kB
+                    Buffers: shared hit=6
+                    ->  Index Scan using "MediaOutlet_pkey" on "MediaOutlet" o  (cost=0.14..0.16 rows=1 width=64) (actual time=0.002..0.002 rows=1 loops=3)
+                          Index Cond: (id = a."outletId")
+                          Buffers: shared hit=6
+Planning:
+  Buffers: shared hit=20
+Planning Time: 0.190 ms
+Execution Time: 5.335 ms
+```
+
+```sql
+SELECT "public"."ArticleCountry"."articleId", "public"."ArticleCountry"."countryId", "public"."ArticleCountry"."basis"::text, "public"."ArticleCountry"."matchedTerm" FROM "public"."ArticleCountry" WHERE "public"."ArticleCountry"."articleId" IN ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22,$23,$24) OFFSET $25
+```
+```
+Index Scan using "ArticleCountry_pkey" on "ArticleCountry"  (cost=0.42..174.06 rows=37 width=99) (actual time=0.012..0.070 rows=34 loops=1)
+  Index Cond: ("articleId" = ANY ('{syn195499,syn111145,syn165969,syn90039,syn141447,syn199287,syn12000,syn170176,syn30568,syn186214,syn191242,syn27338,syn4242,syn130743,syn191736,syn21724,syn23641,syn95953,syn60335,syn28284,syn76238,syn119911,syn80071,syn126271}'::text[]))
+  Buffers: shared hit=96
+Planning Time: 0.024 ms
+Execution Time: 0.074 ms
+```
+
+```sql
+SELECT "public"."ArticleSector"."articleId", "public"."ArticleSector"."sectorId", "public"."ArticleSector"."basis"::text, "public"."ArticleSector"."ruleId" FROM "public"."ArticleSector" WHERE "public"."ArticleSector"."articleId" IN ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22,$23,$24) OFFSET $25
+```
+```
+Index Scan using "ArticleSector_pkey" on "ArticleSector"  (cost=0.42..194.49 rows=24 width=72) (actual time=0.011..0.063 rows=20 loops=1)
+  Index Cond: ("articleId" = ANY ('{syn195499,syn111145,syn165969,syn90039,syn141447,syn199287,syn12000,syn170176,syn30568,syn186214,syn191242,syn27338,syn4242,syn130743,syn191736,syn21724,syn23641,syn95953,syn60335,syn28284,syn76238,syn119911,syn80071,syn126271}'::text[]))
+  Buffers: shared hit=92
+Planning Time: 0.018 ms
+Execution Time: 0.068 ms
+```
+
+```sql
+SELECT "public"."Country"."id", "public"."Country"."iso2", "public"."Country"."name" FROM "public"."Country" WHERE "public"."Country"."id" IN ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22,$23,$24,$25,$26,$27,$28,$29,$30,$31,$32,$33,$34) OFFSET $35
+```
+```
+Seq Scan on "Country"  (cost=0.09..8.84 rows=34 width=40) (actual time=0.005..0.016 rows=9 loops=1)
+  Filter: (id = ANY ('{cmvgrrpql0013g8m6z41r51tv,cmvgrrprr0041g8m66ipj87t7,cmvgrrpqd000lg8m6qejk2bg8,cmvgrrprr0041g8m66ipj87t7,cmvgrrprr0041g8m66ipj87t7,cmvgrrpqh000ug8m6xynmdmmv,cmvgrrprr0041g8m66ipj87t7,cmvgrrprr0041g8m66ipj87t7,cmvgrrps2004ug8m6zli52xg3,cmvgrrprr0041g8m66ipj87t7,cmvgrrprr0041g8m66ipj87t7,cmvgrrprr0041g8m66ipj87t7,cmvgrrprr0041g8m66ipj87t7,cmvgrrpqc000kg8m6p3uwb3fn,cmvgrrprr0041g8m66ipj87t7,cmvgrrprr0041g8m66ipj87t7,cmvgrrprr0041g8m66ipj87t7,cmvgrrprr0041g8m66ipj87t7,cmvgrrprr0041g8m66ipj87t7,cmvgrrpso006gg8m6ua5tl2n7,cmvgrrprr0041g8m66ipj87t7,cmvgrrprr0041g8m66ipj87t7,cmvgrrpqh000ug8m6xynmdmmv,cmvgrrprr0041g8m66ipj87t7,cmvgrrprr0041g8m66ipj87t7,cmvgrrprr0041g8m66ipj87t7,cmvgrrpro003ug8m63gt3d3py,cmvgrrprr0041g8m66ipj87t7,cmvgrrpq8000cg8m6v3lkivhz,cmvgrrprr0041g8m66ipj87t7,cmvgrrpqh000ug8m6xynmdmmv,cmvgrrprr0041g8m66ipj87t7,cmvgrrprr0041g8m66ipj87t7,cmvgrrprr0041g8m66ipj87t7}'::text[]))
+  Rows Removed by Filter: 241
+  Buffers: shared hit=5
+Planning Time: 0.031 ms
+Execution Time: 0.018 ms
+```
+
+```sql
+SELECT "public"."Sector"."id", "public"."Sector"."slug", "public"."Sector"."name", "public"."Sector"."sortOrder" FROM "public"."Sector" WHERE "public"."Sector"."id" IN ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20) OFFSET $21
+```
+```
+Bitmap Heap Scan on "Sector"  (cost=4.35..14.65 rows=20 width=100) (actual time=0.006..0.007 rows=7 loops=1)
+  Recheck Cond: (id = ANY ('{cmvgrrpt1006zg8m6s20r11rw,cmvgrrpt0006yg8m6hr5hb74c,cmvgrrpt30073g8m6w51laxug,cmvgrrpt0006yg8m6hr5hb74c,cmvgrrpt30073g8m6w51laxug,cmvgrrpt0006yg8m6hr5hb74c,cmvgrrpt0006yg8m6hr5hb74c,cmvgrrpt30074g8m65usbdsxt,cmvgrrpt1006zg8m6s20r11rw,cmvgrrpt30073g8m6w51laxug,cmvgrrpt20071g8m6sje0kmfd,cmvgrrpt30074g8m65usbdsxt,cmvgrrpt20071g8m6sje0kmfd,cmvgrrpt20072g8m6czhod24g,cmvgrrpt20071g8m6sje0kmfd,cmvgrrpt0006yg8m6hr5hb74c,cmvgrrpt1006zg8m6s20r11rw,cmvgrrpt10070g8m6s3n4le2h,cmvgrrpt0006yg8m6hr5hb74c,cmvgrrpt10070g8m6s3n4le2h}'::text[]))
+  Heap Blocks: exact=1
+  Buffers: shared hit=2
+  ->  Bitmap Index Scan on "Sector_pkey"  (cost=0.00..4.30 rows=20 width=0) (actual time=0.005..0.005 rows=7 loops=1)
+        Index Cond: (id = ANY ('{cmvgrrpt1006zg8m6s20r11rw,cmvgrrpt0006yg8m6hr5hb74c,cmvgrrpt30073g8m6w51laxug,cmvgrrpt0006yg8m6hr5hb74c,cmvgrrpt30073g8m6w51laxug,cmvgrrpt0006yg8m6hr5hb74c,cmvgrrpt0006yg8m6hr5hb74c,cmvgrrpt30074g8m65usbdsxt,cmvgrrpt1006zg8m6s20r11rw,cmvgrrpt30073g8m6w51laxug,cmvgrrpt20071g8m6sje0kmfd,cmvgrrpt30074g8m65usbdsxt,cmvgrrpt20071g8m6sje0kmfd,cmvgrrpt20072g8m6czhod24g,cmvgrrpt20071g8m6sje0kmfd,cmvgrrpt0006yg8m6hr5hb74c,cmvgrrpt1006zg8m6s20r11rw,cmvgrrpt10070g8m6s3n4le2h,cmvgrrpt0006yg8m6hr5hb74c,cmvgrrpt10070g8m6s3n4le2h}'::text[]))
+        Buffers: shared hit=1
+Planning Time: 0.013 ms
+Execution Time: 0.015 ms
+```
+
+## country US, newest (page 3 via cursor)  (end-to-end 16 ms, 7 statements)
+
+```sql
+SELECT "public"."Country"."id" FROM "public"."Country" WHERE ("public"."Country"."iso2" = $1 AND 1=1) LIMIT $2 OFFSET $3
+```
+```
+Limit  (cost=0.00..8.12 rows=1 width=26) (actual time=0.009..0.009 rows=1 loops=1)
+  Buffers: shared hit=5
+  ->  Seq Scan on "Country"  (cost=0.00..8.12 rows=1 width=26) (actual time=0.009..0.009 rows=1 loops=1)
+        Filter: ((iso2)::text = 'US'::text)
+        Rows Removed by Filter: 232
+        Buffers: shared hit=5
+Planning Time: 0.010 ms
+Execution Time: 0.011 ms
+```
+
+```sql
+SELECT * FROM ( SELECT ac."articleId" AS id, ac."publishedAt" AS pub, lower(o.name) AS oname, 0::numeric AS score, a.title, a.excerpt, a."canonicalUrl", a.language, a.author, a."publishedAtRaw", a."publishedOffsetMinutes", a."publishedAtEstimated", a."firstSeenAt", a."isFixture", a."articleLabel", a."articleLabelNote", o.id AS "outletId", o.slug AS "outletSlug", o.name AS "outletName", o.paywall, o.orientation, o."ideologyTags", o."labelStatus", o."labelConfidence", o."labelMethodology", o."labelSourceUrl", o."labelReviewedAt", o."labelContext", o."labelIsMachine", oc.iso2 AS "outletCountryIso
+```
+```
+Limit  (cost=1.28..203.79 rows=25 width=577) (actual time=0.039..0.147 rows=25 loops=1)
+  Buffers: shared hit=142
+  ->  Nested Loop Left Join  (cost=1.28..39499.43 rows=4876 width=577) (actual time=0.038..0.146 rows=25 loops=1)
+        Buffers: shared hit=142
+        ->  Nested Loop  (cost=1.00..39277.58 rows=4876 width=531) (actual time=0.028..0.127 rows=25 loops=1)
+              Buffers: shared hit=136
+              ->  Nested Loop  (cost=0.84..39155.43 rows=4876 width=272) (actual time=0.021..0.113 rows=25 loops=1)
+                    Buffers: shared hit=130
+                    ->  Index Only Scan using "ArticleCountry_countryId_publishedAt_articleId_idx" on "ArticleCountry" ac  (cost=0.42..13873.99 rows=4876 width=17) (actual time=0.013..0.026 rows=25 loops=1)
+                          Index Cond: (("countryId" = 'cmvgrrpso006gg8m6ua5tl2n7'::text) AND (ROW("publishedAt", "articleId") < ROW('2026-10-16 22:57:26.343'::timestamp without time zone, 'syn175130'::text)))
+                          Heap Fetches: 25
+                          Buffers: shared hit=30
+                    ->  Index Scan using "Article_pkey" on "Article" a  (cost=0.42..5.18 rows=1 width=264) (actual time=0.003..0.003 rows=1 loops=25)
+                          Index Cond: (id = ac."articleId")
+                          Filter: ((NOT "isFixture") AND (status = 'PUBLISHED'::"ArticleStatus"))
+                          Buffers: shared hit=100
+              ->  Memoize  (cost=0.15..0.17 rows=1 width=285) (actual time=0.000..0.000 rows=1 loops=25)
+                    Cache Key: a."outletId"
+                    Cache Mode: logical
+                    Hits: 22  Misses: 3  Evictions: 0  Overflows: 0  Memory Usage: 1kB
+                    Buffers: shared hit=6
+                    ->  Index Scan using "MediaOutlet_pkey" on "MediaOutlet" o  (cost=0.14..0.16 rows=1 width=285) (actual time=0.002..0.002 rows=1 loops=3)
+                          Index Cond: (id = a."outletId")
+                          Buffers: shared hit=6
+        ->  Memoize  (cost=0.28..0.50 rows=1 width=40) (actual time=0.000..0.000 rows=1 loops=25)
+              Cache Key: o."countryId"
+              Cache Mode: logical
+              Hits: 23  Misses: 2  Evictions: 0  Overflows: 0  Memory Usage: 1kB
+              Buffers: shared hit=6
+              ->  Index Scan using "Country_pkey" on "Country" oc  (cost=0.27..0.49 rows=1 width=40) (actual time=0.003..0.003 rows=1 loops=2)
+                    Index Cond: (id = o."countryId")
+                    Buffers: shared hit=6
+Planning:
+  Buffers: shared hit=40
+Planning Time: 0.376 ms
+Execution Time: 0.216 ms
+```
+
+```sql
+SELECT count(*)::int AS n FROM ( SELECT ac."articleId" AS id, ac."publishedAt" AS pub, lower(o.name) AS oname, 0::numeric AS score, a.title, a.excerpt, a."canonicalUrl", a.language, a.author, a."publishedAtRaw", a."publishedOffsetMinutes", a."publishedAtEstimated", a."firstSeenAt", a."isFixture", a."articleLabel", a."articleLabelNote", o.id AS "outletId", o.slug AS "outletSlug", o.name AS "outletName", o.paywall, o.orientation, o."ideologyTags", o."labelStatus", o."labelConfidence", o."labelMethodology", o."labelSourceUrl", o."labelReviewedAt", o."labelContext", o."labelIsMachine", oc.iso2 AS 
+```
+```
+Aggregate  (cost=4933.35..4933.36 rows=1 width=4) (actual time=4.557..12.024 rows=1 loops=1)
+  Buffers: shared hit=6758
+  ->  Limit  (cost=1551.16..4920.83 rows=1001 width=643) (actual time=2.247..11.989 rows=1001 loops=1)
+        Buffers: shared hit=6758
+        ->  Nested Loop  (cost=1551.16..18126.87 rows=4924 width=643) (actual time=2.247..11.949 rows=1001 loops=1)
+              Buffers: shared hit=6758
+              ->  Gather  (cost=1551.00..18003.52 rows=4924 width=26) (actual time=2.238..11.722 rows=1001 loops=1)
+                    Workers Planned: 2
+                    Workers Launched: 2
+                    Buffers: shared hit=6752
+                    ->  Nested Loop  (cost=551.00..16511.12 rows=2052 width=26) (actual time=0.728..1.377 rows=334 loops=3)
+                          Buffers: shared hit=6752
+                          ->  Parallel Bitmap Heap Scan on "ArticleCountry" ac  (cost=550.58..5900.00 rows=2052 width=9) (actual time=0.709..0.818 rows=334 loops=3)
+                                Recheck Cond: ("countryId" = 'cmvgrrpso006gg8m6ua5tl2n7'::text)
+                                Heap Blocks: exact=2613
+                                Buffers: shared hit=2738
+                                ->  Bitmap Index Scan on "ArticleCountry_countryId_publishedAt_articleId_idx"  (cost=0.00..549.35 rows=4924 width=0) (actual time=0.804..0.804 rows=9308 loops=1)
+                                      Index Cond: ("countryId" = 'cmvgrrpso006gg8m6ua5tl2n7'::text)
+                                      Buffers: shared hit=123
+                          ->  Index Scan using "Article_pkey" on "Article" a  (cost=0.42..5.17 rows=1 width=35) (actual time=0.002..0.002 rows=1 loops=1003)
+                                Index Cond: (id = ac."articleId")
+                                Filter: ((NOT "isFixture") AND (status = 'PUBLISHED'::"ArticleStatus"))
+                                Buffers: shared hit=4014
+              ->  Memoize  (cost=0.15..0.17 rows=1 width=64) (actual time=0.000..0.000 rows=1 loops=1001)
+                    Cache Key: a."outletId"
+                    Cache Mode: logical
+                    Hits: 998  Misses: 3  Evictions: 0  Overflows: 0  Memory Usage: 1kB
+                    Buffers: shared hit=6
+                    ->  Index Scan using "MediaOutlet_pkey" on "MediaOutlet" o  (cost=0.14..0.16 rows=1 width=64) (actual time=0.002..0.002 rows=1 loops=3)
+                          Index Cond: (id = a."outletId")
+                          Buffers: shared hit=6
+Planning:
+  Buffers: shared hit=20
+Planning Time: 0.250 ms
+Execution Time: 12.083 ms
+```
+
+```sql
+SELECT "public"."ArticleSector"."articleId", "public"."ArticleSector"."sectorId", "public"."ArticleSector"."basis"::text, "public"."ArticleSector"."ruleId" FROM "public"."ArticleSector" WHERE "public"."ArticleSector"."articleId" IN ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22,$23,$24) OFFSET $25
+```
+```
+Index Scan using "ArticleSector_pkey" on "ArticleSector"  (cost=0.42..194.49 rows=24 width=72) (actual time=0.020..0.089 rows=19 loops=1)
+  Index Cond: ("articleId" = ANY ('{syn141399,syn58924,syn88352,syn81690,syn4155,syn84416,syn9959,syn18012,syn76159,syn149748,syn156717,syn199272,syn71503,syn6806,syn59207,syn5833,syn7864,syn44886,syn137252,syn29876,syn36500,syn162397,syn66555,syn91911}'::text[]))
+  Buffers: shared hit=91
+Planning Time: 0.042 ms
+Execution Time: 0.095 ms
+```
+
+```sql
+SELECT "public"."ArticleCountry"."articleId", "public"."ArticleCountry"."countryId", "public"."ArticleCountry"."basis"::text, "public"."ArticleCountry"."matchedTerm" FROM "public"."ArticleCountry" WHERE "public"."ArticleCountry"."articleId" IN ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22,$23,$24) OFFSET $25
+```
+```
+Index Scan using "ArticleCountry_pkey" on "ArticleCountry"  (cost=0.42..174.06 rows=37 width=99) (actual time=0.017..0.096 rows=38 loops=1)
+  Index Cond: ("articleId" = ANY ('{syn141399,syn58924,syn88352,syn81690,syn4155,syn84416,syn9959,syn18012,syn76159,syn149748,syn156717,syn199272,syn71503,syn6806,syn59207,syn5833,syn7864,syn44886,syn137252,syn29876,syn36500,syn162397,syn66555,syn91911}'::text[]))
+  Buffers: shared hit=99
+Planning Time: 0.018 ms
+Execution Time: 0.100 ms
+```
+
+```sql
+SELECT "public"."Sector"."id", "public"."Sector"."slug", "public"."Sector"."name", "public"."Sector"."sortOrder" FROM "public"."Sector" WHERE "public"."Sector"."id" IN ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19) OFFSET $20
+```
+```
+Bitmap Heap Scan on "Sector"  (cost=4.34..14.63 rows=19 width=100) (actual time=0.009..0.010 rows=7 loops=1)
+  Recheck Cond: (id = ANY ('{cmvgrrpt10070g8m6s3n4le2h,cmvgrrpt0006yg8m6hr5hb74c,cmvgrrpt20071g8m6sje0kmfd,cmvgrrpt1006zg8m6s20r11rw,cmvgrrpt20071g8m6sje0kmfd,cmvgrrpt10070g8m6s3n4le2h,cmvgrrpt30073g8m6w51laxug,cmvgrrpt10070g8m6s3n4le2h,cmvgrrpt30074g8m65usbdsxt,cmvgrrpt1006zg8m6s20r11rw,cmvgrrpt30074g8m65usbdsxt,cmvgrrpt10070g8m6s3n4le2h,cmvgrrpt1006zg8m6s20r11rw,cmvgrrpt20072g8m6czhod24g,cmvgrrpt30074g8m65usbdsxt,cmvgrrpt30073g8m6w51laxug,cmvgrrpt0006yg8m6hr5hb74c,cmvgrrpt1006zg8m6s20r11rw,cmvgrrpt1006zg8m6s20r11rw}'::text[]))
+  Heap Blocks: exact=1
+  Buffers: shared hit=2
+  ->  Bitmap Index Scan on "Sector_pkey"  (cost=0.00..4.29 rows=19 width=0) (actual time=0.007..0.007 rows=7 loops=1)
+        Index Cond: (id = ANY ('{cmvgrrpt10070g8m6s3n4le2h,cmvgrrpt0006yg8m6hr5hb74c,cmvgrrpt20071g8m6sje0kmfd,cmvgrrpt1006zg8m6s20r11rw,cmvgrrpt20071g8m6sje0kmfd,cmvgrrpt10070g8m6s3n4le2h,cmvgrrpt30073g8m6w51laxug,cmvgrrpt10070g8m6s3n4le2h,cmvgrrpt30074g8m65usbdsxt,cmvgrrpt1006zg8m6s20r11rw,cmvgrrpt30074g8m65usbdsxt,cmvgrrpt10070g8m6s3n4le2h,cmvgrrpt1006zg8m6s20r11rw,cmvgrrpt20072g8m6czhod24g,cmvgrrpt30074g8m65usbdsxt,cmvgrrpt30073g8m6w51laxug,cmvgrrpt0006yg8m6hr5hb74c,cmvgrrpt1006zg8m6s20r11rw,cmvgrrpt1006zg8m6s20r11rw}'::text[]))
+        Buffers: shared hit=1
+Planning Time: 0.017 ms
+Execution Time: 0.020 ms
+```
+
+```sql
+SELECT "public"."Country"."id", "public"."Country"."iso2", "public"."Country"."name" FROM "public"."Country" WHERE "public"."Country"."id" IN ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22,$23,$24,$25,$26,$27,$28,$29,$30,$31,$32,$33,$34,$35,$36,$37,$38) OFFSET $39
+```
+```
+Seq Scan on "Country"  (cost=0.10..8.85 rows=38 width=40) (actual time=0.005..0.017 rows=13 loops=1)
+  Filter: (id = ANY ('{cmvgrrpso006gg8m6ua5tl2n7,cmvgrrpso006gg8m6ua5tl2n7,cmvgrrpso006gg8m6ua5tl2n7,cmvgrrpqh000ug8m6xynmdmmv,cmvgrrpso006gg8m6ua5tl2n7,cmvgrrpqk0011g8m659w8w3sg,cmvgrrpso006gg8m6ua5tl2n7,cmvgrrpqh000ug8m6xynmdmmv,cmvgrrpso006gg8m6ua5tl2n7,cmvgrrpso006gg8m6ua5tl2n7,cmvgrrpq40004g8m650kgxjgl,cmvgrrpso006gg8m6ua5tl2n7,cmvgrrpso006gg8m6ua5tl2n7,cmvgrrpr00024g8m6h9mqeb6v,cmvgrrpso006gg8m6ua5tl2n7,cmvgrrpso006gg8m6ua5tl2n7,cmvgrrpso006gg8m6ua5tl2n7,cmvgrrpso006gg8m6ua5tl2n7,cmvgrrpqg000tg8m6usuk0oyz,cmvgrrpso006gg8m6ua5tl2n7,cmvgrrpqh000ug8m6xynmdmmv,cmvgrrpso006gg8m6ua5tl2n7,cmvgrrpso006gg8m6ua5tl2n7,cmvgrrpso006gg8m6ua5tl2n7,cmvgrrprh003bg8m6neqw759z,cmvgrrpso006gg8m6ua5tl2n7,cmvgrrpqw001ug8m6escq4q6a,cmvgrrpso006gg8m6ua5tl2n7,cmvgrrpsh005wg8m6nagm84sk,cmvgrrpso006gg8m6ua5tl2n7,cmvgrrpq40005g8m696d7mez1,cmvgrrpso006gg8m6ua5tl2n7,cmvgrrps4004zg8m6ypthc7lp,cmvgrrpso006gg8m6ua5tl2n7,cmvgrrpq70009g8m6qfjooqhm,cmvgrrpso006gg8m6ua5tl2n7,cmvgrrpqa000fg8m68str0a89,cmvgrrpso006gg8m6ua5tl2n7}'::text[]))
+  Rows Removed by Filter: 237
+  Buffers: shared hit=5
+Planning Time: 0.020 ms
+Execution Time: 0.019 ms
+```
+
+## country US + sector + orientation, oldest  (end-to-end 21 ms, 8 statements)
+
+```sql
+SELECT "public"."Country"."id" FROM "public"."Country" WHERE ("public"."Country"."iso2" = $1 AND 1=1) LIMIT $2 OFFSET $3
+```
+```
+Limit  (cost=0.00..8.12 rows=1 width=26) (actual time=0.011..0.011 rows=1 loops=1)
+  Buffers: shared hit=5
+  ->  Seq Scan on "Country"  (cost=0.00..8.12 rows=1 width=26) (actual time=0.010..0.010 rows=1 loops=1)
+        Filter: ((iso2)::text = 'US'::text)
+        Rows Removed by Filter: 232
+        Buffers: shared hit=5
+Planning Time: 0.013 ms
+Execution Time: 0.013 ms
+```
+
+```sql
+SELECT "public"."Sector"."id" FROM "public"."Sector" WHERE "public"."Sector"."slug" IN ($1) OFFSET $2
+```
+```
+Index Scan using "Sector_slug_key" on "Sector"  (cost=0.15..8.17 rows=1 width=32) (actual time=0.008..0.008 rows=1 loops=1)
+  Index Cond: (slug = 'politics'::text)
+  Buffers: shared hit=2
+Planning Time: 0.008 ms
+Execution Time: 0.012 ms
+```
+
+```sql
+SELECT count(*)::int AS n FROM ( SELECT ac."articleId" AS id, ac."publishedAt" AS pub, lower(o.name) AS oname, 0::numeric AS score, a.title, a.excerpt, a."canonicalUrl", a.language, a.author, a."publishedAtRaw", a."publishedOffsetMinutes", a."publishedAtEstimated", a."firstSeenAt", a."isFixture", a."articleLabel", a."articleLabelNote", o.id AS "outletId", o.slug AS "outletSlug", o.name AS "outletName", o.paywall, o.orientation, o."ideologyTags", o."labelStatus", o."labelConfidence", o."labelMethodology", o."labelSourceUrl", o."labelReviewedAt", o."labelContext", o."labelIsMachine", oc.iso2 AS 
+```
+```
+Aggregate  (cost=11861.94..11861.96 rows=1 width=4) (actual time=11.882..14.010 rows=1 loops=1)
+  Buffers: shared hit=8957
+  ->  Limit  (cost=6926.07..11861.87 rows=6 width=643) (actual time=4.840..14.000 rows=131 loops=1)
+        Buffers: shared hit=8957
+        ->  Nested Loop  (cost=6926.07..11861.87 rows=6 width=643) (actual time=4.839..13.992 rows=131 loops=1)
+              Join Filter: (a."outletId" = o.id)
+              Rows Removed by Join Filter: 325
+              Buffers: shared hit=8957
+              ->  Gather  (cost=6926.07..11833.86 rows=496 width=26) (actual time=4.811..13.904 rows=456 loops=1)
+                    Workers Planned: 1
+                    Workers Launched: 1
+                    Buffers: shared hit=8956
+                    ->  Nested Loop  (cost=5926.07..10784.26 rows=292 width=26) (actual time=2.391..6.634 rows=228 loops=2)
+                          Join Filter: (ac."articleId" = a.id)
+                          Buffers: shared hit=8956
+                          ->  Parallel Hash Join  (cost=5925.65..9605.37 rows=326 width=18) (actual time=2.366..5.946 rows=228 loops=2)
+                                Hash Cond: (s."articleId" = ac."articleId")
+                                Buffers: shared hit=7131
+                                ->  Parallel Seq Scan on "ArticleSector" s  (cost=0.00..3648.64 rows=11840 width=9) (actual time=0.005..3.220 rows=10026 loops=2)
+                                      Filter: ("sectorId" = 'cmvgrrpt0006yg8m6hr5hb74c'::text)
+                                      Rows Removed by Filter: 60057
+                                      Buffers: shared hit=2618
+                                ->  Parallel Hash  (cost=5900.00..5900.00 rows=2052 width=9) (actual time=2.007..2.007 rows=2366 loops=2)
+                                      Buckets: 8192  Batches: 1  Memory Usage: 288kB
+                                      Buffers: shared hit=4461
+                                      ->  Parallel Bitmap Heap Scan on "ArticleCountry" ac  (cost=550.58..5900.00 rows=2052 width=9) (actual time=2.072..3.726 rows=4733 loops=1)
+                                            Recheck Cond: ("countryId" = 'cmvgrrpso006gg8m6ua5tl2n7'::text)
+                                            Heap Blocks: exact=4338
+                                            Buffers: shared hit=4461
+                                            ->  Bitmap Index Scan on "ArticleCountry_countryId_publishedAt_articleId_idx"  (cost=0.00..549.35 rows=4924 width=0) (actual time=0.705..0.705 rows=9308 loops=1)
+                                                  Index Cond: ("countryId" = 'cmvgrrpso006gg8m6ua5tl2n7'::text)
+                                                  Buffers: shared hit=123
+                          ->  Index Scan using "Article_pkey" on "Article" a  (cost=0.42..3.60 rows=1 width=35) (actual time=0.003..0.003 rows=1 loops=456)
+                                Index Cond: (id = s."articleId")
+                                Filter: ((NOT "isFixture") AND (status = 'PUBLISHED'::"ArticleStatus"))
+                                Buffers: shared hit=1825
+              ->  Materialize  (cost=0.00..13.16 rows=2 width=64) (actual time=0.000..0.000 rows=1 loops=456)
+                    Buffers: shared hit=1
+                    ->  Seq Scan on "MediaOutlet" o  (cost=0.00..13.15 rows=2 width=64) (actual time=0.004..0.005 rows=1 loops=1)
+                          Filter: ((orientation)::text = ANY ('{CENTER,UNRATED}'::text[]))
+                          Rows Removed by Filter: 2
+                          Buffers: shared hit=1
+Planning:
+  Buffers: shared hit=60
+Planning Time: 0.561 ms
+Execution Time: 14.071 ms
+```
+
+```sql
+SELECT * FROM ( SELECT ac."articleId" AS id, ac."publishedAt" AS pub, lower(o.name) AS oname, 0::numeric AS score, a.title, a.excerpt, a."canonicalUrl", a.language, a.author, a."publishedAtRaw", a."publishedOffsetMinutes", a."publishedAtEstimated", a."firstSeenAt", a."isFixture", a."articleLabel", a."articleLabelNote", o.id AS "outletId", o.slug AS "outletSlug", o.name AS "outletName", o.paywall, o.orientation, o."ideologyTags", o."labelStatus", o."labelConfidence", o."labelMethodology", o."labelSourceUrl", o."labelReviewedAt", o."labelContext", o."labelIsMachine", oc.iso2 AS "outletCountryIso
+```
+```
+Limit  (cost=11802.92..11803.38 rows=4 width=577) (actual time=11.855..14.001 rows=25 loops=1)
+  Buffers: shared hit=8984
+  ->  Gather Merge  (cost=11802.92..11803.38 rows=4 width=577) (actual time=11.854..13.999 rows=25 loops=1)
+        Workers Planned: 1
+        Workers Launched: 1
+        Buffers: shared hit=8984
+        ->  Sort  (cost=10802.91..10802.92 rows=4 width=577) (actual time=6.485..6.488 rows=15 loops=2)
+              Sort Key: ac."publishedAt", ac."articleId"
+              Sort Method: top-N heapsort  Memory: 47kB
+              Buffers: shared hit=8984
+              Worker 0:  Sort Method: quicksort  Memory: 28kB
+              ->  Hash Left Join  (cost=5936.85..10802.87 rows=4 width=577) (actual time=2.350..6.439 rows=66 loops=2)
+                    Hash Cond: (o."countryId" = oc.id)
+                    Buffers: shared hit=8969
+                    ->  Nested Loop  (cost=5926.22..10792.23 rows=4 width=531) (actual time=2.302..6.371 rows=66 loops=2)
+                          Buffers: shared hit=8959
+                          ->  Nested Loop  (cost=5926.07..10784.26 rows=292 width=272) (actual time=2.184..6.271 rows=228 loops=2)
+                                Join Filter: (ac."articleId" = a.id)
+                                Buffers: shared hit=8922
+                                ->  Parallel Hash Join  (cost=5925.65..9605.37 rows=326 width=26) (actual time=2.164..5.616 rows=228 loops=2)
+                                      Hash Cond: (s."articleId" = ac."articleId")
+                                      Buffers: shared hit=7097
+                                      ->  Parallel Seq Scan on "ArticleSector" s  (cost=0.00..3648.64 rows=11840 width=9) (actual time=0.003..3.087 rows=10026 loops=2)
+                                            Filter: ("sectorId" = 'cmvgrrpt0006yg8m6hr5hb74c'::text)
+                                            Rows Removed by Filter: 60057
+                                            Buffers: shared hit=2618
+                                      ->  Parallel Hash  (cost=5900.00..5900.00 rows=2052 width=17) (actual time=1.837..1.837 rows=2366 loops=2)
+                                            Buckets: 8192  Batches: 1  Memory Usage: 352kB
+                                            Buffers: shared hit=4461
+                                            ->  Parallel Bitmap Heap Scan on "ArticleCountry" ac  (cost=550.58..5900.00 rows=2052 width=17) (actual time=1.828..3.379 rows=4733 loops=1)
+                                                  Recheck Cond: ("countryId" = 'cmvgrrpso006gg8m6ua5tl2n7'::text)
+                                                  Heap Blocks: exact=4338
+                                                  Buffers: shared hit=4461
+                                                  ->  Bitmap Index Scan on "ArticleCountry_countryId_publishedAt_articleId_idx"  (cost=0.00..549.35 rows=4924 width=0) (actual time=0.665..0.665 rows=9308 loops=1)
+                                                        Index Cond: ("countryId" = 'cmvgrrpso006gg8m6ua5tl2n7'::text)
+                                                        Buffers: shared hit=123
+                                ->  Index Scan using "Article_pkey" on "Article" a  (cost=0.42..3.60 rows=1 width=264) (actual time=0.003..0.003 rows=1 loops=456)
+                                      Index Cond: (id = s."articleId")
+                                      Filter: ((NOT "isFixture") AND (status = 'PUBLISHED'::"ArticleStatus"))
+                                      Buffers: shared hit=1825
+                          ->  Memoize  (cost=0.15..0.18 rows=1 width=285) (actual time=0.000..0.000 rows=0 loops=456)
+                                Cache Key: a."outletId"
+                                Cache Mode: logical
+                                Hits: 407  Misses: 3  Evictions: 0  Overflows: 0  Memory Usage: 1kB
+                                Buffers: shared hit=37
+                                Worker 0:  Hits: 43  Misses: 3  Evictions: 0  Overflows: 0  Memory Usage: 1kB
+                                ->  Index Scan using "MediaOutlet_pkey" on "MediaOutlet" o  (cost=0.14..0.17 rows=1 width=285) (actual time=0.015..0.015 rows=0 loops=6)
+                                      Index Cond: (id = a."outletId")
+                                      Filter: ((orientation)::text = ANY ('{CENTER,UNRATED}'::text[]))
+                                      Rows Removed by Filter: 1
+                                      Buffers: shared hit=37
+                    ->  Hash  (cost=7.50..7.50 rows=250 width=40) (actual time=0.042..0.042 rows=250 loops=2)
+                          Buckets: 1024  Batches: 1  Memory Usage: 26kB
+                          Buffers: shared hit=10
+                          ->  Seq Scan on "Country" oc  (cost=0.00..7.50 rows=250 width=40) (actual time=0.006..0.021 rows=250 loops=2)
+                                Buffers: shared hit=10
+Planning:
+  Buffers: shared hit=60
+Planning Time: 0.886 ms
+Execution Time: 14.095 ms
+```
+
+```sql
+SELECT "public"."ArticleSector"."articleId", "public"."ArticleSector"."sectorId", "public"."ArticleSector"."basis"::text, "public"."ArticleSector"."ruleId" FROM "public"."ArticleSector" WHERE "public"."ArticleSector"."articleId" IN ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22,$23,$24) OFFSET $25
+```
+```
+Index Scan using "ArticleSector_pkey" on "ArticleSector"  (cost=0.42..194.49 rows=24 width=72) (actual time=0.015..0.079 rows=24 loops=1)
+  Index Cond: ("articleId" = ANY ('{syn97751,syn185453,syn115745,syn69410,syn155744,syn72797,syn134690,syn57437,syn185552,syn96464,syn77588,syn193508,syn121229,syn90311,syn88625,syn41309,syn41990,syn166112,syn82103,syn39848,syn126002,syn91151,syn99173,syn33341}'::text[]))
+  Buffers: shared hit=96
+Planning Time: 0.031 ms
+Execution Time: 0.085 ms
+```
+
+```sql
+SELECT "public"."ArticleCountry"."articleId", "public"."ArticleCountry"."countryId", "public"."ArticleCountry"."basis"::text, "public"."ArticleCountry"."matchedTerm" FROM "public"."ArticleCountry" WHERE "public"."ArticleCountry"."articleId" IN ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22,$23,$24) OFFSET $25
+```
+```
+Index Scan using "ArticleCountry_pkey" on "ArticleCountry"  (cost=0.42..174.06 rows=37 width=99) (actual time=0.020..0.094 rows=37 loops=1)
+  Index Cond: ("articleId" = ANY ('{syn97751,syn185453,syn115745,syn69410,syn155744,syn72797,syn134690,syn57437,syn185552,syn96464,syn77588,syn193508,syn121229,syn90311,syn88625,syn41309,syn41990,syn166112,syn82103,syn39848,syn126002,syn91151,syn99173,syn33341}'::text[]))
+  Buffers: shared hit=97
+Planning Time: 0.028 ms
+Execution Time: 0.103 ms
+```
+
+```sql
+SELECT "public"."Sector"."id", "public"."Sector"."slug", "public"."Sector"."name", "public"."Sector"."sortOrder" FROM "public"."Sector" WHERE "public"."Sector"."id" IN ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22,$23,$24) OFFSET $25
+```
+```
+Bitmap Heap Scan on "Sector"  (cost=4.39..14.75 rows=24 width=100) (actual time=0.005..0.005 rows=1 loops=1)
+  Recheck Cond: (id = ANY ('{cmvgrrpt0006yg8m6hr5hb74c,cmvgrrpt0006yg8m6hr5hb74c,cmvgrrpt0006yg8m6hr5hb74c,cmvgrrpt0006yg8m6hr5hb74c,cmvgrrpt0006yg8m6hr5hb74c,cmvgrrpt0006yg8m6hr5hb74c,cmvgrrpt0006yg8m6hr5hb74c,cmvgrrpt0006yg8m6hr5hb74c,cmvgrrpt0006yg8m6hr5hb74c,cmvgrrpt0006yg8m6hr5hb74c,cmvgrrpt0006yg8m6hr5hb74c,cmvgrrpt0006yg8m6hr5hb74c,cmvgrrpt0006yg8m6hr5hb74c,cmvgrrpt0006yg8m6hr5hb74c,cmvgrrpt0006yg8m6hr5hb74c,cmvgrrpt0006yg8m6hr5hb74c,cmvgrrpt0006yg8m6hr5hb74c,cmvgrrpt0006yg8m6hr5hb74c,cmvgrrpt0006yg8m6hr5hb74c,cmvgrrpt0006yg8m6hr5hb74c,cmvgrrpt0006yg8m6hr5hb74c,cmvgrrpt0006yg8m6hr5hb74c,cmvgrrpt0006yg8m6hr5hb74c,cmvgrrpt0006yg8m6hr5hb74c}'::text[]))
+  Heap Blocks: exact=1
+  Buffers: shared hit=2
+  ->  Bitmap Index Scan on "Sector_pkey"  (cost=0.00..4.33 rows=24 width=0) (actual time=0.003..0.003 rows=1 loops=1)
+        Index Cond: (id = ANY ('{cmvgrrpt0006yg8m6hr5hb74c,cmvgrrpt0006yg8m6hr5hb74c,cmvgrrpt0006yg8m6hr5hb74c,cmvgrrpt0006yg8m6hr5hb74c,cmvgrrpt0006yg8m6hr5hb74c,cmvgrrpt0006yg8m6hr5hb74c,cmvgrrpt0006yg8m6hr5hb74c,cmvgrrpt0006yg8m6hr5hb74c,cmvgrrpt0006yg8m6hr5hb74c,cmvgrrpt0006yg8m6hr5hb74c,cmvgrrpt0006yg8m6hr5hb74c,cmvgrrpt0006yg8m6hr5hb74c,cmvgrrpt0006yg8m6hr5hb74c,cmvgrrpt0006yg8m6hr5hb74c,cmvgrrpt0006yg8m6hr5hb74c,cmvgrrpt0006yg8m6hr5hb74c,cmvgrrpt0006yg8m6hr5hb74c,cmvgrrpt0006yg8m6hr5hb74c,cmvgrrpt0006yg8m6hr5hb74c,cmvgrrpt0006yg8m6hr5hb74c,cmvgrrpt0006yg8m6hr5hb74c,cmvgrrpt0006yg8m6hr5hb74c,cmvgrrpt0006yg8m6hr5hb74c,cmvgrrpt0006yg8m6hr5hb74c}'::text[]))
+        Buffers: shared hit=1
+Planning Time: 0.017 ms
+Execution Time: 0.016 ms
+```
+
+```sql
+SELECT "public"."Country"."id", "public"."Country"."iso2", "public"."Country"."name" FROM "public"."Country" WHERE "public"."Country"."id" IN ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22,$23,$24,$25,$26,$27,$28,$29,$30,$31,$32,$33,$34,$35,$36,$37) OFFSET $38
+```
+```
+Seq Scan on "Country"  (cost=0.09..8.84 rows=37 width=40) (actual time=0.004..0.014 rows=13 loops=1)
+  Filter: (id = ANY ('{cmvgrrpso006gg8m6ua5tl2n7,cmvgrrprf0036g8m6u8djpsru,cmvgrrpso006gg8m6ua5tl2n7,cmvgrrpqh000ug8m6xynmdmmv,cmvgrrpso006gg8m6ua5tl2n7,cmvgrrps1004tg8m6jdknwcfl,cmvgrrpso006gg8m6ua5tl2n7,cmvgrrpqb000hg8m6xmdrmrfi,cmvgrrpso006gg8m6ua5tl2n7,cmvgrrpso006gg8m6ua5tl2n7,cmvgrrpre0034g8m65pnxqj4v,cmvgrrpso006gg8m6ua5tl2n7,cmvgrrpqh000ug8m6xynmdmmv,cmvgrrpso006gg8m6ua5tl2n7,cmvgrrpso006gg8m6ua5tl2n7,cmvgrrpso006gg8m6ua5tl2n7,cmvgrrpq60008g8m6xih2a1rv,cmvgrrpso006gg8m6ua5tl2n7,cmvgrrppy0000g8m6ycpxt1c4,cmvgrrpso006gg8m6ua5tl2n7,cmvgrrpso006gg8m6ua5tl2n7,cmvgrrpso006gg8m6ua5tl2n7,cmvgrrpso006gg8m6ua5tl2n7,cmvgrrps40050g8m6s0s2s97p,cmvgrrpso006gg8m6ua5tl2n7,cmvgrrprm003og8m6t9kr3qxs,cmvgrrpso006gg8m6ua5tl2n7,cmvgrrprz004og8m6aalav97w,cmvgrrpso006gg8m6ua5tl2n7,cmvgrrpso006gg8m6ua5tl2n7,cmvgrrpqb000ig8m6b79wjndk,cmvgrrpso006gg8m6ua5tl2n7,cmvgrrpso006gg8m6ua5tl2n7,cmvgrrpso006gg8m6ua5tl2n7,cmvgrrpso006gg8m6ua5tl2n7,cmvgrrpqm0016g8m6j7fv207j,cmvgrrpso006gg8m6ua5tl2n7}'::text[]))
+  Rows Removed by Filter: 237
+  Buffers: shared hit=5
+Planning Time: 0.021 ms
+Execution Time: 0.017 ms
+```
+
+## country US + politics + center-right, oldest (load-test URL)  (end-to-end 16 ms, 4 statements)
+
+```sql
+SELECT "public"."Country"."id" FROM "public"."Country" WHERE ("public"."Country"."iso2" = $1 AND 1=1) LIMIT $2 OFFSET $3
+```
+```
+Limit  (cost=0.00..8.12 rows=1 width=26) (actual time=0.012..0.012 rows=1 loops=1)
+  Buffers: shared hit=5
+  ->  Seq Scan on "Country"  (cost=0.00..8.12 rows=1 width=26) (actual time=0.011..0.011 rows=1 loops=1)
+        Filter: ((iso2)::text = 'US'::text)
+        Rows Removed by Filter: 232
+        Buffers: shared hit=5
+Planning Time: 0.035 ms
+Execution Time: 0.015 ms
+```
+
+```sql
+SELECT "public"."Sector"."id" FROM "public"."Sector" WHERE "public"."Sector"."slug" IN ($1) OFFSET $2
+```
+```
+Index Scan using "Sector_slug_key" on "Sector"  (cost=0.15..8.17 rows=1 width=32) (actual time=0.008..0.009 rows=1 loops=1)
+  Index Cond: (slug = 'politics'::text)
+  Buffers: shared hit=2
+Planning Time: 0.023 ms
+Execution Time: 0.015 ms
+```
+
+```sql
+SELECT count(*)::int AS n FROM ( SELECT ac."articleId" AS id, ac."publishedAt" AS pub, lower(o.name) AS oname, 0::numeric AS score, a.title, a.excerpt, a."canonicalUrl", a.language, a.author, a."publishedAtRaw", a."publishedOffsetMinutes", a."publishedAtEstimated", a."firstSeenAt", a."isFixture", a."articleLabel", a."articleLabelNote", o.id AS "outletId", o.slug AS "outletSlug", o.name AS "outletName", o.paywall, o.orientation, o."ideologyTags", o."labelStatus", o."labelConfidence", o."labelMethodology", o."labelSourceUrl", o."labelReviewedAt", o."labelContext", o."labelIsMachine", oc.iso2 AS 
+```
+```
+Aggregate  (cost=11853.25..11853.26 rows=1 width=4) (actual time=0.004..0.005 rows=1 loops=1)
+  Buffers: shared hit=1
+  ->  Limit  (cost=6926.07..11853.21 rows=3 width=643) (actual time=0.003..0.004 rows=0 loops=1)
+        Buffers: shared hit=1
+        ->  Nested Loop  (cost=6926.07..11853.21 rows=3 width=643) (actual time=0.003..0.004 rows=0 loops=1)
+              Join Filter: (a."outletId" = o.id)
+              Buffers: shared hit=1
+              ->  Seq Scan on "MediaOutlet" o  (cost=0.00..13.15 rows=1 width=64) (actual time=0.003..0.003 rows=0 loops=1)
+                    Filter: ((orientation)::text = 'CENTER_RIGHT'::text)
+                    Rows Removed by Filter: 3
+                    Buffers: shared hit=1
+              ->  Gather  (cost=6926.07..11833.86 rows=496 width=26) (never executed)
+                    Workers Planned: 1
+                    Workers Launched: 0
+                    ->  Nested Loop  (cost=5926.07..10784.26 rows=292 width=26) (never executed)
+                          Join Filter: (ac."articleId" = a.id)
+                          ->  Parallel Hash Join  (cost=5925.65..9605.37 rows=326 width=18) (never executed)
+                                Hash Cond: (s."articleId" = ac."articleId")
+                                ->  Parallel Seq Scan on "ArticleSector" s  (cost=0.00..3648.64 rows=11840 width=9) (never executed)
+                                      Filter: ("sectorId" = 'cmvgrrpt0006yg8m6hr5hb74c'::text)
+                                ->  Parallel Hash  (cost=5900.00..5900.00 rows=2052 width=9) (never executed)
+                                      ->  Parallel Bitmap Heap Scan on "ArticleCountry" ac  (cost=550.58..5900.00 rows=2052 width=9) (never executed)
+                                            Recheck Cond: ("countryId" = 'cmvgrrpso006gg8m6ua5tl2n7'::text)
+                                            ->  Bitmap Index Scan on "ArticleCountry_countryId_publishedAt_articleId_idx"  (cost=0.00..549.35 rows=4924 width=0) (never executed)
+                                                  Index Cond: ("countryId" = 'cmvgrrpso006gg8m6ua5tl2n7'::text)
+                          ->  Index Scan using "Article_pkey" on "Article" a  (cost=0.42..3.60 rows=1 width=35) (never executed)
+                                Index Cond: (id = s."articleId")
+                                Filter: ((NOT "isFixture") AND (status = 'PUBLISHED'::"ArticleStatus"))
+Planning:
+  Buffers: shared hit=60
+Planning Time: 0.605 ms
+Execution Time: 0.045 ms
+```
+
+```sql
+SELECT * FROM ( SELECT ac."articleId" AS id, ac."publishedAt" AS pub, lower(o.name) AS oname, 0::numeric AS score, a.title, a.excerpt, a."canonicalUrl", a.language, a.author, a."publishedAtRaw", a."publishedOffsetMinutes", a."publishedAtEstimated", a."firstSeenAt", a."isFixture", a."articleLabel", a."articleLabelNote", o.id AS "outletId", o.slug AS "outletSlug", o.name AS "outletName", o.paywall, o.orientation, o."ideologyTags", o."labelStatus", o."labelConfidence", o."labelMethodology", o."labelSourceUrl", o."labelReviewedAt", o."labelContext", o."labelIsMachine", oc.iso2 AS "outletCountryIso
+```
+```
+Limit  (cost=11802.89..11803.12 rows=2 width=577) (actual time=11.660..13.832 rows=0 loops=1)
+  Buffers: shared hit=8974
+  ->  Gather Merge  (cost=11802.89..11803.12 rows=2 width=577) (actual time=11.659..13.831 rows=0 loops=1)
+        Workers Planned: 1
+        Workers Launched: 1
+        Buffers: shared hit=8974
+        ->  Sort  (cost=10802.88..10802.89 rows=2 width=577) (actual time=6.569..6.571 rows=0 loops=2)
+              Sort Key: ac."publishedAt", ac."articleId"
+              Sort Method: quicksort  Memory: 25kB
+              Buffers: shared hit=8974
+              Worker 0:  Sort Method: quicksort  Memory: 25kB
+              ->  Hash Left Join  (cost=5936.85..10802.87 rows=2 width=577) (actual time=6.554..6.556 rows=0 loops=2)
+                    Hash Cond: (o."countryId" = oc.id)
+                    Buffers: shared hit=8959
+                    ->  Nested Loop  (cost=5926.22..10792.24 rows=2 width=531) (actual time=6.554..6.555 rows=0 loops=2)
+                          Buffers: shared hit=8959
+                          ->  Nested Loop  (cost=5926.07..10784.26 rows=292 width=272) (actual time=2.337..6.477 rows=228 loops=2)
+                                Join Filter: (ac."articleId" = a.id)
+                                Buffers: shared hit=8922
+                                ->  Parallel Hash Join  (cost=5925.65..9605.37 rows=326 width=26) (actual time=2.322..5.807 rows=228 loops=2)
+                                      Hash Cond: (s."articleId" = ac."articleId")
+                                      Buffers: shared hit=7097
+                                      ->  Parallel Seq Scan on "ArticleSector" s  (cost=0.00..3648.64 rows=11840 width=9) (actual time=0.003..3.160 rows=10026 loops=2)
+                                            Filter: ("sectorId" = 'cmvgrrpt0006yg8m6hr5hb74c'::text)
+                                            Rows Removed by Filter: 60057
+                                            Buffers: shared hit=2618
+                                      ->  Parallel Hash  (cost=5900.00..5900.00 rows=2052 width=17) (actual time=1.961..1.962 rows=2366 loops=2)
+                                            Buckets: 8192  Batches: 1  Memory Usage: 352kB
+                                            Buffers: shared hit=4461
+                                            ->  Parallel Bitmap Heap Scan on "ArticleCountry" ac  (cost=550.58..5900.00 rows=2052 width=17) (actual time=1.986..3.629 rows=4733 loops=1)
+                                                  Recheck Cond: ("countryId" = 'cmvgrrpso006gg8m6ua5tl2n7'::text)
+                                                  Heap Blocks: exact=4338
+                                                  Buffers: shared hit=4461
+                                                  ->  Bitmap Index Scan on "ArticleCountry_countryId_publishedAt_articleId_idx"  (cost=0.00..549.35 rows=4924 width=0) (actual time=0.659..0.660 rows=9308 loops=1)
+                                                        Index Cond: ("countryId" = 'cmvgrrpso006gg8m6ua5tl2n7'::text)
+                                                        Buffers: shared hit=123
+                                ->  Index Scan using "Article_pkey" on "Article" a  (cost=0.42..3.60 rows=1 width=264) (actual time=0.003..0.003 rows=1 loops=456)
+                                      Index Cond: (id = s."articleId")
+                                      Filter: ((NOT "isFixture") AND (status = 'PUBLISHED'::"ArticleStatus"))
+                                      Buffers: shared hit=1825
+                          ->  Memoize  (cost=0.15..0.18 rows=1 width=285) (actual time=0.000..0.000 rows=0 loops=456)
+                                Cache Key: a."outletId"
+                                Cache Mode: logical
+                                Hits: 389  Misses: 3  Evictions: 0  Overflows: 0  Memory Usage: 1kB
+                                Buffers: shared hit=37
+                                Worker 0:  Hits: 61  Misses: 3  Evictions: 0  Overflows: 0  Memory Usage: 1kB
+                                ->  Index Scan using "MediaOutlet_pkey" on "MediaOutlet" o  (cost=0.14..0.17 rows=1 width=285) (actual time=0.011..0.011 rows=0 loops=6)
+                                      Index Cond: (id = a."outletId")
+                                      Filter: ((orientation)::text = 'CENTER_RIGHT'::text)
+                                      Rows Removed by Filter: 1
+                                      Buffers: shared hit=37
+                    ->  Hash  (cost=7.50..7.50 rows=250 width=40) (never executed)
+                          ->  Seq Scan on "Country" oc  (cost=0.00..7.50 rows=250 width=40) (never executed)
+Planning:
+  Buffers: shared hit=60
+Planning Time: 0.707 ms
+Execution Time: 13.918 ms
+```
+
+## country KE + last 7 days  (end-to-end 6 ms, 7 statements)
+
+```sql
+SELECT "public"."Country"."id" FROM "public"."Country" WHERE ("public"."Country"."iso2" = $1 AND 1=1) LIMIT $2 OFFSET $3
+```
+```
+Limit  (cost=0.00..8.12 rows=1 width=26) (actual time=0.006..0.006 rows=1 loops=1)
+  Buffers: shared hit=4
+  ->  Seq Scan on "Country"  (cost=0.00..8.12 rows=1 width=26) (actual time=0.006..0.006 rows=1 loops=1)
+        Filter: ((iso2)::text = 'KE'::text)
+        Rows Removed by Filter: 114
+        Buffers: shared hit=4
+Planning Time: 0.011 ms
+Execution Time: 0.008 ms
+```
+
+```sql
+SELECT * FROM ( SELECT ac."articleId" AS id, ac."publishedAt" AS pub, lower(o.name) AS oname, 0::numeric AS score, a.title, a.excerpt, a."canonicalUrl", a.language, a.author, a."publishedAtRaw", a."publishedOffsetMinutes", a."publishedAtEstimated", a."firstSeenAt", a."isFixture", a."articleLabel", a."articleLabelNote", o.id AS "outletId", o.slug AS "outletSlug", o.name AS "outletName", o.paywall, o.orientation, o."ideologyTags", o."labelStatus", o."labelConfidence", o."labelMethodology", o."labelSourceUrl", o."labelReviewedAt", o."labelContext", o."labelIsMachine", oc.iso2 AS "outletCountryIso
+```
+```
+Limit  (cost=1.27..324.71 rows=25 width=577) (actual time=0.029..0.128 rows=25 loops=1)
+  Buffers: shared hit=210
+  ->  Nested Loop Left Join  (cost=1.27..1514.99 rows=117 width=577) (actual time=0.029..0.126 rows=25 loops=1)
+        Buffers: shared hit=210
+        ->  Nested Loop  (cost=1.00..1457.66 rows=117 width=531) (actual time=0.020..0.083 rows=25 loops=1)
+              Buffers: shared hit=135
+              ->  Nested Loop  (cost=0.84..1454.11 rows=117 width=272) (actual time=0.015..0.068 rows=25 loops=1)
+                    Buffers: shared hit=129
+                    ->  Index Only Scan using "ArticleCountry_countryId_publishedAt_articleId_idx" on "ArticleCountry" ac  (cost=0.42..482.63 rows=117 width=17) (actual time=0.009..0.017 rows=25 loops=1)
+                          Index Cond: (("countryId" = 'cmvgrrprf0036g8m6u8djpsru'::text) AND ("publishedAt" >= '2026-10-13 14:28:58.108'::timestamp without time zone))
+                          Heap Fetches: 25
+                          Buffers: shared hit=29
+                    ->  Index Scan using "Article_pkey" on "Article" a  (cost=0.42..8.30 rows=1 width=264) (actual time=0.002..0.002 rows=1 loops=25)
+                          Index Cond: (id = ac."articleId")
+                          Filter: ((NOT "isFixture") AND (status = 'PUBLISHED'::"ArticleStatus"))
+                          Buffers: shared hit=100
+              ->  Memoize  (cost=0.15..0.17 rows=1 width=285) (actual time=0.000..0.000 rows=1 loops=25)
+                    Cache Key: a."outletId"
+                    Cache Mode: logical
+                    Hits: 22  Misses: 3  Evictions: 0  Overflows: 0  Memory Usage: 1kB
+                    Buffers: shared hit=6
+                    ->  Index Scan using "MediaOutlet_pkey" on "MediaOutlet" o  (cost=0.14..0.16 rows=1 width=285) (actual time=0.002..0.002 rows=1 loops=3)
+                          Index Cond: (id = a."outletId")
+                          Buffers: shared hit=6
+        ->  Index Scan using "Country_pkey" on "Country" oc  (cost=0.27..0.49 rows=1 width=40) (actual time=0.001..0.001 rows=1 loops=25)
+              Index Cond: (id = o."countryId")
+              Buffers: shared hit=75
+Planning:
+  Buffers: shared hit=40
+Planning Time: 0.319 ms
+Execution Time: 0.167 ms
+```
+
+```sql
+SELECT count(*)::int AS n FROM ( SELECT ac."articleId" AS id, ac."publishedAt" AS pub, lower(o.name) AS oname, 0::numeric AS score, a.title, a.excerpt, a."canonicalUrl", a.language, a.author, a."publishedAtRaw", a."publishedOffsetMinutes", a."publishedAtEstimated", a."firstSeenAt", a."isFixture", a."articleLabel", a."articleLabelNote", o.id AS "outletId", o.slug AS "outletSlug", o.name AS "outletName", o.paywall, o.orientation, o."ideologyTags", o."labelStatus", o."labelConfidence", o."labelMethodology", o."labelSourceUrl", o."labelReviewedAt", o."labelContext", o."labelIsMachine", oc.iso2 AS 
+```
+```
+Aggregate  (cost=1407.85..1407.87 rows=1 width=4) (actual time=0.338..0.338 rows=1 loops=1)
+  Buffers: shared hit=818
+  ->  Limit  (cost=18.20..1406.39 rows=117 width=643) (actual time=0.084..0.332 rows=140 loops=1)
+        Buffers: shared hit=818
+        ->  Nested Loop  (cost=18.20..1406.39 rows=117 width=643) (actual time=0.083..0.327 rows=140 loops=1)
+              Buffers: shared hit=818
+              ->  Nested Loop  (cost=18.04..1402.84 rows=117 width=26) (actual time=0.079..0.293 rows=140 loops=1)
+                    Buffers: shared hit=812
+                    ->  Bitmap Heap Scan on "ArticleCountry" ac  (cost=17.62..431.36 rows=117 width=9) (actual time=0.073..0.109 rows=140 loops=1)
+                          Recheck Cond: (("countryId" = 'cmvgrrprf0036g8m6u8djpsru'::text) AND ("publishedAt" >= '2026-10-13 14:28:58.108'::timestamp without time zone))
+                          Heap Blocks: exact=246
+                          Buffers: shared hit=252
+                          ->  Bitmap Index Scan on "ArticleCountry_countryId_publishedAt_articleId_idx"  (cost=0.00..17.59 rows=117 width=0) (actual time=0.030..0.030 rows=249 loops=1)
+                                Index Cond: (("countryId" = 'cmvgrrprf0036g8m6u8djpsru'::text) AND ("publishedAt" >= '2026-10-13 14:28:58.108'::timestamp without time zone))
+                                Buffers: shared hit=6
+                    ->  Index Scan using "Article_pkey" on "Article" a  (cost=0.42..8.30 rows=1 width=35) (actual time=0.001..0.001 rows=1 loops=140)
+                          Index Cond: (id = ac."articleId")
+                          Filter: ((NOT "isFixture") AND (status = 'PUBLISHED'::"ArticleStatus"))
+                          Buffers: shared hit=560
+              ->  Memoize  (cost=0.15..0.17 rows=1 width=64) (actual time=0.000..0.000 rows=1 loops=140)
+                    Cache Key: a."outletId"
+                    Cache Mode: logical
+                    Hits: 137  Misses: 3  Evictions: 0  Overflows: 0  Memory Usage: 1kB
+                    Buffers: shared hit=6
+                    ->  Index Scan using "MediaOutlet_pkey" on "MediaOutlet" o  (cost=0.14..0.16 rows=1 width=64) (actual time=0.001..0.001 rows=1 loops=3)
+                          Index Cond: (id = a."outletId")
+                          Buffers: shared hit=6
+Planning:
+  Buffers: shared hit=20
+Planning Time: 0.177 ms
+Execution Time: 0.368 ms
+```
+
+```sql
+SELECT "public"."ArticleSector"."articleId", "public"."ArticleSector"."sectorId", "public"."ArticleSector"."basis"::text, "public"."ArticleSector"."ruleId" FROM "public"."ArticleSector" WHERE "public"."ArticleSector"."articleId" IN ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22,$23,$24) OFFSET $25
+```
+```
+Index Scan using "ArticleSector_pkey" on "ArticleSector"  (cost=0.42..194.49 rows=24 width=72) (actual time=0.010..0.042 rows=15 loops=1)
+  Index Cond: ("articleId" = ANY ('{syn97659,syn3289,syn22089,syn101111,syn34636,syn38378,syn173072,syn101735,syn52653,syn51837,syn101162,syn96673,syn5995,syn100331,syn186432,syn90945,syn167539,syn139357,syn134387,syn56801,syn2487,syn42133,syn127646,syn53577}'::text[]))
+  Buffers: shared hit=83
+Planning Time: 0.014 ms
+Execution Time: 0.046 ms
+```
+
+```sql
+SELECT "public"."ArticleCountry"."articleId", "public"."ArticleCountry"."countryId", "public"."ArticleCountry"."basis"::text, "public"."ArticleCountry"."matchedTerm" FROM "public"."ArticleCountry" WHERE "public"."ArticleCountry"."articleId" IN ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22,$23,$24) OFFSET $25
+```
+```
+Index Scan using "ArticleCountry_pkey" on "ArticleCountry"  (cost=0.42..174.06 rows=37 width=99) (actual time=0.009..0.045 rows=40 loops=1)
+  Index Cond: ("articleId" = ANY ('{syn97659,syn3289,syn22089,syn101111,syn34636,syn38378,syn173072,syn101735,syn52653,syn51837,syn101162,syn96673,syn5995,syn100331,syn186432,syn90945,syn167539,syn139357,syn134387,syn56801,syn2487,syn42133,syn127646,syn53577}'::text[]))
+  Buffers: shared hit=96
+Planning Time: 0.011 ms
+Execution Time: 0.049 ms
+```
+
+```sql
+SELECT "public"."Sector"."id", "public"."Sector"."slug", "public"."Sector"."name", "public"."Sector"."sortOrder" FROM "public"."Sector" WHERE "public"."Sector"."id" IN ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15) OFFSET $16
+```
+```
+Bitmap Heap Scan on "Sector"  (cost=4.30..14.91 rows=15 width=100) (actual time=0.005..0.006 rows=7 loops=1)
+  Recheck Cond: (id = ANY ('{cmvgrrpt20072g8m6czhod24g,cmvgrrpt10070g8m6s3n4le2h,cmvgrrpt10070g8m6s3n4le2h,cmvgrrpt1006zg8m6s20r11rw,cmvgrrpt20071g8m6sje0kmfd,cmvgrrpt30074g8m65usbdsxt,cmvgrrpt20072g8m6czhod24g,cmvgrrpt0006yg8m6hr5hb74c,cmvgrrpt30073g8m6w51laxug,cmvgrrpt20071g8m6sje0kmfd,cmvgrrpt10070g8m6s3n4le2h,cmvgrrpt10070g8m6s3n4le2h,cmvgrrpt30074g8m65usbdsxt,cmvgrrpt1006zg8m6s20r11rw,cmvgrrpt1006zg8m6s20r11rw}'::text[]))
+  Heap Blocks: exact=1
+  Buffers: shared hit=2
+  ->  Bitmap Index Scan on "Sector_pkey"  (cost=0.00..4.26 rows=15 width=0) (actual time=0.004..0.004 rows=7 loops=1)
+        Index Cond: (id = ANY ('{cmvgrrpt20072g8m6czhod24g,cmvgrrpt10070g8m6s3n4le2h,cmvgrrpt10070g8m6s3n4le2h,cmvgrrpt1006zg8m6s20r11rw,cmvgrrpt20071g8m6sje0kmfd,cmvgrrpt30074g8m65usbdsxt,cmvgrrpt20072g8m6czhod24g,cmvgrrpt0006yg8m6hr5hb74c,cmvgrrpt30073g8m6w51laxug,cmvgrrpt20071g8m6sje0kmfd,cmvgrrpt10070g8m6s3n4le2h,cmvgrrpt10070g8m6s3n4le2h,cmvgrrpt30074g8m65usbdsxt,cmvgrrpt1006zg8m6s20r11rw,cmvgrrpt1006zg8m6s20r11rw}'::text[]))
+        Buffers: shared hit=1
+Planning Time: 0.011 ms
+Execution Time: 0.012 ms
+```
+
+```sql
+SELECT "public"."Country"."id", "public"."Country"."iso2", "public"."Country"."name" FROM "public"."Country" WHERE "public"."Country"."id" IN ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22,$23,$24,$25,$26,$27,$28,$29,$30,$31,$32,$33,$34,$35,$36,$37,$38,$39,$40) OFFSET $41
+```
+```
+Seq Scan on "Country"  (cost=0.10..8.85 rows=40 width=40) (actual time=0.003..0.013 rows=16 loops=1)
+  Filter: (id = ANY ('{cmvgrrpq8000bg8m6nvwskrco,cmvgrrprf0036g8m6u8djpsru,cmvgrrprf0036g8m6u8djpsru,cmvgrrprf0036g8m6u8djpsru,cmvgrrpsh005xg8m6wr0nl2w8,cmvgrrpq40005g8m696d7mez1,cmvgrrprf0036g8m6u8djpsru,cmvgrrpr8002qg8m6mi9f92vz,cmvgrrprf0036g8m6u8djpsru,cmvgrrppy0000g8m6ycpxt1c4,cmvgrrprf0036g8m6u8djpsru,cmvgrrprf0036g8m6u8djpsru,cmvgrrprk003jg8m63e2ms7ix,cmvgrrprf0036g8m6u8djpsru,cmvgrrprp003xg8m6tbpqdy03,cmvgrrprf0036g8m6u8djpsru,cmvgrrprm003pg8m6uadqcvir,cmvgrrprf0036g8m6u8djpsru,cmvgrrprf0036g8m6u8djpsru,cmvgrrpru004bg8m6ro3k1qvt,cmvgrrpqb000ig8m6b79wjndk,cmvgrrprf0036g8m6u8djpsru,cmvgrrprf0036g8m6u8djpsru,cmvgrrprf0036g8m6u8djpsru,cmvgrrpqh000ug8m6xynmdmmv,cmvgrrprf0036g8m6u8djpsru,cmvgrrprf0036g8m6u8djpsru,cmvgrrpq20002g8m6gtav4obc,cmvgrrprf0036g8m6u8djpsru,cmvgrrprf0036g8m6u8djpsru,cmvgrrprf0036g8m6u8djpsru,cmvgrrps50052g8m688wseukv,cmvgrrprf0036g8m6u8djpsru,cmvgrrpqh000ug8m6xynmdmmv,cmvgrrprf0036g8m6u8djpsru,cmvgrrprf0036g8m6u8djpsru,cmvgrrpq7000ag8m6x141ui7e,cmvgrrprf0036g8m6u8djpsru,cmvgrrprf0036g8m6u8djpsru,cmvgrrpsv006xg8m6sotepsc5}'::text[]))
+  Rows Removed by Filter: 234
+  Buffers: shared hit=5
+Planning Time: 0.016 ms
+Execution Time: 0.015 ms
+```
+
+## region Africa, newest  (end-to-end 20 ms, 7 statements)
+
+```sql
+SELECT "public"."Country"."id" FROM "public"."Country" WHERE ("public"."Country"."region" = $1 OR "public"."Country"."subregion" = $2) OFFSET $3
+```
+```
+Seq Scan on "Country"  (cost=0.00..8.75 rows=60 width=26) (actual time=0.002..0.017 rows=60 loops=1)
+  Filter: ((region = 'Africa'::text) OR (subregion = 'Africa'::text))
+  Rows Removed by Filter: 190
+  Buffers: shared hit=5
+Planning:
+  Buffers: shared hit=6
+Planning Time: 0.032 ms
+Execution Time: 0.020 ms
+```
+
+```sql
+SELECT count(*)::int AS n FROM ( SELECT a.id AS id, a."publishedAt" AS pub, lower(o.name) AS oname, 0::numeric AS score, a.title, a.excerpt, a."canonicalUrl", a.language, a.author, a."publishedAtRaw", a."publishedOffsetMinutes", a."publishedAtEstimated", a."firstSeenAt", a."isFixture", a."articleLabel", a."articleLabelNote", o.id AS "outletId", o.slug AS "outletSlug", o.name AS "outletName", o.paywall, o.orientation, o."ideologyTags", o."labelStatus", o."labelConfidence", o."labelMethodology", o."labelSourceUrl", o."labelReviewedAt", o."labelContext", o."labelIsMachine", oc.iso2 AS "outletCoun
+```
+```
+Aggregate  (cost=3057.02..3057.03 rows=1 width=4) (actual time=3.184..3.185 rows=1 loops=1)
+  Buffers: shared hit=1259 read=33 written=24
+  ->  Limit  (cost=281.33..3044.51 rows=1001 width=643) (actual time=0.069..3.153 rows=1001 loops=1)
+        Buffers: shared hit=1259 read=33 written=24
+        ->  Nested Loop  (cost=281.33..133220.37 rows=48159 width=643) (actual time=0.069..3.114 rows=1001 loops=1)
+              Buffers: shared hit=1259 read=33 written=24
+              ->  Merge Semi Join  (cost=281.17..132019.73 rows=48159 width=26) (actual time=0.061..2.892 rows=1001 loops=1)
+                    Merge Cond: (a.id = acr."articleId")
+                    Buffers: shared hit=1253 read=33 written=24
+                    ->  Index Scan using "Article_pkey" on "Article" a  (cost=0.42..102970.49 rows=200011 width=35) (actual time=0.006..0.765 rows=4431 loops=1)
+                          Filter: ((NOT "isFixture") AND (status = 'PUBLISHED'::"ArticleStatus"))
+                          Rows Removed by Filter: 3
+                          Buffers: shared hit=1137 read=2 written=2
+                    ->  Index Only Scan using "ArticleCountry_pkey" on "ArticleCountry" acr  (cost=0.42..27947.23 rows=48159 width=9) (actual time=0.039..1.806 rows=1049 loops=1)
+                          Index Cond: ("countryId" = ANY ('{cmvgrrpq50007g8m6lowm8qqr,cmvgrrpqc000kg8m6p3uwb3fn,cmvgrrpqe000ng8m6u8y9c9p5,cmvgrrpqe000og8m6lo2cm383,cmvgrrpqj000yg8m61wq8l1k3,cmvgrrpql0013g8m6z41r51tv,cmvgrrpql0014g8m6scimyfh1,cmvgrrpql0015g8m6iqov1ff2,cmvgrrpqm0017g8m6ks4qouly,cmvgrrpqn001ag8m6vpbiqyjq,cmvgrrpqq001fg8m6hfmu4tiz,cmvgrrpqs001lg8m65cg5xc6x,cmvgrrpqu001pg8m6ism2ohn4,cmvgrrpqv001sg8m6ta92n8jp,cmvgrrpqv001tg8m6alozyrtb,cmvgrrpqw001ug8m6escq4q6a,cmvgrrpqx001wg8m6x98w0zkk,cmvgrrpqz0023g8m63qt8l1a9,cmvgrrpr20029g8m6tikn9hhm,cmvgrrpr3002cg8m6nhhfmvhl,cmvgrrpr3002dg8m6shfb4maf,cmvgrrpr4002fg8m6we5559fv,cmvgrrpr6002kg8m6hzf4m710,cmvgrrprb002xg8m65jvrm68y,cmvgrrprf0036g8m6u8djpsru,cmvgrrprg003ag8m6to9t50h5,cmvgrrprl003mg8m6i4s7jlia,cmvgrrprl003ng8m6l9dqzt8a,cmvgrrprn003rg8m6e0dicfeo,cmvgrrprn003sg8m6mr80w4j2,cmvgrrprp003xg8m6tbpqdy03,cmvgrrprq0040g8m6dz1x45ba,cmvgrrprt0046g8m6w9717bl4,cmvgrrpru0049g8m69wgj6wxd,cmvgrrpru004bg8m6ro3k1qvt,cmvgrrprw004eg8m65lot6fgw,cmvgrrprw004fg8m67tlsamke,cmvgrrprx004hg8m6fm80n4si,cmvgrrprx004jg8m64zv1nxhh,cmvgrrps70057g8m6fbbvj6bd,cmvgrrps9005bg8m6n5ys09zx,cmvgrrpsa005eg8m65m59iopa,cmvgrrpsa005fg8m6fv0ri3yh,cmvgrrpsb005ig8m699r8mr53,cmvgrrpsd005mg8m6xpjp9p1o,cmvgrrpse005og8m6y0e7u5gw,cmvgrrpse005pg8m6bhjgqjzn,cmvgrrpsf005rg8m6kozrxd2j,cmvgrrpsf005sg8m6b1rjyvr3,cmvgrrpsh005wg8m6nagm84sk,cmvgrrpsh005yg8m6n5khiz8c,cmvgrrpsi005zg8m6d68nfo02,cmvgrrpsi0060g8m6zlve4yau,cmvgrrpsl0066g8m62irsbtyz,cmvgrrpsn006cg8m6mfpgmahx,cmvgrrpso006eg8m6pf0mha92,cmvgrrpsu006ug8m68zuwp76u,cmvgrrpsu006vg8m6r6cijoq6,cmvgrrpsv006wg8m61j3u6qck,cmvgrrpsv006xg8m6sotepsc5}'::text[]))
+                          Heap Fetches: 1049
+                          Buffers: shared hit=116 read=31 written=22
+              ->  Memoize  (cost=0.15..0.17 rows=1 width=64) (actual time=0.000..0.000 rows=1 loops=1001)
+                    Cache Key: a."outletId"
+                    Cache Mode: logical
+                    Hits: 998  Misses: 3  Evictions: 0  Overflows: 0  Memory Usage: 1kB
+                    Buffers: shared hit=6
+                    ->  Index Scan using "MediaOutlet_pkey" on "MediaOutlet" o  (cost=0.14..0.16 rows=1 width=64) (actual time=0.002..0.002 rows=1 loops=3)
+                          Index Cond: (id = a."outletId")
+                          Buffers: shared hit=6
+Planning:
+  Buffers: shared hit=20
+Planning Time: 0.555 ms
+Execution Time: 3.220 ms
+```
+
+```sql
+SELECT * FROM ( SELECT a.id AS id, a."publishedAt" AS pub, lower(o.name) AS oname, 0::numeric AS score, a.title, a.excerpt, a."canonicalUrl", a.language, a.author, a."publishedAtRaw", a."publishedOffsetMinutes", a."publishedAtEstimated", a."firstSeenAt", a."isFixture", a."articleLabel", a."articleLabelNote", o.id AS "outletId", o.slug AS "outletSlug", o.name AS "outletName", o.paywall, o.orientation, o."ideologyTags", o."labelStatus", o."labelConfidence", o."labelMethodology", o."labelSourceUrl", o."labelReviewedAt", o."labelContext", o."labelIsMachine", oc.iso2 AS "outletCountryIso2", oc.name
+```
+```
+Limit  (cost=1001.28..2191.57 rows=25 width=577) (actual time=12.426..15.355 rows=25 loops=1)
+  Buffers: shared hit=3699 read=11 written=8
+  ->  Nested Loop Left Join  (cost=1001.28..2293920.79 rows=48159 width=577) (actual time=12.425..15.353 rows=25 loops=1)
+        Buffers: shared hit=3699 read=11 written=8
+        ->  Nested Loop  (cost=1001.01..2270364.51 rows=48159 width=531) (actual time=12.415..15.319 rows=25 loops=1)
+              Buffers: shared hit=3624 read=11 written=8
+              ->  Gather Merge  (cost=1000.87..2262531.78 rows=48159 width=272) (actual time=12.400..15.289 rows=25 loops=1)
+                    Workers Planned: 2
+                    Workers Launched: 2
+                    Buffers: shared hit=3574 read=11 written=8
+                    ->  Nested Loop Semi Join  (cost=0.84..2255973.02 rows=20066 width=272) (actual time=0.080..2.287 rows=69 loops=3)
+                          Buffers: shared hit=3574 read=11 written=8
+                          ->  Parallel Index Scan using "Article_status_publishedAt_id_idx" on "Article" a  (cost=0.42..77086.19 rows=83338 width=272) (actual time=0.013..0.516 rows=280 loops=3)
+                                Index Cond: (status = 'PUBLISHED'::"ArticleStatus")
+                                Filter: (NOT "isFixture")
+                                Buffers: shared hit=851 read=5 written=4
+                          ->  Index Only Scan using "ArticleCountry_pkey" on "ArticleCountry" acr  (cost=0.42..26.14 rows=1 width=9) (actual time=0.006..0.006 rows=0 loops=839)
+                                Index Cond: (("articleId" = a.id) AND ("countryId" = ANY ('{cmvgrrpq50007g8m6lowm8qqr,cmvgrrpqc000kg8m6p3uwb3fn,cmvgrrpqe000ng8m6u8y9c9p5,cmvgrrpqe000og8m6lo2cm383,cmvgrrpqj000yg8m61wq8l1k3,cmvgrrpql0013g8m6z41r51tv,cmvgrrpql0014g8m6scimyfh1,cmvgrrpql0015g8m6iqov1ff2,cmvgrrpqm0017g8m6ks4qouly,cmvgrrpqn001ag8m6vpbiqyjq,cmvgrrpqq001fg8m6hfmu4tiz,cmvgrrpqs001lg8m65cg5xc6x,cmvgrrpqu001pg8m6ism2ohn4,cmvgrrpqv001sg8m6ta92n8jp,cmvgrrpqv001tg8m6alozyrtb,cmvgrrpqw001ug8m6escq4q6a,cmvgrrpqx001wg8m6x98w0zkk,cmvgrrpqz0023g8m63qt8l1a9,cmvgrrpr20029g8m6tikn9hhm,cmvgrrpr3002cg8m6nhhfmvhl,cmvgrrpr3002dg8m6shfb4maf,cmvgrrpr4002fg8m6we5559fv,cmvgrrpr6002kg8m6hzf4m710,cmvgrrprb002xg8m65jvrm68y,cmvgrrprf0036g8m6u8djpsru,cmvgrrprg003ag8m6to9t50h5,cmvgrrprl003mg8m6i4s7jlia,cmvgrrprl003ng8m6l9dqzt8a,cmvgrrprn003rg8m6e0dicfeo,cmvgrrprn003sg8m6mr80w4j2,cmvgrrprp003xg8m6tbpqdy03,cmvgrrprq0040g8m6dz1x45ba,cmvgrrprt0046g8m6w9717bl4,cmvgrrpru0049g8m69wgj6wxd,cmvgrrpru004bg8m6ro3k1qvt,cmvgrrprw004eg8m65lot6fgw,cmvgrrprw004fg8m67tlsamke,cmvgrrprx004hg8m6fm80n4si,cmvgrrprx004jg8m64zv1nxhh,cmvgrrps70057g8m6fbbvj6bd,cmvgrrps9005bg8m6n5ys09zx,cmvgrrpsa005eg8m65m59iopa,cmvgrrpsa005fg8m6fv0ri3yh,cmvgrrpsb005ig8m699r8mr53,cmvgrrpsd005mg8m6xpjp9p1o,cmvgrrpse005og8m6y0e7u5gw,cmvgrrpse005pg8m6bhjgqjzn,cmvgrrpsf005rg8m6kozrxd2j,cmvgrrpsf005sg8m6b1rjyvr3,cmvgrrpsh005wg8m6nagm84sk,cmvgrrpsh005yg8m6n5khiz8c,cmvgrrpsi005zg8m6d68nfo02,cmvgrrpsi0060g8m6zlve4yau,cmvgrrpsl0066g8m62irsbtyz,cmvgrrpsn006cg8m6mfpgmahx,cmvgrrpso006eg8m6pf0mha92,cmvgrrpsu006ug8m68zuwp76u,cmvgrrpsu006vg8m6r6cijoq6,cmvgrrpsv006wg8m61j3u6qck,cmvgrrpsv006xg8m6sotepsc5}'::text[])))
+                                Heap Fetches: 207
+                                Buffers: shared hit=2723 read=6 written=4
+              ->  Index Scan using "MediaOutlet_pkey" on "MediaOutlet" o  (cost=0.14..0.16 rows=1 width=285) (actual time=0.001..0.001 rows=1 loops=25)
+                    Index Cond: (id = a."outletId")
+                    Buffers: shared hit=50
+        ->  Index Scan using "Country_pkey" on "Country" oc  (cost=0.27..0.49 rows=1 width=40) (actual time=0.001..0.001 rows=1 loops=25)
+              Index Cond: (id = o."countryId")
+              Buffers: shared hit=75
+Planning:
+  Buffers: shared hit=40
+Planning Time: 0.589 ms
+Execution Time: 15.411 ms
+```
+
+```sql
+SELECT "public"."ArticleCountry"."articleId", "public"."ArticleCountry"."countryId", "public"."ArticleCountry"."basis"::text, "public"."ArticleCountry"."matchedTerm" FROM "public"."ArticleCountry" WHERE "public"."ArticleCountry"."articleId" IN ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22,$23,$24) OFFSET $25
+```
+```
+Index Scan using "ArticleCountry_pkey" on "ArticleCountry"  (cost=0.42..174.06 rows=37 width=99) (actual time=0.013..0.069 rows=36 loops=1)
+  Index Cond: ("articleId" = ANY ('{syn129833,syn97659,syn43175,syn86282,syn152090,syn18777,syn118981,syn127490,syn190581,syn37497,syn28521,syn140274,syn168151,syn192072,syn162906,syn91187,syn60686,syn3289,syn78884,syn132412,syn86348,syn111145,syn196953,syn22089}'::text[]))
+  Buffers: shared hit=96
+Planning Time: 0.033 ms
+Execution Time: 0.075 ms
+```
+
+```sql
+SELECT "public"."ArticleSector"."articleId", "public"."ArticleSector"."sectorId", "public"."ArticleSector"."basis"::text, "public"."ArticleSector"."ruleId" FROM "public"."ArticleSector" WHERE "public"."ArticleSector"."articleId" IN ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22,$23,$24) OFFSET $25
+```
+```
+Index Scan using "ArticleSector_pkey" on "ArticleSector"  (cost=0.42..194.49 rows=24 width=72) (actual time=0.013..0.077 rows=16 loops=1)
+  Index Cond: ("articleId" = ANY ('{syn129833,syn97659,syn43175,syn86282,syn152090,syn18777,syn118981,syn127490,syn190581,syn37497,syn28521,syn140274,syn168151,syn192072,syn162906,syn91187,syn60686,syn3289,syn78884,syn132412,syn86348,syn111145,syn196953,syn22089}'::text[]))
+  Buffers: shared hit=85
+Planning Time: 0.015 ms
+Execution Time: 0.082 ms
+```
+
+```sql
+SELECT "public"."Country"."id", "public"."Country"."iso2", "public"."Country"."name" FROM "public"."Country" WHERE "public"."Country"."id" IN ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22,$23,$24,$25,$26,$27,$28,$29,$30,$31,$32,$33,$34,$35,$36) OFFSET $37
+```
+```
+Seq Scan on "Country"  (cost=0.09..8.84 rows=36 width=40) (actual time=0.005..0.020 rows=28 loops=1)
+  Filter: (id = ANY ('{cmvgrrpql0013g8m6z41r51tv,cmvgrrprr0041g8m66ipj87t7,cmvgrrpqc000kg8m6p3uwb3fn,cmvgrrpqz0021g8m67uoz9aec,cmvgrrps9005bg8m6n5ys09zx,cmvgrrpql0013g8m6z41r51tv,cmvgrrprd0033g8m65wc4ebhp,cmvgrrpqj000yg8m61wq8l1k3,cmvgrrprq0040g8m6dz1x45ba,cmvgrrpqf000rg8m6rqmzjbi9,cmvgrrpqw001ug8m6escq4q6a,cmvgrrpsd005mg8m6xpjp9p1o,cmvgrrpr00024g8m6h9mqeb6v,cmvgrrprn003rg8m6e0dicfeo,cmvgrrpq40005g8m696d7mez1,cmvgrrpql0015g8m6iqov1ff2,cmvgrrpqj000yg8m61wq8l1k3,cmvgrrpqc000kg8m6p3uwb3fn,cmvgrrpqw001ug8m6escq4q6a,cmvgrrprb002wg8m6lss6zqdu,cmvgrrprf0036g8m6u8djpsru,cmvgrrpru004bg8m6ro3k1qvt,cmvgrrpsf005rg8m6kozrxd2j,cmvgrrprf0036g8m6u8djpsru,cmvgrrpqn001ag8m6vpbiqyjq,cmvgrrpqp001dg8m6ixziyi1t,cmvgrrprt0046g8m6w9717bl4,cmvgrrpr3002cg8m6nhhfmvhl,cmvgrrprt0046g8m6w9717bl4,cmvgrrpql0014g8m6scimyfh1,cmvgrrprb002wg8m6lss6zqdu,cmvgrrpqe000ng8m6u8y9c9p5,cmvgrrps3004xg8m6t8tx2jxp,cmvgrrprw004eg8m65lot6fgw,cmvgrrprf0036g8m6u8djpsru,cmvgrrpsv006xg8m6sotepsc5}'::text[]))
+  Rows Removed by Filter: 222
+  Buffers: shared hit=5
+Planning Time: 0.020 ms
+Execution Time: 0.023 ms
+```
+
+```sql
+SELECT "public"."Sector"."id", "public"."Sector"."slug", "public"."Sector"."name", "public"."Sector"."sortOrder" FROM "public"."Sector" WHERE "public"."Sector"."id" IN ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16) OFFSET $17
+```
+```
+Bitmap Heap Scan on "Sector"  (cost=4.31..14.94 rows=16 width=100) (actual time=0.008..0.008 rows=6 loops=1)
+  Recheck Cond: (id = ANY ('{cmvgrrpt1006zg8m6s20r11rw,cmvgrrpt30073g8m6w51laxug,cmvgrrpt10070g8m6s3n4le2h,cmvgrrpt20072g8m6czhod24g,cmvgrrpt0006yg8m6hr5hb74c,cmvgrrpt20072g8m6czhod24g,cmvgrrpt30074g8m65usbdsxt,cmvgrrpt30073g8m6w51laxug,cmvgrrpt10070g8m6s3n4le2h,cmvgrrpt30074g8m65usbdsxt,cmvgrrpt20072g8m6czhod24g,cmvgrrpt0006yg8m6hr5hb74c,cmvgrrpt20072g8m6czhod24g,cmvgrrpt0006yg8m6hr5hb74c,cmvgrrpt10070g8m6s3n4le2h,cmvgrrpt1006zg8m6s20r11rw}'::text[]))
+  Heap Blocks: exact=1
+  Buffers: shared hit=2
+  ->  Bitmap Index Scan on "Sector_pkey"  (cost=0.00..4.27 rows=16 width=0) (actual time=0.005..0.005 rows=6 loops=1)
+        Index Cond: (id = ANY ('{cmvgrrpt1006zg8m6s20r11rw,cmvgrrpt30073g8m6w51laxug,cmvgrrpt10070g8m6s3n4le2h,cmvgrrpt20072g8m6czhod24g,cmvgrrpt0006yg8m6hr5hb74c,cmvgrrpt20072g8m6czhod24g,cmvgrrpt30074g8m65usbdsxt,cmvgrrpt30073g8m6w51laxug,cmvgrrpt10070g8m6s3n4le2h,cmvgrrpt30074g8m65usbdsxt,cmvgrrpt20072g8m6czhod24g,cmvgrrpt0006yg8m6hr5hb74c,cmvgrrpt20072g8m6czhod24g,cmvgrrpt0006yg8m6hr5hb74c,cmvgrrpt10070g8m6s3n4le2h,cmvgrrpt1006zg8m6s20r11rw}'::text[]))
+        Buffers: shared hit=1
+Planning Time: 0.015 ms
+Execution Time: 0.019 ms
+```
+
+## global newest, no filters  (end-to-end 21 ms, 6 statements)
+
+```sql
+SELECT * FROM ( SELECT a.id AS id, a."publishedAt" AS pub, lower(o.name) AS oname, 0::numeric AS score, a.title, a.excerpt, a."canonicalUrl", a.language, a.author, a."publishedAtRaw", a."publishedOffsetMinutes", a."publishedAtEstimated", a."firstSeenAt", a."isFixture", a."articleLabel", a."articleLabelNote", o.id AS "outletId", o.slug AS "outletSlug", o.name AS "outletName", o.paywall, o.orientation, o."ideologyTags", o."labelStatus", o."labelConfidence", o."labelMethodology", o."labelSourceUrl", o."labelReviewedAt", o."labelContext", o."labelIsMachine", oc.iso2 AS "outletCountryIso2", oc.name
+```
+```
+Limit  (cost=0.85..11.96 rows=25 width=577) (actual time=0.033..0.074 rows=25 loops=1)
+  Buffers: shared hit=40
+  ->  Nested Loop Left Join  (cost=0.85..88813.84 rows=200011 width=577) (actual time=0.033..0.073 rows=25 loops=1)
+        Buffers: shared hit=40
+        ->  Nested Loop  (cost=0.57..83237.36 rows=200011 width=531) (actual time=0.017..0.048 rows=25 loops=1)
+              Buffers: shared hit=34
+              ->  Index Scan using "Article_status_publishedAt_id_idx" on "Article" a  (cost=0.42..78252.93 rows=200011 width=272) (actual time=0.009..0.033 rows=25 loops=1)
+                    Index Cond: (status = 'PUBLISHED'::"ArticleStatus")
+                    Filter: (NOT "isFixture")
+                    Buffers: shared hit=28
+              ->  Memoize  (cost=0.15..0.17 rows=1 width=285) (actual time=0.000..0.000 rows=1 loops=25)
+                    Cache Key: a."outletId"
+                    Cache Mode: logical
+                    Hits: 22  Misses: 3  Evictions: 0  Overflows: 0  Memory Usage: 1kB
+                    Buffers: shared hit=6
+                    ->  Index Scan using "MediaOutlet_pkey" on "MediaOutlet" o  (cost=0.14..0.16 rows=1 width=285) (actual time=0.002..0.002 rows=1 loops=3)
+                          Index Cond: (id = a."outletId")
+                          Buffers: shared hit=6
+        ->  Memoize  (cost=0.28..0.50 rows=1 width=40) (actual time=0.001..0.001 rows=1 loops=25)
+              Cache Key: o."countryId"
+              Cache Mode: logical
+              Hits: 23  Misses: 2  Evictions: 0  Overflows: 0  Memory Usage: 1kB
+              Buffers: shared hit=6
+              ->  Index Scan using "Country_pkey" on "Country" oc  (cost=0.27..0.49 rows=1 width=40) (actual time=0.005..0.005 rows=1 loops=2)
+                    Index Cond: (id = o."countryId")
+                    Buffers: shared hit=6
+Planning Time: 0.117 ms
+Execution Time: 0.114 ms
+```
+
+```sql
+SELECT count(*)::int AS n FROM ( SELECT a.id AS id, a."publishedAt" AS pub, lower(o.name) AS oname, 0::numeric AS score, a.title, a.excerpt, a."canonicalUrl", a.language, a.author, a."publishedAtRaw", a."publishedOffsetMinutes", a."publishedAtEstimated", a."firstSeenAt", a."isFixture", a."articleLabel", a."articleLabelNote", o.id AS "outletId", o.slug AS "outletSlug", o.name AS "outletName", o.paywall, o.orientation, o."ideologyTags", o."labelStatus", o."labelConfidence", o."labelMethodology", o."labelSourceUrl", o."labelReviewedAt", o."labelContext", o."labelIsMachine", oc.iso2 AS "outletCoun
+```
+```
+Aggregate  (cost=174.86..174.87 rows=1 width=4) (actual time=0.384..0.385 rows=1 loops=1)
+  Buffers: shared hit=14 read=52 written=27
+  ->  Limit  (cost=14.05..162.35 rows=1001 width=643) (actual time=0.014..0.356 rows=1001 loops=1)
+        Buffers: shared hit=14 read=52 written=27
+        ->  Hash Join  (cost=14.05..29645.58 rows=200011 width=643) (actual time=0.014..0.320 rows=1001 loops=1)
+              Hash Cond: (a."outletId" = o.id)
+              Buffers: shared hit=14 read=52 written=27
+              ->  Seq Scan on "Article" a  (cost=0.00..29094.14 rows=200011 width=26) (actual time=0.003..0.188 rows=1001 loops=1)
+                    Filter: ((NOT "isFixture") AND (status = 'PUBLISHED'::"ArticleStatus"))
+                    Buffers: shared hit=13 read=52 written=27
+              ->  Hash  (cost=11.80..11.80 rows=180 width=64) (actual time=0.004..0.005 rows=3 loops=1)
+                    Buckets: 1024  Batches: 1  Memory Usage: 9kB
+                    Buffers: shared hit=1
+                    ->  Seq Scan on "MediaOutlet" o  (cost=0.00..11.80 rows=180 width=64) (actual time=0.001..0.001 rows=3 loops=1)
+                          Buffers: shared hit=1
+Planning Time: 0.067 ms
+Execution Time: 0.419 ms
+```
+
+```sql
+SELECT "public"."ArticleCountry"."articleId", "public"."ArticleCountry"."countryId", "public"."ArticleCountry"."basis"::text, "public"."ArticleCountry"."matchedTerm" FROM "public"."ArticleCountry" WHERE "public"."ArticleCountry"."articleId" IN ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22,$23,$24) OFFSET $25
+```
+```
+Index Scan using "ArticleCountry_pkey" on "ArticleCountry"  (cost=0.42..174.06 rows=37 width=99) (actual time=0.016..0.059 rows=34 loops=1)
+  Index Cond: ("articleId" = ANY ('{syn180480,syn67387,syn83752,syn103689,syn2375,syn84983,syn171271,syn178262,syn129833,syn97659,syn43175,syn86282,syn3723,syn152090,syn7328,syn26414,syn37486,syn167467,syn195499,syn177339,syn61120,syn18777,syn12848,syn118981}'::text[]))
+  Buffers: shared hit=96
+Planning Time: 0.016 ms
+Execution Time: 0.064 ms
+```
+
+```sql
+SELECT "public"."ArticleSector"."articleId", "public"."ArticleSector"."sectorId", "public"."ArticleSector"."basis"::text, "public"."ArticleSector"."ruleId" FROM "public"."ArticleSector" WHERE "public"."ArticleSector"."articleId" IN ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22,$23,$24) OFFSET $25
+```
+```
+Index Scan using "ArticleSector_pkey" on "ArticleSector"  (cost=0.42..194.49 rows=24 width=72) (actual time=0.012..0.048 rows=19 loops=1)
+  Index Cond: ("articleId" = ANY ('{syn180480,syn67387,syn83752,syn103689,syn2375,syn84983,syn171271,syn178262,syn129833,syn97659,syn43175,syn86282,syn3723,syn152090,syn7328,syn26414,syn37486,syn167467,syn195499,syn177339,syn61120,syn18777,syn12848,syn118981}'::text[]))
+  Buffers: shared hit=91
+Planning Time: 0.017 ms
+Execution Time: 0.054 ms
+```
+
+```sql
+SELECT "public"."Country"."id", "public"."Country"."iso2", "public"."Country"."name" FROM "public"."Country" WHERE "public"."Country"."id" IN ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22,$23,$24,$25,$26,$27,$28,$29,$30,$31,$32,$33,$34) OFFSET $35
+```
+```
+Seq Scan on "Country"  (cost=0.09..8.84 rows=34 width=40) (actual time=0.003..0.015 rows=25 loops=1)
+  Filter: (id = ANY ('{cmvgrrpqu001qg8m645ipjwjy,cmvgrrpqc000kg8m6p3uwb3fn,cmvgrrpqz0021g8m67uoz9aec,cmvgrrprb002wg8m6lss6zqdu,cmvgrrpso006gg8m6ua5tl2n7,cmvgrrpql0013g8m6z41r51tv,cmvgrrprd0033g8m65wc4ebhp,cmvgrrpqf000rg8m6rqmzjbi9,cmvgrrpqw001ug8m6escq4q6a,cmvgrrpq20001g8m6nvelemq0,cmvgrrpq30003g8m6vkzga5xe,cmvgrrprj003ig8m60rtnur9l,cmvgrrpq30003g8m6vkzga5xe,cmvgrrpqz0021g8m67uoz9aec,cmvgrrpq40005g8m696d7mez1,cmvgrrpql0015g8m6iqov1ff2,cmvgrrprr0041g8m66ipj87t7,cmvgrrpq20001g8m6nvelemq0,cmvgrrpqh000ug8m6xynmdmmv,cmvgrrprj003gg8m66anfdma3,cmvgrrpqh000ug8m6xynmdmmv,cmvgrrps3004wg8m6vv2e1kjl,cmvgrrpqp001dg8m6ixziyi1t,cmvgrrprt0046g8m6w9717bl4,cmvgrrpqh000ug8m6xynmdmmv,cmvgrrpqh000ug8m6xynmdmmv,cmvgrrprw004gg8m6gwnc31s1,cmvgrrpqh000ug8m6xynmdmmv,cmvgrrpqh000ug8m6xynmdmmv,cmvgrrprj003hg8m6hubhbb3x,cmvgrrpql0014g8m6scimyfh1,cmvgrrprb002wg8m6lss6zqdu,cmvgrrprf0036g8m6u8djpsru,cmvgrrpsv006xg8m6sotepsc5}'::text[]))
+  Rows Removed by Filter: 225
+  Buffers: shared hit=5
+Planning Time: 0.013 ms
+Execution Time: 0.016 ms
+```
+
+```sql
+SELECT "public"."Sector"."id", "public"."Sector"."slug", "public"."Sector"."name", "public"."Sector"."sortOrder" FROM "public"."Sector" WHERE "public"."Sector"."id" IN ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19) OFFSET $20
+```
+```
+Bitmap Heap Scan on "Sector"  (cost=4.34..14.63 rows=19 width=100) (actual time=0.005..0.006 rows=7 loops=1)
+  Recheck Cond: (id = ANY ('{cmvgrrpt30073g8m6w51laxug,cmvgrrpt30073g8m6w51laxug,cmvgrrpt0006yg8m6hr5hb74c,cmvgrrpt20072g8m6czhod24g,cmvgrrpt20072g8m6czhod24g,cmvgrrpt20071g8m6sje0kmfd,cmvgrrpt30073g8m6w51laxug,cmvgrrpt30073g8m6w51laxug,cmvgrrpt20072g8m6czhod24g,cmvgrrpt10070g8m6s3n4le2h,cmvgrrpt30073g8m6w51laxug,cmvgrrpt30074g8m65usbdsxt,cmvgrrpt30073g8m6w51laxug,cmvgrrpt20072g8m6czhod24g,cmvgrrpt10070g8m6s3n4le2h,cmvgrrpt20072g8m6czhod24g,cmvgrrpt20071g8m6sje0kmfd,cmvgrrpt0006yg8m6hr5hb74c,cmvgrrpt1006zg8m6s20r11rw}'::text[]))
+  Heap Blocks: exact=1
+  Buffers: shared hit=2
+  ->  Bitmap Index Scan on "Sector_pkey"  (cost=0.00..4.29 rows=19 width=0) (actual time=0.004..0.004 rows=7 loops=1)
+        Index Cond: (id = ANY ('{cmvgrrpt30073g8m6w51laxug,cmvgrrpt30073g8m6w51laxug,cmvgrrpt0006yg8m6hr5hb74c,cmvgrrpt20072g8m6czhod24g,cmvgrrpt20072g8m6czhod24g,cmvgrrpt20071g8m6sje0kmfd,cmvgrrpt30073g8m6w51laxug,cmvgrrpt30073g8m6w51laxug,cmvgrrpt20072g8m6czhod24g,cmvgrrpt10070g8m6s3n4le2h,cmvgrrpt30073g8m6w51laxug,cmvgrrpt30074g8m65usbdsxt,cmvgrrpt30073g8m6w51laxug,cmvgrrpt20072g8m6czhod24g,cmvgrrpt10070g8m6s3n4le2h,cmvgrrpt20072g8m6czhod24g,cmvgrrpt20071g8m6sje0kmfd,cmvgrrpt0006yg8m6hr5hb74c,cmvgrrpt1006zg8m6s20r11rw}'::text[]))
+        Buffers: shared hit=1
+Planning Time: 0.010 ms
+Execution Time: 0.013 ms
+```
+
+## search "rice harvest", relevance  (end-to-end 274 ms, 9 statements)
+
+```sql
+SELECT id FROM "MediaOutlet" WHERE name ILIKE $1
+```
+```
+Seq Scan on "MediaOutlet"  (cost=0.00..12.25 rows=1 width=32) (actual time=0.003..0.003 rows=0 loops=1)
+  Filter: (name ~~* '%rice harvest%'::text)
+  Rows Removed by Filter: 3
+  Buffers: shared hit=1
+Planning:
+  Buffers: shared hit=1 read=9
+Planning Time: 0.229 ms
+Execution Time: 0.005 ms
+```
+
+```sql
+SELECT * FROM ( SELECT a.id AS id, a."publishedAt" AS pub, lower(o.name) AS oname, round(( CASE WHEN a."searchVector" @@ (SELECT (websearch_to_tsquery('simple', $1) || websearch_to_tsquery(frealgo_ts_config($2), $3))) THEN ts_rank_cd(a."searchVector", (SELECT (websearch_to_tsquery('simple', $4) || websearch_to_tsquery(frealgo_ts_config($5), $6))), 32) ELSE 0 END + 0.3 * word_similarity($7, a.title) + 0 )::numeric, 6) AS score, a.title, a.excerpt, a."canonicalUrl", a.language, a.author, a."publishedAtRaw", a."publishedOffsetMinutes", a."publishedAtEstimated", a."firstSeenAt", a."isFixture", a."
+```
+```
+Limit  (cost=32562.00..32562.06 rows=25 width=577) (actual time=212.891..212.897 rows=25 loops=1)
+  Buffers: shared hit=6120 read=21977 written=201
+  InitPlan 1
+    ->  Result  (cost=0.00..0.01 rows=1 width=32) (actual time=0.000..0.001 rows=1 loops=1)
+  InitPlan 2
+    ->  Result  (cost=0.00..0.01 rows=1 width=32) (never executed)
+  ->  Sort  (cost=32561.98..32619.36 rows=22952 width=577) (actual time=212.890..212.894 rows=25 loops=1)
+        Sort Key: (round((((CASE WHEN (a."searchVector" @@ (InitPlan 1).col1) THEN ts_rank_cd(a."searchVector", (InitPlan 2).col1, 32) ELSE '0'::real END + ('0.3'::double precision * word_similarity('rice harvest'::text, a.title))) + '0'::double precision))::numeric, 6)) DESC, a."publishedAt" DESC, a.id DESC
+        Sort Method: top-N heapsort  Memory: 46kB
+        Buffers: shared hit=6120 read=21977 written=201
+        ->  Hash Left Join  (cost=3906.03..31914.29 rows=22952 width=577) (actual time=20.273..208.036 rows=20000 loops=1)
+              Hash Cond: (o."countryId" = oc.id)
+              Buffers: shared hit=6117 read=21977 written=201
+              ->  Hash Join  (cost=3874.89..31305.45 rows=22952 width=747) (actual time=20.208..157.039 rows=20000 loops=1)
+                    Hash Cond: (a."outletId" = o.id)
+                    Buffers: shared hit=6112 read=21974 written=201
+                    ->  Bitmap Heap Scan on "Article" a  (cost=3821.79..31190.69 rows=22952 width=488) (actual time=20.187..153.587 rows=20000 loops=1)
+                          Recheck Cond: (("searchVector" @@ '''rice'' & ''harvest'' | ''rice'' & ''harvest'''::tsquery) OR (title ~~* '%rice harvest%'::text) OR ('rice harvest'::text <% title))
+                          Filter: ((NOT "isFixture") AND (status = 'PUBLISHED'::"ArticleStatus") AND (("searchVector" @@ '''rice'' & ''harvest'' | ''rice'' & ''harvest'''::tsquery) OR (title ~~* '%rice harvest%'::text) OR ('rice harvest'::text <% title)))
+                          Heap Blocks: exact=26593
+                          Buffers: shared hit=6111 read=21973 written=201
+                          ->  BitmapOr  (cost=3821.79..3821.79 rows=23430 width=0) (actual time=18.066..18.067 rows=0 loops=1)
+                                Buffers: shared hit=677 read=814
+                                ->  Bitmap Index Scan on "Article_searchVector_idx"  (cost=0.00..1909.50 rows=5227 width=0) (actual time=5.753..5.754 rows=0 loops=1)
+                                      Index Cond: ("searchVector" @@ '''rice'' & ''harvest'' | ''rice'' & ''harvest'''::tsquery)
+                                      Buffers: shared hit=74 read=464
+                                ->  Bitmap Index Scan on "Article_title_trgm_idx"  (cost=0.00..870.35 rows=20 width=0) (actual time=3.270..3.271 rows=0 loops=1)
+                                      Index Cond: (title ~~* '%rice harvest%'::text)
+                                      Buffers: shared hit=147 read=295
+                                ->  Bitmap Index Scan on "Article_title_trgm_idx"  (cost=0.00..1024.73 rows=18183 width=0) (actual time=9.042..9.042 rows=40000 loops=1)
+                                      Index Cond: (title %> 'rice harvest'::text)
+                                      Buffers: shared hit=456 read=55
+                    ->  Hash  (cost=50.84..50.84 rows=180 width=285) (actual time=0.013..0.013 rows=3 loops=1)
+                          Buckets: 1024  Batches: 1  Memory Usage: 9kB
+                          Buffers: shared hit=1 read=1
+                          ->  Index Scan using "MediaOutlet_countryId_orientation_idx" on "MediaOutlet" o  (cost=0.14..50.84 rows=180 width=285) (actual time=0.008..0.008 rows=3 loops=1)
+                                Buffers: shared hit=1 read=1
+              ->  Hash  (cost=28.02..28.02 rows=250 width=40) (actual time=0.048..0.049 rows=250 loops=1)
+                    Buckets: 1024  Batches: 1  Memory Usage: 26kB
+                    Buffers: shared hit=5 read=3
+                    ->  Index Scan using "Country_pkey" on "Country" oc  (cost=0.27..28.02 rows=250 width=40) (actual time=0.009..0.027 rows=250 loops=1)
+                          Buffers: shared hit=5 read=3
+Planning:
+  Buffers: shared hit=97 read=27
+Planning Time: 1.363 ms
+Execution Time: 213.199 ms
+```
+
+```sql
+SELECT count(*)::int AS n FROM ( SELECT a.id AS id, a."publishedAt" AS pub, lower(o.name) AS oname, round(( CASE WHEN a."searchVector" @@ (SELECT (websearch_to_tsquery('simple', $1) || websearch_to_tsquery(frealgo_ts_config($2), $3))) THEN ts_rank_cd(a."searchVector", (SELECT (websearch_to_tsquery('simple', $4) || websearch_to_tsquery(frealgo_ts_config($5), $6))), 32) ELSE 0 END + 0.3 * word_similarity($7, a.title) + 0 )::numeric, 6) AS score, a.title, a.excerpt, a."canonicalUrl", a.language, a.author, a."publishedAtRaw", a."publishedOffsetMinutes", a."publishedAtEstimated", a."firstSeenAt", a
+```
+```
+Aggregate  (cost=3516.28..3516.29 rows=1 width=4) (actual time=27.495..27.496 rows=1 loops=1)
+  Buffers: shared hit=9240 read=348
+  ->  Limit  (cost=0.57..3503.77 rows=1001 width=643) (actual time=0.031..27.464 rows=1001 loops=1)
+        Buffers: shared hit=9240 read=348
+        ->  Nested Loop  (cost=0.57..80325.56 rows=22952 width=643) (actual time=0.031..27.424 rows=1001 loops=1)
+              Buffers: shared hit=9240 read=348
+              ->  Index Scan using "Article_status_publishedAt_id_idx" on "Article" a  (cost=0.42..79753.01 rows=22952 width=26) (actual time=0.022..27.160 rows=1001 loops=1)
+                    Index Cond: (status = 'PUBLISHED'::"ArticleStatus")
+                    Filter: ((NOT "isFixture") AND (("searchVector" @@ '''rice'' & ''harvest'' | ''rice'' & ''harvest'''::tsquery) OR (title ~~* '%rice harvest%'::text) OR ('rice harvest'::text <% title)))
+                    Rows Removed by Filter: 8434
+                    Buffers: shared hit=9237 read=347
+              ->  Memoize  (cost=0.15..0.17 rows=1 width=64) (actual time=0.000..0.000 rows=1 loops=1001)
+                    Cache Key: a."outletId"
+                    Cache Mode: logical
+                    Hits: 999  Misses: 2  Evictions: 0  Overflows: 0  Memory Usage: 1kB
+                    Buffers: shared hit=3 read=1
+                    ->  Index Scan using "MediaOutlet_pkey" on "MediaOutlet" o  (cost=0.14..0.16 rows=1 width=64) (actual time=0.004..0.004 rows=1 loops=2)
+                          Index Cond: (id = a."outletId")
+                          Buffers: shared hit=3 read=1
+Planning:
+  Buffers: shared hit=2 read=1
+Planning Time: 0.563 ms
+Execution Time: 27.521 ms
+```
+
+```sql
+SELECT "public"."ArticleCountry"."articleId", "public"."ArticleCountry"."countryId", "public"."ArticleCountry"."basis"::text, "public"."ArticleCountry"."matchedTerm" FROM "public"."ArticleCountry" WHERE "public"."ArticleCountry"."articleId" IN ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22,$23,$24) OFFSET $25
+```
+```
+Index Scan using "ArticleCountry_pkey" on "ArticleCountry"  (cost=0.42..174.06 rows=37 width=99) (actual time=0.026..0.167 rows=32 loops=1)
+  Index Cond: ("articleId" = ANY ('{syn67387,syn84983,syn129833,syn167467,syn183373,syn167233,syn22213,syn28433,syn307,syn102997,syn194813,syn124613,syn154597,syn128633,syn38047,syn90113,syn65863,syn130927,syn96673,syn129373,syn191983,syn187063,syn23003,syn65353}'::text[]))
+  Buffers: shared hit=40 read=56
+Planning Time: 0.029 ms
+Execution Time: 0.173 ms
+```
+
+```sql
+SELECT "public"."ArticleSector"."articleId", "public"."ArticleSector"."sectorId", "public"."ArticleSector"."basis"::text, "public"."ArticleSector"."ruleId" FROM "public"."ArticleSector" WHERE "public"."ArticleSector"."articleId" IN ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22,$23,$24) OFFSET $25
+```
+```
+Index Scan using "ArticleSector_pkey" on "ArticleSector"  (cost=0.42..194.49 rows=24 width=72) (actual time=0.018..0.119 rows=17 loops=1)
+  Index Cond: ("articleId" = ANY ('{syn67387,syn84983,syn129833,syn167467,syn183373,syn167233,syn22213,syn28433,syn307,syn102997,syn194813,syn124613,syn154597,syn128633,syn38047,syn90113,syn65863,syn130927,syn96673,syn129373,syn191983,syn187063,syn23003,syn65353}'::text[]))
+  Buffers: shared hit=43 read=46
+Planning Time: 0.017 ms
+Execution Time: 0.124 ms
+```
+
+```sql
+SELECT "public"."Country"."id", "public"."Country"."iso2", "public"."Country"."name" FROM "public"."Country" WHERE "public"."Country"."id" IN ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22,$23,$24,$25,$26,$27,$28,$29,$30,$31,$32) OFFSET $33
+```
+```
+Seq Scan on "Country"  (cost=0.08..8.83 rows=32 width=40) (actual time=0.008..0.027 rows=23 loops=1)
+  Filter: (id = ANY ('{cmvgrrpqi000xg8m6dx3uzw6i,cmvgrrpqk0012g8m6g3e4pvee,cmvgrrpr5002hg8m6aubk0wmc,cmvgrrpr00024g8m6h9mqeb6v,cmvgrrpsb005ig8m699r8mr53,cmvgrrpql0013g8m6z41r51tv,cmvgrrprd0033g8m65wc4ebhp,cmvgrrpqf000rg8m6rqmzjbi9,cmvgrrpqj000yg8m61wq8l1k3,cmvgrrpqh000ug8m6xynmdmmv,cmvgrrprv004dg8m6mgqfir9j,cmvgrrpq20001g8m6nvelemq0,cmvgrrpq70009g8m6qfjooqhm,cmvgrrpr00024g8m6h9mqeb6v,cmvgrrpqh000ug8m6xynmdmmv,cmvgrrpqh000ug8m6xynmdmmv,cmvgrrpq70009g8m6qfjooqhm,cmvgrrpq40004g8m650kgxjgl,cmvgrrpqc000kg8m6p3uwb3fn,cmvgrrprl003lg8m6ms2fydkp,cmvgrrpqt001mg8m62ribpsff,cmvgrrppy0000g8m6ycpxt1c4,cmvgrrpqk0012g8m6g3e4pvee,cmvgrrprh003cg8m62nk8e9i7,cmvgrrpr10027g8m6hy87usw3,cmvgrrpqh000ug8m6xynmdmmv,cmvgrrpqh000ug8m6xynmdmmv,cmvgrrprj003hg8m6hubhbb3x,cmvgrrpr00024g8m6h9mqeb6v,cmvgrrprv004dg8m6mgqfir9j,cmvgrrpq7000ag8m6x141ui7e,cmvgrrprf0036g8m6u8djpsru}'::text[]))
+  Rows Removed by Filter: 227
+  Buffers: shared read=5
+Planning Time: 0.024 ms
+Execution Time: 0.029 ms
+```
+
+```sql
+SELECT "public"."Sector"."id", "public"."Sector"."slug", "public"."Sector"."name", "public"."Sector"."sortOrder" FROM "public"."Sector" WHERE "public"."Sector"."id" IN ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17) OFFSET $18
+```
+```
+Bitmap Heap Scan on "Sector"  (cost=4.32..14.58 rows=17 width=100) (actual time=0.009..0.010 rows=7 loops=1)
+  Recheck Cond: (id = ANY ('{cmvgrrpt1006zg8m6s20r11rw,cmvgrrpt10070g8m6s3n4le2h,cmvgrrpt20072g8m6czhod24g,cmvgrrpt10070g8m6s3n4le2h,cmvgrrpt30074g8m65usbdsxt,cmvgrrpt30074g8m65usbdsxt,cmvgrrpt20071g8m6sje0kmfd,cmvgrrpt30073g8m6w51laxug,cmvgrrpt30074g8m65usbdsxt,cmvgrrpt20071g8m6sje0kmfd,cmvgrrpt30074g8m65usbdsxt,cmvgrrpt0006yg8m6hr5hb74c,cmvgrrpt1006zg8m6s20r11rw,cmvgrrpt1006zg8m6s20r11rw,cmvgrrpt0006yg8m6hr5hb74c,cmvgrrpt20072g8m6czhod24g,cmvgrrpt1006zg8m6s20r11rw}'::text[]))
+  Heap Blocks: exact=1
+  Buffers: shared read=2
+  ->  Bitmap Index Scan on "Sector_pkey"  (cost=0.00..4.28 rows=17 width=0) (actual time=0.006..0.006 rows=7 loops=1)
+        Index Cond: (id = ANY ('{cmvgrrpt1006zg8m6s20r11rw,cmvgrrpt10070g8m6s3n4le2h,cmvgrrpt20072g8m6czhod24g,cmvgrrpt10070g8m6s3n4le2h,cmvgrrpt30074g8m65usbdsxt,cmvgrrpt30074g8m65usbdsxt,cmvgrrpt20071g8m6sje0kmfd,cmvgrrpt30073g8m6w51laxug,cmvgrrpt30074g8m65usbdsxt,cmvgrrpt20071g8m6sje0kmfd,cmvgrrpt30074g8m65usbdsxt,cmvgrrpt0006yg8m6hr5hb74c,cmvgrrpt1006zg8m6s20r11rw,cmvgrrpt1006zg8m6s20r11rw,cmvgrrpt0006yg8m6hr5hb74c,cmvgrrpt20072g8m6czhod24g,cmvgrrpt1006zg8m6s20r11rw}'::text[]))
+        Buffers: shared read=1
+Planning Time: 0.017 ms
+Execution Time: 0.019 ms
+```
+
+## search "ceasefire" in country IN  (end-to-end 65 ms, 10 statements)
+
+```sql
+SELECT "public"."Country"."id" FROM "public"."Country" WHERE ("public"."Country"."iso2" = $1 AND 1=1) LIMIT $2 OFFSET $3
+```
+```
+Limit  (cost=0.00..8.12 rows=1 width=26) (actual time=0.006..0.006 rows=1 loops=1)
+  Buffers: shared hit=3
+  ->  Seq Scan on "Country"  (cost=0.00..8.12 rows=1 width=26) (actual time=0.006..0.006 rows=1 loops=1)
+        Filter: ((iso2)::text = 'IN'::text)
+        Rows Removed by Filter: 104
+        Buffers: shared hit=3
+Planning Time: 0.012 ms
+Execution Time: 0.009 ms
+```
+
+```sql
+SELECT id FROM "MediaOutlet" WHERE name ILIKE $1
+```
+```
+Seq Scan on "MediaOutlet"  (cost=0.00..12.25 rows=1 width=32) (actual time=0.003..0.003 rows=0 loops=1)
+  Filter: (name ~~* '%ceasefire%'::text)
+  Rows Removed by Filter: 3
+  Buffers: shared hit=1
+Planning:
+  Buffers: shared hit=1
+Planning Time: 0.019 ms
+Execution Time: 0.004 ms
+```
+
+```sql
+SELECT * FROM ( SELECT a.id AS id, a."publishedAt" AS pub, lower(o.name) AS oname, round(( CASE WHEN a."searchVector" @@ (SELECT (websearch_to_tsquery('simple', $1) || websearch_to_tsquery(frealgo_ts_config($2), $3))) THEN ts_rank_cd(a."searchVector", (SELECT (websearch_to_tsquery('simple', $4) || websearch_to_tsquery(frealgo_ts_config($5), $6))), 32) ELSE 0 END + 0.3 * word_similarity($7, a.title) + 0 )::numeric, 6) AS score, a.title, a.excerpt, a."canonicalUrl", a.language, a.author, a."publishedAtRaw", a."publishedOffsetMinutes", a."publishedAtEstimated", a."firstSeenAt", a."isFixture", a."
+```
+```
+Limit  (cost=22879.67..22882.59 rows=25 width=577) (actual time=31.551..36.256 rows=25 loops=1)
+  Buffers: shared hit=37578
+  InitPlan 1
+    ->  Result  (cost=0.00..0.01 rows=1 width=32) (actual time=0.000..0.000 rows=1 loops=1)
+  InitPlan 2
+    ->  Result  (cost=0.00..0.01 rows=1 width=32) (actual time=0.000..0.001 rows=1 loops=1)
+  ->  Gather Merge  (cost=22879.65..23186.97 rows=2634 width=577) (actual time=31.551..36.253 rows=25 loops=1)
+        Workers Planned: 2
+        Workers Launched: 2
+        Buffers: shared hit=37578
+        ->  Sort  (cost=21879.63..21882.92 rows=1317 width=577) (actual time=23.993..23.996 rows=21 loops=3)
+              Sort Key: (round((((CASE WHEN (a."searchVector" @@ (InitPlan 1).col1) THEN ts_rank_cd(a."searchVector", (InitPlan 2).col1, 32) ELSE '0'::real END + ('0.3'::double precision * word_similarity('ceasefire'::text, a.title))) + '0'::double precision))::numeric, 6)) DESC, a."publishedAt" DESC, a.id DESC
+              Sort Method: top-N heapsort  Memory: 45kB
+              Buffers: shared hit=37578
+              Worker 0:  Sort Method: top-N heapsort  Memory: 44kB
+              Worker 1:  Sort Method: top-N heapsort  Memory: 47kB
+              ->  Hash Left Join  (cost=930.70..21842.46 rows=1317 width=577) (actual time=0.968..23.798 rows=368 loops=3)
+                    Hash Cond: (o."countryId" = oc.id)
+                    Buffers: shared hit=37534
+                    ->  Nested Loop  (cost=899.56..21778.17 rows=1317 width=747) (actual time=0.856..13.611 rows=368 loops=3)
+                          Buffers: shared hit=37502
+                          ->  Nested Loop  (cost=899.40..21744.70 rows=1317 width=488) (actual time=0.846..13.479 rows=368 loops=3)
+                                Buffers: shared hit=37488
+                                ->  Parallel Bitmap Heap Scan on "ArticleCountry" acx  (cost=898.98..6364.47 rows=3363 width=9) (actual time=0.819..2.084 rows=2691 loops=3)
+                                      Recheck Cond: ("countryId" = 'cmvgrrprb002wg8m6lss6zqdu'::text)
+                                      Heap Blocks: exact=3600
+                                      Buffers: shared hit=5198
+                                      ->  Bitmap Index Scan on "ArticleCountry_countryId_publishedAt_articleId_idx"  (cost=0.00..896.96 rows=8072 width=0) (actual time=0.964..0.964 rows=16125 loops=1)
+                                            Index Cond: ("countryId" = 'cmvgrrprb002wg8m6lss6zqdu'::text)
+                                            Buffers: shared hit=211
+                                ->  Index Scan using "Article_pkey" on "Article" a  (cost=0.42..4.57 rows=1 width=488) (actual time=0.004..0.004 rows=0 loops=8072)
+                                      Index Cond: (id = acx."articleId")
+                                      Filter: ((NOT "isFixture") AND (status = 'PUBLISHED'::"ArticleStatus") AND (("searchVector" @@ '''ceasefire'' | ''ceasefir'''::tsquery) OR (title ~~* '%ceasefire%'::text) OR ('ceasefire'::text <% title)))
+                                      Rows Removed by Filter: 1
+                                      Buffers: shared hit=32290
+                          ->  Memoize  (cost=0.15..0.17 rows=1 width=285) (actual time=0.000..0.000 rows=1 loops=1105)
+                                Cache Key: a."outletId"
+                                Cache Mode: logical
+                                Hits: 490  Misses: 2  Evictions: 0  Overflows: 0  Memory Usage: 1kB
+                                Buffers: shared hit=14
+                                Worker 0:  Hits: 313  Misses: 2  Evictions: 0  Overflows: 0  Memory Usage: 1kB
+                                Worker 1:  Hits: 296  Misses: 2  Evictions: 0  Overflows: 0  Memory Usage: 1kB
+                                ->  Index Scan using "MediaOutlet_pkey" on "MediaOutlet" o  (cost=0.14..0.16 rows=1 width=285) (actual time=0.004..0.004 rows=1 loops=6)
+                                      Index Cond: (id = a."outletId")
+                                      Buffers: shared hit=14
+                    ->  Hash  (cost=28.02..28.02 rows=250 width=40) (actual time=0.057..0.058 rows=250 loops=3)
+                          Buckets: 1024  Batches: 1  Memory Usage: 26kB
+                          Buffers: shared hit=26
+                          ->  Index Scan using "Country_pkey" on "Country" oc  (cost=0.27..28.02 rows=250 width=40) (actual time=0.010..0.034 rows=250 loops=3)
+                                Buffers: shared hit=26
+Planning:
+  Buffers: shared hit=43
+Planning Time: 0.844 ms
+Execution Time: 36.360 ms
+```
+
+```sql
+SELECT count(*)::int AS n FROM ( SELECT a.id AS id, a."publishedAt" AS pub, lower(o.name) AS oname, round(( CASE WHEN a."searchVector" @@ (SELECT (websearch_to_tsquery('simple', $1) || websearch_to_tsquery(frealgo_ts_config($2), $3))) THEN ts_rank_cd(a."searchVector", (SELECT (websearch_to_tsquery('simple', $4) || websearch_to_tsquery(frealgo_ts_config($5), $6))), 32) ELSE 0 END + 0.3 * word_similarity($7, a.title) + 0 )::numeric, 6) AS score, a.title, a.excerpt, a."canonicalUrl", a.language, a.author, a."publishedAtRaw", a."publishedOffsetMinutes", a."publishedAtEstimated", a."firstSeenAt", a
+```
+```
+Aggregate  (cost=8623.84..8623.85 rows=1 width=4) (actual time=21.063..23.775 rows=1 loops=1)
+  Buffers: shared hit=37502
+  ->  Limit  (cost=1899.56..8611.33 rows=1001 width=643) (actual time=2.776..23.738 rows=1001 loops=1)
+        Buffers: shared hit=37502
+        ->  Gather  (cost=1899.56..23094.27 rows=3161 width=643) (actual time=2.775..23.696 rows=1001 loops=1)
+              Workers Planned: 2
+              Workers Launched: 2
+              Buffers: shared hit=37502
+              ->  Nested Loop  (cost=899.56..21778.17 rows=1317 width=643) (actual time=0.906..13.722 rows=368 loops=3)
+                    Buffers: shared hit=37502
+                    ->  Nested Loop  (cost=899.40..21744.70 rows=1317 width=26) (actual time=0.897..13.606 rows=368 loops=3)
+                          Buffers: shared hit=37488
+                          ->  Parallel Bitmap Heap Scan on "ArticleCountry" acx  (cost=898.98..6364.47 rows=3363 width=9) (actual time=0.873..2.125 rows=2691 loops=3)
+                                Recheck Cond: ("countryId" = 'cmvgrrprb002wg8m6lss6zqdu'::text)
+                                Heap Blocks: exact=3937
+                                Buffers: shared hit=5198
+                                ->  Bitmap Index Scan on "ArticleCountry_countryId_publishedAt_articleId_idx"  (cost=0.00..896.96 rows=8072 width=0) (actual time=1.118..1.118 rows=16125 loops=1)
+                                      Index Cond: ("countryId" = 'cmvgrrprb002wg8m6lss6zqdu'::text)
+                                      Buffers: shared hit=211
+                          ->  Index Scan using "Article_pkey" on "Article" a  (cost=0.42..4.57 rows=1 width=35) (actual time=0.004..0.004 rows=0 loops=8072)
+                                Index Cond: (id = acx."articleId")
+                                Filter: ((NOT "isFixture") AND (status = 'PUBLISHED'::"ArticleStatus") AND (("searchVector" @@ '''ceasefire'' | ''ceasefir'''::tsquery) OR (title ~~* '%ceasefire%'::text) OR ('ceasefire'::text <% title)))
+                                Rows Removed by Filter: 1
+                                Buffers: shared hit=32290
+                    ->  Memoize  (cost=0.15..0.17 rows=1 width=64) (actual time=0.000..0.000 rows=1 loops=1105)
+                          Cache Key: a."outletId"
+                          Cache Mode: logical
+                          Hits: 635  Misses: 2  Evictions: 0  Overflows: 0  Memory Usage: 1kB
+                          Buffers: shared hit=14
+                          Worker 0:  Hits: 234  Misses: 2  Evictions: 0  Overflows: 0  Memory Usage: 1kB
+                          Worker 1:  Hits: 230  Misses: 2  Evictions: 0  Overflows: 0  Memory Usage: 1kB
+                          ->  Index Scan using "MediaOutlet_pkey" on "MediaOutlet" o  (cost=0.14..0.16 rows=1 width=64) (actual time=0.004..0.004 rows=1 loops=6)
+                                Index Cond: (id = a."outletId")
+                                Buffers: shared hit=14
+Planning:
+  Buffers: shared hit=23
+Planning Time: 0.597 ms
+Execution Time: 23.844 ms
+```
+
+```sql
+SELECT "public"."ArticleCountry"."articleId", "public"."ArticleCountry"."countryId", "public"."ArticleCountry"."basis"::text, "public"."ArticleCountry"."matchedTerm" FROM "public"."ArticleCountry" WHERE "public"."ArticleCountry"."articleId" IN ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22,$23,$24) OFFSET $25
+```
+```
+Index Scan using "ArticleCountry_pkey" on "ArticleCountry"  (cost=0.42..174.06 rows=37 width=99) (actual time=0.018..0.091 rows=36 loops=1)
+  Index Cond: ("articleId" = ANY ('{syn12848,syn65692,syn95858,syn92648,syn144098,syn165532,syn36022,syn81128,syn48622,syn168398,syn37822,syn184522,syn92018,syn32218,syn144598,syn190012,syn110248,syn196478,syn52058,syn122428,syn151102,syn49168,syn150202,syn103732}'::text[]))
+  Buffers: shared hit=96
+Planning Time: 0.031 ms
+Execution Time: 0.097 ms
+```
+
+```sql
+SELECT "public"."ArticleSector"."articleId", "public"."ArticleSector"."sectorId", "public"."ArticleSector"."basis"::text, "public"."ArticleSector"."ruleId" FROM "public"."ArticleSector" WHERE "public"."ArticleSector"."articleId" IN ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22,$23,$24) OFFSET $25
+```
+```
+Index Scan using "ArticleSector_pkey" on "ArticleSector"  (cost=0.42..194.49 rows=24 width=72) (actual time=0.014..0.068 rows=17 loops=1)
+  Index Cond: ("articleId" = ANY ('{syn12848,syn65692,syn95858,syn92648,syn144098,syn165532,syn36022,syn81128,syn48622,syn168398,syn37822,syn184522,syn92018,syn32218,syn144598,syn190012,syn110248,syn196478,syn52058,syn122428,syn151102,syn49168,syn150202,syn103732}'::text[]))
+  Buffers: shared hit=89
+Planning Time: 0.016 ms
+Execution Time: 0.073 ms
+```
+
+```sql
+SELECT "public"."Country"."id", "public"."Country"."iso2", "public"."Country"."name" FROM "public"."Country" WHERE "public"."Country"."id" IN ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22,$23,$24,$25,$26,$27,$28,$29,$30,$31,$32,$33,$34,$35,$36) OFFSET $37
+```
+```
+Seq Scan on "Country"  (cost=0.09..8.84 rows=36 width=40) (actual time=0.005..0.016 rows=13 loops=1)
+  Filter: (id = ANY ('{cmvgrrprb002wg8m6lss6zqdu,cmvgrrpqy001zg8m6jb3c2nf5,cmvgrrprb002wg8m6lss6zqdu,cmvgrrprb002wg8m6lss6zqdu,cmvgrrprb002wg8m6lss6zqdu,cmvgrrpso006gg8m6ua5tl2n7,cmvgrrpq20002g8m6gtav4obc,cmvgrrprb002wg8m6lss6zqdu,cmvgrrprb002wg8m6lss6zqdu,cmvgrrprb002wg8m6lss6zqdu,cmvgrrpry004kg8m657nk9c27,cmvgrrprb002wg8m6lss6zqdu,cmvgrrprb002wg8m6lss6zqdu,cmvgrrprf0036g8m6u8djpsru,cmvgrrprb002wg8m6lss6zqdu,cmvgrrprr0041g8m66ipj87t7,cmvgrrprb002wg8m6lss6zqdu,cmvgrrprb002wg8m6lss6zqdu,cmvgrrprb002wg8m6lss6zqdu,cmvgrrpqm0017g8m6ks4qouly,cmvgrrprb002wg8m6lss6zqdu,cmvgrrpq9000eg8m6wuqvpx2d,cmvgrrprb002wg8m6lss6zqdu,cmvgrrpq8000cg8m6v3lkivhz,cmvgrrprb002wg8m6lss6zqdu,cmvgrrpqi000xg8m6dx3uzw6i,cmvgrrprb002wg8m6lss6zqdu,cmvgrrprb002wg8m6lss6zqdu,cmvgrrpr10027g8m6hy87usw3,cmvgrrprb002wg8m6lss6zqdu,cmvgrrprb002wg8m6lss6zqdu,cmvgrrprb002wg8m6lss6zqdu,cmvgrrprb002wg8m6lss6zqdu,cmvgrrprb002wg8m6lss6zqdu,cmvgrrpqh000ug8m6xynmdmmv,cmvgrrprb002wg8m6lss6zqdu}'::text[]))
+  Rows Removed by Filter: 237
+  Buffers: shared hit=5
+Planning Time: 0.024 ms
+Execution Time: 0.019 ms
+```
+
+```sql
+SELECT "public"."Sector"."id", "public"."Sector"."slug", "public"."Sector"."name", "public"."Sector"."sortOrder" FROM "public"."Sector" WHERE "public"."Sector"."id" IN ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17) OFFSET $18
+```
+```
+Bitmap Heap Scan on "Sector"  (cost=4.32..14.58 rows=17 width=100) (actual time=0.007..0.007 rows=6 loops=1)
+  Recheck Cond: (id = ANY ('{cmvgrrpt20071g8m6sje0kmfd,cmvgrrpt10070g8m6s3n4le2h,cmvgrrpt0006yg8m6hr5hb74c,cmvgrrpt10070g8m6s3n4le2h,cmvgrrpt30073g8m6w51laxug,cmvgrrpt0006yg8m6hr5hb74c,cmvgrrpt1006zg8m6s20r11rw,cmvgrrpt0006yg8m6hr5hb74c,cmvgrrpt20071g8m6sje0kmfd,cmvgrrpt20071g8m6sje0kmfd,cmvgrrpt20072g8m6czhod24g,cmvgrrpt20072g8m6czhod24g,cmvgrrpt1006zg8m6s20r11rw,cmvgrrpt20071g8m6sje0kmfd,cmvgrrpt20071g8m6sje0kmfd,cmvgrrpt20071g8m6sje0kmfd,cmvgrrpt20071g8m6sje0kmfd}'::text[]))
+  Heap Blocks: exact=1
+  Buffers: shared hit=2
+  ->  Bitmap Index Scan on "Sector_pkey"  (cost=0.00..4.28 rows=17 width=0) (actual time=0.005..0.005 rows=6 loops=1)
+        Index Cond: (id = ANY ('{cmvgrrpt20071g8m6sje0kmfd,cmvgrrpt10070g8m6s3n4le2h,cmvgrrpt0006yg8m6hr5hb74c,cmvgrrpt10070g8m6s3n4le2h,cmvgrrpt30073g8m6w51laxug,cmvgrrpt0006yg8m6hr5hb74c,cmvgrrpt1006zg8m6s20r11rw,cmvgrrpt0006yg8m6hr5hb74c,cmvgrrpt20071g8m6sje0kmfd,cmvgrrpt20071g8m6sje0kmfd,cmvgrrpt20072g8m6czhod24g,cmvgrrpt20072g8m6czhod24g,cmvgrrpt1006zg8m6s20r11rw,cmvgrrpt20071g8m6sje0kmfd,cmvgrrpt20071g8m6sje0kmfd,cmvgrrpt20071g8m6sje0kmfd,cmvgrrpt20071g8m6sje0kmfd}'::text[]))
+        Buffers: shared hit=1
+Planning Time: 0.014 ms
+Execution Time: 0.019 ms
+```
+
+## search "hurricanes" (selective)  (end-to-end 11 ms, 5 statements)
+
+```sql
+SELECT id FROM "MediaOutlet" WHERE name ILIKE $1
+```
+```
+Seq Scan on "MediaOutlet"  (cost=0.00..12.25 rows=1 width=32) (actual time=0.003..0.003 rows=0 loops=1)
+  Filter: (name ~~* '%hurricanes%'::text)
+  Rows Removed by Filter: 3
+  Buffers: shared hit=1
+Planning:
+  Buffers: shared hit=1
+Planning Time: 0.010 ms
+Execution Time: 0.004 ms
+```
+
+```sql
+SELECT * FROM ( SELECT a.id AS id, a."publishedAt" AS pub, lower(o.name) AS oname, round(( CASE WHEN a."searchVector" @@ (SELECT (websearch_to_tsquery('simple', $1) || websearch_to_tsquery(frealgo_ts_config($2), $3))) THEN ts_rank_cd(a."searchVector", (SELECT (websearch_to_tsquery('simple', $4) || websearch_to_tsquery(frealgo_ts_config($5), $6))), 32) ELSE 0 END + 0.3 * word_similarity($7, a.title) + 0 )::numeric, 6) AS score, a.title, a.excerpt, a."canonicalUrl", a.language, a.author, a."publishedAtRaw", a."publishedOffsetMinutes", a."publishedAtEstimated", a."firstSeenAt", a."isFixture", a."
+```
+```
+Limit  (cost=10058.64..10058.70 rows=25 width=577) (actual time=2.721..2.722 rows=0 loops=1)
+  Buffers: shared hit=805
+  InitPlan 1
+    ->  Result  (cost=0.00..0.01 rows=1 width=32) (never executed)
+  InitPlan 2
+    ->  Result  (cost=0.00..0.01 rows=1 width=32) (never executed)
+  ->  Sort  (cost=10058.62..10063.71 rows=2035 width=577) (actual time=2.721..2.722 rows=0 loops=1)
+        Sort Key: (round((((CASE WHEN (a."searchVector" @@ (InitPlan 1).col1) THEN ts_rank_cd(a."searchVector", (InitPlan 2).col1, 32) ELSE '0'::real END + ('0.3'::double precision * word_similarity('hurricanes'::text, a.title))) + '0'::double precision))::numeric, 6)) DESC, a."publishedAt" DESC, a.id DESC
+        Sort Method: quicksort  Memory: 25kB
+        Buffers: shared hit=805
+        ->  Hash Left Join  (cost=3611.50..10001.19 rows=2035 width=577) (actual time=2.719..2.720 rows=0 loops=1)
+              Hash Cond: (o."countryId" = oc.id)
+              Buffers: shared hit=805
+              ->  Nested Loop  (cost=3580.35..9918.83 rows=2035 width=747) (actual time=2.719..2.720 rows=0 loops=1)
+                    Buffers: shared hit=805
+                    ->  Bitmap Heap Scan on "Article" a  (cost=3580.20..9867.38 rows=2035 width=488) (actual time=2.719..2.719 rows=0 loops=1)
+                          Recheck Cond: (("searchVector" @@ '''hurricanes'' | ''hurrican'''::tsquery) OR (title ~~* '%hurricanes%'::text) OR ('hurricanes'::text <% title))
+                          Filter: ((NOT "isFixture") AND (status = 'PUBLISHED'::"ArticleStatus") AND (("searchVector" @@ '''hurricanes'' | ''hurrican'''::tsquery) OR (title ~~* '%hurricanes%'::text) OR ('hurricanes'::text <% title)))
+                          Buffers: shared hit=805
+                          ->  BitmapOr  (cost=3580.20..3580.20 rows=2035 width=0) (actual time=2.718..2.718 rows=0 loops=1)
+                                Buffers: shared hit=805
+                                ->  Bitmap Index Scan on "Article_searchVector_idx"  (cost=0.00..1863.29 rows=1995 width=0) (actual time=1.398..1.398 rows=0 loops=1)
+                                      Index Cond: ("searchVector" @@ '''hurricanes'' | ''hurrican'''::tsquery)
+                                      Buffers: shared hit=436
+                                ->  Bitmap Index Scan on "Article_title_trgm_idx"  (cost=0.00..823.85 rows=20 width=0) (actual time=0.574..0.574 rows=0 loops=1)
+                                      Index Cond: (title ~~* '%hurricanes%'::text)
+                                      Buffers: shared hit=179
+                                ->  Bitmap Index Scan on "Article_title_trgm_idx"  (cost=0.00..891.54 rows=20 width=0) (actual time=0.745..0.746 rows=0 loops=1)
+                                      Index Cond: (title %> 'hurricanes'::text)
+                                      Buffers: shared hit=190
+                    ->  Memoize  (cost=0.15..0.20 rows=1 width=285) (never executed)
+                          Cache Key: a."outletId"
+                          Cache Mode: logical
+                          ->  Index Scan using "MediaOutlet_pkey" on "MediaOutlet" o  (cost=0.14..0.19 rows=1 width=285) (never executed)
+                                Index Cond: (id = a."outletId")
+              ->  Hash  (cost=28.02..28.02 rows=250 width=40) (never executed)
+                    ->  Index Scan using "Country_pkey" on "Country" oc  (cost=0.27..28.02 rows=250 width=40) (never executed)
+Planning:
+  Buffers: shared hit=3
+Planning Time: 0.524 ms
+Execution Time: 2.773 ms
+```
+
+```sql
+SELECT count(*)::int AS n FROM ( SELECT a.id AS id, a."publishedAt" AS pub, lower(o.name) AS oname, round(( CASE WHEN a."searchVector" @@ (SELECT (websearch_to_tsquery('simple', $1) || websearch_to_tsquery(frealgo_ts_config($2), $3))) THEN ts_rank_cd(a."searchVector", (SELECT (websearch_to_tsquery('simple', $4) || websearch_to_tsquery(frealgo_ts_config($5), $6))), 32) ELSE 0 END + 0.3 * word_similarity($7, a.title) + 0 )::numeric, 6) AS score, a.title, a.excerpt, a."canonicalUrl", a.language, a.author, a."publishedAtRaw", a."publishedOffsetMinutes", a."publishedAtEstimated", a."firstSeenAt", a
+```
+```
+Aggregate  (cost=6710.71..6710.72 rows=1 width=4) (actual time=2.716..2.717 rows=1 loops=1)
+  Buffers: shared hit=805
+  ->  Limit  (cost=3580.35..6698.20 rows=1001 width=643) (actual time=2.715..2.716 rows=0 loops=1)
+        Buffers: shared hit=805
+        ->  Nested Loop  (cost=3580.35..9918.83 rows=2035 width=643) (actual time=2.715..2.716 rows=0 loops=1)
+              Buffers: shared hit=805
+              ->  Bitmap Heap Scan on "Article" a  (cost=3580.20..9867.38 rows=2035 width=26) (actual time=2.715..2.715 rows=0 loops=1)
+                    Recheck Cond: (("searchVector" @@ '''hurricanes'' | ''hurrican'''::tsquery) OR (title ~~* '%hurricanes%'::text) OR ('hurricanes'::text <% title))
+                    Filter: ((NOT "isFixture") AND (status = 'PUBLISHED'::"ArticleStatus") AND (("searchVector" @@ '''hurricanes'' | ''hurrican'''::tsquery) OR (title ~~* '%hurricanes%'::text) OR ('hurricanes'::text <% title)))
+                    Buffers: shared hit=805
+                    ->  BitmapOr  (cost=3580.20..3580.20 rows=2035 width=0) (actual time=2.713..2.713 rows=0 loops=1)
+                          Buffers: shared hit=805
+                          ->  Bitmap Index Scan on "Article_searchVector_idx"  (cost=0.00..1863.29 rows=1995 width=0) (actual time=1.351..1.351 rows=0 loops=1)
+                                Index Cond: ("searchVector" @@ '''hurricanes'' | ''hurrican'''::tsquery)
+                                Buffers: shared hit=436
+                          ->  Bitmap Index Scan on "Article_title_trgm_idx"  (cost=0.00..823.85 rows=20 width=0) (actual time=0.588..0.588 rows=0 loops=1)
+                                Index Cond: (title ~~* '%hurricanes%'::text)
+                                Buffers: shared hit=179
+                          ->  Bitmap Index Scan on "Article_title_trgm_idx"  (cost=0.00..891.54 rows=20 width=0) (actual time=0.773..0.773 rows=0 loops=1)
+                                Index Cond: (title %> 'hurricanes'::text)
+                                Buffers: shared hit=190
+              ->  Memoize  (cost=0.15..0.20 rows=1 width=64) (never executed)
+                    Cache Key: a."outletId"
+                    Cache Mode: logical
+                    ->  Index Scan using "MediaOutlet_pkey" on "MediaOutlet" o  (cost=0.14..0.19 rows=1 width=64) (never executed)
+                          Index Cond: (id = a."outletId")
+Planning:
+  Buffers: shared hit=3
+Planning Time: 0.362 ms
+Execution Time: 2.752 ms
+```
+
+## search "ceasfire" (typo, trigram only)  (end-to-end 193 ms, 5 statements)
+
+```sql
+SELECT id FROM "MediaOutlet" WHERE name ILIKE $1
+```
+```
+Seq Scan on "MediaOutlet"  (cost=0.00..12.25 rows=1 width=32) (actual time=0.006..0.006 rows=0 loops=1)
+  Filter: (name ~~* '%ceasfire%'::text)
+  Rows Removed by Filter: 3
+  Buffers: shared read=1
+Planning:
+  Buffers: shared read=1
+Planning Time: 0.041 ms
+Execution Time: 0.010 ms
+```
+
+```sql
+SELECT * FROM ( SELECT a.id AS id, a."publishedAt" AS pub, lower(o.name) AS oname, round(( CASE WHEN a."searchVector" @@ (SELECT (websearch_to_tsquery('simple', $1) || websearch_to_tsquery(frealgo_ts_config($2), $3))) THEN ts_rank_cd(a."searchVector", (SELECT (websearch_to_tsquery('simple', $4) || websearch_to_tsquery(frealgo_ts_config($5), $6))), 32) ELSE 0 END + 0.3 * word_similarity($7, a.title) + 0 )::numeric, 6) AS score, a.title, a.excerpt, a."canonicalUrl", a.language, a.author, a."publishedAtRaw", a."publishedOffsetMinutes", a."publishedAtEstimated", a."firstSeenAt", a."isFixture", a."
+```
+```
+Limit  (cost=9969.77..9969.83 rows=25 width=577) (actual time=94.738..94.742 rows=0 loops=1)
+  Buffers: shared hit=278 read=27286
+  InitPlan 1
+    ->  Result  (cost=0.00..0.01 rows=1 width=32) (never executed)
+  InitPlan 2
+    ->  Result  (cost=0.00..0.01 rows=1 width=32) (never executed)
+  ->  Sort  (cost=9969.75..9974.83 rows=2035 width=577) (actual time=94.737..94.740 rows=0 loops=1)
+        Sort Key: (round((((CASE WHEN (a."searchVector" @@ (InitPlan 1).col1) THEN ts_rank_cd(a."searchVector", (InitPlan 2).col1, 32) ELSE '0'::real END + ('0.3'::double precision * word_similarity('ceasfire'::text, a.title))) + '0'::double precision))::numeric, 6)) DESC, a."publishedAt" DESC, a.id DESC
+        Sort Method: quicksort  Memory: 25kB
+        Buffers: shared hit=278 read=27286
+        ->  Hash Left Join  (cost=3522.62..9912.32 rows=2035 width=577) (actual time=94.734..94.737 rows=0 loops=1)
+              Hash Cond: (o."countryId" = oc.id)
+              Buffers: shared hit=278 read=27286
+              ->  Nested Loop  (cost=3491.48..9829.96 rows=2035 width=747) (actual time=94.733..94.735 rows=0 loops=1)
+                    Buffers: shared hit=278 read=27286
+                    ->  Bitmap Heap Scan on "Article" a  (cost=3491.32..9778.51 rows=2035 width=488) (actual time=94.732..94.734 rows=0 loops=1)
+                          Recheck Cond: (("searchVector" @@ '''ceasfire'' | ''ceasfir'''::tsquery) OR (title ~~* '%ceasfire%'::text) OR ('ceasfire'::text <% title))
+                          Rows Removed by Index Recheck: 19999
+                          Filter: ((NOT "isFixture") AND (status = 'PUBLISHED'::"ArticleStatus") AND (("searchVector" @@ '''ceasfire'' | ''ceasfir'''::tsquery) OR (title ~~* '%ceasfire%'::text) OR ('ceasfire'::text <% title)))
+                          Heap Blocks: exact=26593
+                          Buffers: shared hit=278 read=27286
+                          ->  BitmapOr  (cost=3491.32..3491.32 rows=2035 width=0) (actual time=8.552..8.553 rows=0 loops=1)
+                                Buffers: shared hit=278 read=693
+                                ->  Bitmap Index Scan on "Article_searchVector_idx"  (cost=0.00..1863.29 rows=1995 width=0) (actual time=2.025..2.025 rows=0 loops=1)
+                                      Index Cond: ("searchVector" @@ '''ceasfire'' | ''ceasfir'''::tsquery)
+                                      Buffers: shared hit=4 read=432
+                                ->  Bitmap Index Scan on "Article_title_trgm_idx"  (cost=0.00..781.48 rows=20 width=0) (actual time=0.731..0.731 rows=0 loops=1)
+                                      Index Cond: (title ~~* '%ceasfire%'::text)
+                                      Buffers: shared hit=19 read=160
+                                ->  Bitmap Index Scan on "Article_title_trgm_idx"  (cost=0.00..845.04 rows=20 width=0) (actual time=5.796..5.796 rows=39998 loops=1)
+                                      Index Cond: (title %> 'ceasfire'::text)
+                                      Buffers: shared hit=255 read=101
+                    ->  Memoize  (cost=0.15..0.20 rows=1 width=285) (never executed)
+                          Cache Key: a."outletId"
+                          Cache Mode: logical
+                          ->  Index Scan using "MediaOutlet_pkey" on "MediaOutlet" o  (cost=0.14..0.19 rows=1 width=285) (never executed)
+                                Index Cond: (id = a."outletId")
+              ->  Hash  (cost=28.02..28.02 rows=250 width=40) (never executed)
+                    ->  Index Scan using "Country_pkey" on "Country" oc  (cost=0.27..28.02 rows=250 width=40) (never executed)
+Planning:
+  Buffers: shared hit=2 read=1
+Planning Time: 0.758 ms
+Execution Time: 94.954 ms
+```
+
+```sql
+SELECT count(*)::int AS n FROM ( SELECT a.id AS id, a."publishedAt" AS pub, lower(o.name) AS oname, round(( CASE WHEN a."searchVector" @@ (SELECT (websearch_to_tsquery('simple', $1) || websearch_to_tsquery(frealgo_ts_config($2), $3))) THEN ts_rank_cd(a."searchVector", (SELECT (websearch_to_tsquery('simple', $4) || websearch_to_tsquery(frealgo_ts_config($5), $6))), 32) ELSE 0 END + 0.3 * word_similarity($7, a.title) + 0 )::numeric, 6) AS score, a.title, a.excerpt, a."canonicalUrl", a.language, a.author, a."publishedAtRaw", a."publishedOffsetMinutes", a."publishedAtEstimated", a."firstSeenAt", a
+```
+```
+Aggregate  (cost=6621.84..6621.85 rows=1 width=4) (actual time=93.473..93.475 rows=1 loops=1)
+  Buffers: shared hit=278 read=27286
+  ->  Limit  (cost=3491.48..6609.32 rows=1001 width=643) (actual time=93.470..93.472 rows=0 loops=1)
+        Buffers: shared hit=278 read=27286
+        ->  Nested Loop  (cost=3491.48..9829.96 rows=2035 width=643) (actual time=93.469..93.471 rows=0 loops=1)
+              Buffers: shared hit=278 read=27286
+              ->  Bitmap Heap Scan on "Article" a  (cost=3491.32..9778.51 rows=2035 width=26) (actual time=93.468..93.470 rows=0 loops=1)
+                    Recheck Cond: (("searchVector" @@ '''ceasfire'' | ''ceasfir'''::tsquery) OR (title ~~* '%ceasfire%'::text) OR ('ceasfire'::text <% title))
+                    Rows Removed by Index Recheck: 19999
+                    Filter: ((NOT "isFixture") AND (status = 'PUBLISHED'::"ArticleStatus") AND (("searchVector" @@ '''ceasfire'' | ''ceasfir'''::tsquery) OR (title ~~* '%ceasfire%'::text) OR ('ceasfire'::text <% title)))
+                    Heap Blocks: exact=26593
+                    Buffers: shared hit=278 read=27286
+                    ->  BitmapOr  (cost=3491.32..3491.32 rows=2035 width=0) (actual time=8.208..8.210 rows=0 loops=1)
+                          Buffers: shared hit=278 read=693
+                          ->  Bitmap Index Scan on "Article_searchVector_idx"  (cost=0.00..1863.29 rows=1995 width=0) (actual time=2.069..2.069 rows=0 loops=1)
+                                Index Cond: ("searchVector" @@ '''ceasfire'' | ''ceasfir'''::tsquery)
+                                Buffers: shared hit=4 read=432
+                          ->  Bitmap Index Scan on "Article_title_trgm_idx"  (cost=0.00..781.48 rows=20 width=0) (actual time=0.729..0.729 rows=0 loops=1)
+                                Index Cond: (title ~~* '%ceasfire%'::text)
+                                Buffers: shared hit=19 read=160
+                          ->  Bitmap Index Scan on "Article_title_trgm_idx"  (cost=0.00..845.04 rows=20 width=0) (actual time=5.410..5.411 rows=39998 loops=1)
+                                Index Cond: (title %> 'ceasfire'::text)
+                                Buffers: shared hit=255 read=101
+              ->  Memoize  (cost=0.15..0.20 rows=1 width=64) (never executed)
+                    Cache Key: a."outletId"
+                    Cache Mode: logical
+                    ->  Index Scan using "MediaOutlet_pkey" on "MediaOutlet" o  (cost=0.14..0.19 rows=1 width=64) (never executed)
+                          Index Cond: (id = a."outletId")
+Planning:
+  Buffers: shared hit=2 read=1
+Planning Time: 0.482 ms
+Execution Time: 93.662 ms
+```
+
+## country summaries (globe/list)  (end-to-end 52 ms, 1 statements)
+
+```sql
+ WITH counts AS ( SELECT ac."countryId", count(*)::int AS n, max(ac."publishedAt") AS latest FROM "ArticleCountry" ac JOIN "Article" a ON a.id = ac."articleId" WHERE a.status = 'PUBLISHED' AND ($1 OR NOT a."isFixture") GROUP BY ac."countryId" ), outlets AS ( SELECT o."countryId", count(DISTINCT o.id)::int AS n, count(f.id) FILTER (WHERE f.status = 'ACTIVE')::int AS active, max(f."lastSuccessfulSyncAt") AS "lastSync" FROM "MediaOutlet" o LEFT JOIN "FeedSource" f ON f."outletId" = o.id WHERE ($2 OR NOT o."isFixture") GROUP BY o."countryId" ) SELECT c.iso2, c.iso3, c."isoNumeric", c.name, c.regio
+```
+```
+Sort  (cost=37332.63..37333.26 rows=250 width=103) (actual time=54.528..57.824 rows=250 loops=1)
+  Sort Key: c.name, c.iso2
+  Sort Method: quicksort  Memory: 55kB
+  Buffers: shared hit=16139 read=15675
+  ->  Hash Left Join  (cost=37313.84..37322.68 rows=250 width=103) (actual time=54.367..57.722 rows=250 loops=1)
+        Hash Cond: (c.id = counts."countryId")
+        Buffers: shared hit=16139 read=15675
+        ->  Hash Left Join  (cost=32.48..40.64 rows=250 width=117) (actual time=0.023..0.062 rows=250 loops=1)
+              Hash Cond: (c.id = outlets."countryId")
+              Buffers: shared hit=6
+              ->  Seq Scan on "Country" c  (cost=0.00..7.50 rows=250 width=101) (actual time=0.002..0.014 rows=250 loops=1)
+                    Buffers: shared hit=5
+              ->  Hash  (cost=31.35..31.35 rows=90 width=48) (actual time=0.017..0.019 rows=2 loops=1)
+                    Buckets: 1024  Batches: 1  Memory Usage: 9kB
+                    Buffers: shared hit=1
+                    ->  Subquery Scan on outlets  (cost=27.75..31.35 rows=90 width=48) (actual time=0.014..0.016 rows=2 loops=1)
+                          Buffers: shared hit=1
+                          ->  GroupAggregate  (cost=27.75..30.45 rows=90 width=48) (actual time=0.013..0.016 rows=2 loops=1)
+                                Group Key: o."countryId"
+                                Buffers: shared hit=1
+                                ->  Sort  (cost=27.75..27.98 rows=90 width=108) (actual time=0.012..0.013 rows=3 loops=1)
+                                      Sort Key: o."countryId", o.id
+                                      Sort Method: quicksort  Memory: 25kB
+                                      Buffers: shared hit=1
+                                      ->  Hash Right Join  (cost=12.93..24.83 rows=90 width=108) (actual time=0.009..0.011 rows=3 loops=1)
+                                            Hash Cond: (f."outletId" = o.id)
+                                            Buffers: shared hit=1
+                                            ->  Seq Scan on "FeedSource" f  (cost=0.00..11.50 rows=150 width=76) (actual time=0.001..0.001 rows=0 loops=1)
+                                            ->  Hash  (cost=11.80..11.80 rows=90 width=64) (actual time=0.005..0.005 rows=3 loops=1)
+                                                  Buckets: 1024  Batches: 1  Memory Usage: 9kB
+                                                  Buffers: shared hit=1
+                                                  ->  Seq Scan on "MediaOutlet" o  (cost=0.00..11.80 rows=90 width=64) (actual time=0.001..0.002 rows=3 loops=1)
+                                                        Filter: (NOT "isFixture")
+                                                        Buffers: shared hit=1
+        ->  Hash  (cost=37278.24..37278.24 rows=250 width=38) (actual time=54.336..57.623 rows=250 loops=1)
+              Buckets: 1024  Batches: 1  Memory Usage: 27kB
+              Buffers: shared hit=16133 read=15675
+              ->  Subquery Scan on counts  (cost=37210.53..37278.24 rows=250 width=38) (actual time=54.150..57.591 rows=250 loops=1)
+                    Buffers: shared hit=16133 read=15675
+                    ->  Finalize GroupAggregate  (cost=37210.53..37275.74 rows=250 width=38) (actual time=54.150..57.580 rows=250 loops=1)
+                          Group Key: ac."countryId"
+                          Buffers: shared hit=16133 read=15675
+                          ->  Gather Merge  (cost=37210.53..37268.86 rows=500 width=42) (actual time=54.147..57.517 rows=750 loops=1)
+                                Workers Planned: 2
+                                Workers Launched: 2
+                                Buffers: shared hit=16133 read=15675
+                                ->  Sort  (cost=36210.50..36211.13 rows=250 width=42) (actual time=47.163..47.171 rows=250 loops=3)
+                                      Sort Key: ac."countryId"
+                                      Sort Method: quicksort  Memory: 40kB
+                                      Buffers: shared hit=16133 read=15675
+                                      Worker 0:  Sort Method: quicksort  Memory: 40kB
+                                      Worker 1:  Sort Method: quicksort  Memory: 40kB
+                                      ->  Partial HashAggregate  (cost=36198.05..36200.55 rows=250 width=42) (actual time=47.041..47.058 rows=250 loops=3)
+                                            Group Key: ac."countryId"
+                                            Batches: 1  Memory Usage: 61kB
+                                            Buffers: shared hit=16117 read=15675
+                                            Worker 0:  Batches: 1  Memory Usage: 61kB
+                                            Worker 1:  Batches: 1  Memory Usage: 61kB
+                                            ->  Parallel Hash Join  (cost=28677.45..35330.25 rows=115706 width=34) (actual time=22.325..38.608 rows=92564 loops=3)
+                                                  Hash Cond: (ac."articleId" = a.id)
+                                                  Buffers: shared hit=16117 read=15675
+                                                  ->  Parallel Seq Scan on "ArticleCountry" ac  (cost=0.00..6349.06 rows=115706 width=43) (actual time=1.483..5.732 rows=92565 loops=3)
+                                                        Buffers: shared hit=98 read=5094
+                                                  ->  Parallel Hash  (cost=27635.72..27635.72 rows=83338 width=9) (actual time=20.544..20.544 rows=66669 loops=3)
+                                                        Buckets: 262144  Batches: 1  Memory Usage: 11424kB
+                                                        Buffers: shared hit=16013 read=10581
+                                                        ->  Parallel Seq Scan on "Article" a  (cost=0.00..27635.72 rows=83338 width=9) (actual time=0.006..14.064 rows=66669 loops=3)
+                                                              Filter: ((NOT "isFixture") AND (status = 'PUBLISHED'::"ArticleStatus"))
+                                                              Rows Removed by Filter: 1
+                                                              Buffers: shared hit=16013 read=10581
+Planning:
+  Buffers: shared hit=24
+Planning Time: 0.282 ms
+Execution Time: 57.914 ms
+```
+
+## country coverage (MM)  (end-to-end 10 ms, 3 statements)
+
+```sql
+SELECT "public"."Country"."id", "public"."Country"."iso2", "public"."Country"."name", "public"."Country"."region", "public"."Country"."subregion", "public"."Country"."officialLanguages" FROM "public"."Country" WHERE ("public"."Country"."iso2" = $1 AND 1=1) LIMIT $2 OFFSET $3
+```
+```
+Limit  (cost=0.00..8.12 rows=1 width=93) (actual time=0.008..0.008 rows=1 loops=1)
+  Buffers: shared hit=4
+  ->  Seq Scan on "Country"  (cost=0.00..8.12 rows=1 width=93) (actual time=0.007..0.007 rows=1 loops=1)
+        Filter: ((iso2)::text = 'MM'::text)
+        Rows Removed by Filter: 145
+        Buffers: shared hit=4
+Planning Time: 0.019 ms
+Execution Time: 0.010 ms
+```
+
+```sql
+SELECT "public"."MediaOutlet"."id", "public"."MediaOutlet"."slug", "public"."MediaOutlet"."name", "public"."MediaOutlet"."primaryLanguage", "public"."MediaOutlet"."paywall"::text, "public"."MediaOutlet"."isFixture" FROM "public"."MediaOutlet" LEFT JOIN "public"."Country" AS "j0" ON ("j0"."id") = ("public"."MediaOutlet"."countryId") WHERE (("j0"."iso2" = $1 AND ("j0"."id" IS NOT NULL)) AND "public"."MediaOutlet"."isFixture" = $2) ORDER BY "public"."MediaOutlet"."name" ASC OFFSET $3
+```
+```
+Sort  (cost=16.31..16.32 rows=1 width=161) (actual time=0.021..0.021 rows=2 loops=1)
+  Sort Key: "MediaOutlet".name
+  Sort Method: quicksort  Memory: 25kB
+  Buffers: shared hit=7
+  ->  Nested Loop  (cost=0.14..16.30 rows=1 width=161) (actual time=0.015..0.019 rows=2 loops=1)
+        Buffers: shared hit=7
+        ->  Seq Scan on "Country" j0  (cost=0.00..8.12 rows=1 width=26) (actual time=0.006..0.010 rows=1 loops=1)
+              Filter: ((iso2)::text = 'MM'::text)
+              Rows Removed by Filter: 249
+              Buffers: shared hit=5
+        ->  Index Scan using "MediaOutlet_countryId_orientation_idx" on "MediaOutlet"  (cost=0.14..8.16 rows=1 width=165) (actual time=0.007..0.008 rows=2 loops=1)
+              Index Cond: ("countryId" = j0.id)
+              Filter: (NOT "isFixture")
+              Buffers: shared hit=2
+Planning Time: 0.046 ms
+Execution Time: 0.033 ms
+```
+
+```sql
+SELECT "public"."FeedSource"."id", "public"."FeedSource"."status"::text, "public"."FeedSource"."isFixture", "public"."FeedSource"."lastSuccessfulSyncAt", "public"."FeedSource"."fetchIntervalMinutes", "public"."FeedSource"."language", "public"."FeedSource"."outletId" FROM "public"."FeedSource" WHERE "public"."FeedSource"."outletId" IN ($1,$2) OFFSET $3
+```
+```
+Bitmap Heap Scan on "FeedSource"  (cost=4.16..9.51 rows=2 width=141) (actual time=0.004..0.004 rows=0 loops=1)
+  Recheck Cond: ("outletId" = ANY ('{cmvgrrptr0076g8m6ra6vd2rc,cmvgrrptp0075g8m6vfo8mq8a}'::text[]))
+  Buffers: shared hit=2
+  ->  Bitmap Index Scan on "FeedSource_outletId_idx"  (cost=0.00..4.16 rows=2 width=0) (actual time=0.003..0.003 rows=0 loops=1)
+        Index Cond: ("outletId" = ANY ('{cmvgrrptr0076g8m6ra6vd2rc,cmvgrrptp0075g8m6vfo8mq8a}'::text[]))
+        Buffers: shared hit=2
+Planning:
+  Buffers: shared hit=4
+Planning Time: 0.030 ms
+Execution Time: 0.020 ms
+```
+
+## freshness report  (end-to-end 3 ms, 4 statements)
+
+```sql
+SELECT "public"."FeedSource"."id", "public"."FeedSource"."name", "public"."FeedSource"."url", "public"."FeedSource"."status"::text, "public"."FeedSource"."isFixture", "public"."FeedSource"."language", "public"."FeedSource"."fetchIntervalMinutes", "public"."FeedSource"."lastAttemptAt", "public"."FeedSource"."lastSuccessfulSyncAt", "public"."FeedSource"."lastNewItemAt", "public"."FeedSource"."lastError", "public"."FeedSource"."lastHttpStatus", "public"."FeedSource"."failureCount", "public"."FeedSource"."nextEligibleFetchAt", "public"."FeedSource"."termsReviewedAt", "public"."FeedSource"."outletI
+```
+```
+Sort  (cost=28.37..28.56 rows=75 width=309) (actual time=0.015..0.015 rows=0 loops=1)
+  Sort Key: "FeedSource"."isFixture", orderby_1.name, "FeedSource".url
+  Sort Method: quicksort  Memory: 25kB
+  ->  Hash Right Join  (cost=12.44..26.04 rows=75 width=309) (actual time=0.008..0.009 rows=0 loops=1)
+        Hash Cond: (orderby_1.id = "FeedSource"."outletId")
+        ->  Seq Scan on "MediaOutlet" orderby_1  (cost=0.00..11.80 rows=180 width=64) (never executed)
+        ->  Hash  (cost=11.50..11.50 rows=75 width=249) (actual time=0.002..0.002 rows=0 loops=1)
+              Buckets: 1024  Batches: 1  Memory Usage: 8kB
+              ->  Seq Scan on "FeedSource"  (cost=0.00..11.50 rows=75 width=249) (actual time=0.002..0.002 rows=0 loops=1)
+                    Filter: (NOT "isFixture")
+Planning:
+  Buffers: shared hit=4
+Planning Time: 0.036 ms
+Execution Time: 0.029 ms
+```
+
+```sql
+SELECT "public"."IngestionRun"."id", "public"."IngestionRun"."startedAt" FROM "public"."IngestionRun" WHERE "public"."IngestionRun"."trigger" = $1 ORDER BY "public"."IngestionRun"."startedAt" DESC LIMIT $2 OFFSET $3
+```
+```
+Limit  (cost=13.76..13.76 rows=1 width=40) (actual time=0.002..0.002 rows=0 loops=1)
+  ->  Sort  (cost=13.76..13.77 rows=2 width=40) (actual time=0.002..0.002 rows=0 loops=1)
+        Sort Key: "startedAt" DESC
+        Sort Method: quicksort  Memory: 25kB
+        ->  Seq Scan on "IngestionRun"  (cost=0.00..13.75 rows=2 width=40) (actual time=0.001..0.001 rows=0 loops=1)
+              Filter: (trigger = 'schedule'::text)
+Planning:
+  Buffers: shared hit=78
+Planning Time: 0.193 ms
+Execution Time: 0.005 ms
+```
+
+```sql
+SELECT "public"."MediaOutlet"."id", "public"."MediaOutlet"."name", "public"."MediaOutlet"."slug", "public"."MediaOutlet"."paywall"::text, "public"."MediaOutlet"."countryId" FROM "public"."MediaOutlet" WHERE "public"."MediaOutlet"."id" IN (NULL) OFFSET $1
+```
+```
+Result  (cost=0.00..0.00 rows=0 width=160) (actual time=0.000..0.001 rows=0 loops=1)
+  One-Time Filter: false
+Planning Time: 0.009 ms
+Execution Time: 0.002 ms
+```
+
+```sql
+SELECT "public"."Country"."id", "public"."Country"."iso2", "public"."Country"."name" FROM "public"."Country" WHERE "public"."Country"."id" IN (NULL) OFFSET $1
+```
+```
+Result  (cost=0.00..0.00 rows=0 width=0) (actual time=0.000..0.000 rows=0 loops=1)
+  One-Time Filter: false
+Planning Time: 0.005 ms
+Execution Time: 0.001 ms
+```

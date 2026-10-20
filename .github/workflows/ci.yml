@@ -41,6 +41,8 @@ jobs:
       - run: npm test
       - name: Dependency audit (production deps, high+)
         run: npm audit --omit=dev --audit-level=high
+      - name: Dependency audit (all deps incl. tooling, critical)
+        run: npm audit --audit-level=critical
 
   integration:
     name: Integration tests (Postgres + Redis)

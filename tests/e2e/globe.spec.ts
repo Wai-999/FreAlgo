@@ -219,3 +219,30 @@ test('no serious or critical axe violations with the globe active', async ({
     serious.map((v) => `${v.id}: ${v.nodes.map((n) => n.target.join(' ')).join(' | ')}`),
   ).toEqual([]);
 });
+
+test('offline or flaky network: a globe that cannot be downloaded falls back to the flat map', async ({
+  page,
+  browserName,
+}) => {
+  test.skip(browserName !== 'chromium', 'WebGL via SwiftShader is configured for Chromium');
+  // Fail only the lazily loaded 3D engine chunk, as if the connection dropped after first paint
+  // (or a deploy removed the old chunk while the tab was open).
+  await page.route('**/_next/static/chunks/**', async (route) => {
+    const response = await route.fetch();
+    const body = await response.text();
+    if (body.includes('WebGLRenderer')) return route.abort('internetdisconnected');
+    return route.fulfill({ response, body });
+  });
+  await page.goto('/?globe=force&intro=0');
+  await expect(page.getByTestId('globe-stage')).toHaveAttribute('data-mode', 'fallback', {
+    timeout: 20_000,
+  });
+  await expect(page.getByTestId('globe-fallback-notice')).toContainText('could not be downloaded');
+  await expect(page.getByTestId('world-map-svg')).toBeVisible();
+  // The page did not crash: the explore workflow still works.
+  await page.goto('/?view=list&intro=0');
+  await page.locator('a[data-country="MM"]').click();
+  await expect(
+    page.getByTestId('country-sheet').getByRole('heading', { name: 'Myanmar' }),
+  ).toBeVisible();
+});

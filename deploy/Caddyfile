@@ -1,0 +1,25 @@
+# TLS termination + reverse proxy. Caddy obtains and renews certificates automatically for {$DOMAIN}.
+{$DOMAIN} {
+	encode zstd gzip
+	# Metrics stay internal: scrape web:3000/api/v1/metrics from inside the network instead.
+	@metrics path /api/v1/metrics
+	respond @metrics 404
+	reverse_proxy web:3000 {
+		header_up X-Forwarded-For {remote_host}
+	}
+	header -Server
+	log {
+		output stdout
+		format json
+		# No client IPs in proxy logs (privacy): drop the remote address fields.
+		format filter {
+			wrap json
+			fields {
+				request>remote_ip delete
+				request>client_ip delete
+				request>headers>Cookie delete
+				request>headers>Authorization delete
+			}
+		}
+	}
+}

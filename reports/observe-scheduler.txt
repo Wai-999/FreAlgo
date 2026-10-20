@@ -1,0 +1,71 @@
+== reset + migrate + seed (test DB)
+NOTICE:  drop cascades to 29 other objects
+DETAIL:  drop cascades to table _prisma_migrations
+drop cascades to extension pg_trgm
+drop cascades to type "Orientation"
+drop cascades to type "LabelStatus"
+drop cascades to type "ArticleStatus"
+drop cascades to type "FeedStatus"
+drop cascades to type "FeedKind"
+drop cascades to type "PaywallPolicy"
+drop cascades to type "OwnershipType"
+drop cascades to type "CountryTagBasis"
+drop cascades to type "SectorTagBasis"
+drop cascades to type "IngestionRunStatus"
+drop cascades to type "AppealStatus"
+drop cascades to table "Country"
+drop cascades to table "MediaOutlet"
+drop cascades to table "FeedSource"
+drop cascades to table "Sector"
+drop cascades to table "Article"
+drop cascades to table "ArticleCountry"
+drop cascades to table "ArticleSector"
+drop cascades to table "UserPreference"
+drop cascades to table "IngestionRun"
+drop cascades to table "IngestionQuarantine"
+drop cascades to table "OutletLabelHistory"
+drop cascades to table "LabelAppeal"
+drop cascades to table "AdminAuditLog"
+drop cascades to table "ClientEventCounter"
+drop cascades to function frealgo_ts_config(text)
+drop cascades to function frealgo_article_search_vector()
+Loaded Prisma config from prisma.config.ts.
+
+Prisma schema loaded from prisma/schema.prisma.
+{"msg":"seed complete","countries":250,"sectors":7,"fixtureArticles":0,"fixturesSeeded":false,"realFeedsRegistered":27,"ms":367}
+activated bbc-news https://feeds.bbci.co.uk/news/world/rss.xml
+activated bbc-news https://feeds.bbci.co.uk/news/world/asia/rss.xml
+activated dw-english https://rss.dw.com/rdf/rss-en-all
+activated agencia-brasil https://agenciabrasil.ebc.com.br/rss/ultimasnoticias/feed.xml
+== running worker for 3 min (cron every minute, queue prefix observe-1792505255)
+frealgo_queue_jobs{state="waiting"} 0
+frealgo_queue_jobs{state="failed"} 0
+frealgo_dlq_jobs 0
+frealgo_ingest_runs_24h{status="SUCCESS"} 4
+frealgo_fetch_success_ratio_24h 1
+frealgo_sources{status="PAUSED"} 23
+frealgo_sources{status="ACTIVE"} 4
+== results
+      slug      | trigger  | status  | fetched | inserted | updated | started  
+----------------+----------+---------+---------+----------+---------+----------
+ bbc-news       | schedule | SUCCESS |      34 |       32 |       0 | 14:08:00
+ bbc-news       | schedule | SUCCESS |      18 |       17 |       0 | 14:08:00
+ agencia-brasil | schedule | SUCCESS |      10 |       10 |       0 | 14:08:00
+ dw-english     | schedule | SUCCESS |     134 |      134 |       0 | 14:08:00
+(4 rows)
+
+      slug      | status | last_attempt | last_success | has_etag | articles 
+----------------+--------+--------------+--------------+----------+----------
+ agencia-brasil | ACTIVE | 14:08:00     | 14:08:05     | t        |       10
+ bbc-news       | ACTIVE | 14:08:00     | 14:08:05     | f        |       32
+ bbc-news       | ACTIVE | 14:08:00     | 14:08:05     | f        |       17
+ dw-english     | ACTIVE | 14:08:00     | 14:08:05     | f        |      134
+(4 rows)
+
+{"level":30,"time":"2026-10-20T14:08:00.208Z","service":"worker","window":"2026-10-20T12:00:00.000Z","enqueued":4,"msg":"schedule tick"}
+{"level":30,"time":"2026-10-20T14:08:05.408Z","service":"worker","sourceId":"cmvgrcjqy0078pam6k7c2ecpq","jobId":"fetch__cmvgrcjqy0078pam6k7c2ecpq__1792497600000","attempt":1,"status":"SUCCESS","fetched":18,"inserted":17,"updated":0,"quarantined":0,"msg":"source ingested"}
+{"level":30,"time":"2026-10-20T14:08:05.453Z","service":"worker","sourceId":"cmvgrcjsi008tpam6sy7jkluo","jobId":"fetch__cmvgrcjsi008tpam6sy7jkluo__1792497600000","attempt":1,"status":"SUCCESS","fetched":10,"inserted":10,"updated":0,"quarantined":0,"msg":"source ingested"}
+{"level":30,"time":"2026-10-20T14:08:05.486Z","service":"worker","sourceId":"cmvgrcjqx0077pam6zhc9r33y","jobId":"fetch__cmvgrcjqx0077pam6zhc9r33y__1792497600000","attempt":1,"status":"SUCCESS","fetched":34,"inserted":32,"updated":0,"quarantined":0,"msg":"source ingested"}
+{"level":30,"time":"2026-10-20T14:08:05.929Z","service":"worker","sourceId":"cmvgrcjr8007hpam6kqx0tkuh","jobId":"fetch__cmvgrcjr8007hpam6kqx0tkuh__1792497600000","attempt":1,"status":"SUCCESS","fetched":134,"inserted":134,"updated":0,"quarantined":0,"msg":"source ingested"}
+{"level":30,"time":"2026-10-20T14:09:00.080Z","service":"worker","window":"2026-10-20T12:00:00.000Z","enqueued":0,"msg":"schedule tick"}
+{"level":30,"time":"2026-10-20T14:10:00.109Z","service":"worker","window":"2026-10-20T12:00:00.000Z","enqueued":0,"msg":"schedule tick"}
