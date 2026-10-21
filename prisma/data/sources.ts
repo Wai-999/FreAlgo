@@ -5,7 +5,7 @@
  *   Feeds that answered 403/404 or a bot challenge (e.g. some regional outlets) were left out
  *   rather than worked around; feeds that returned zero items (Korea Herald national feed) too.
  * - All feeds are seeded PAUSED. An operator activates a feed only after reviewing the
- *   publisher's terms (npm run sources:activate). See docs/source-policy.md §2.
+ *   publisher's terms (npm run sources:activate). See docs/data/source-methodology.md §2.
  * - Orientation labels are UNRATED: no third-party rating dataset is bundled (licence review is
  *   an external gate), and FreAlgo does not invent labels.
  * - Ownership types are filled only for well-documented public-service broadcasters and

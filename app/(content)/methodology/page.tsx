@@ -1,12 +1,17 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
+import { connection } from 'next/server';
+import { FLAG_NAMES, FLAGS, flagEnvName, flagSnapshot } from '@/lib/flags';
 import { LABEL_STATUS_INFO, ORIENTATIONS, ORIENTATION_INFO } from '@/lib/domain/orientation';
 import { SECTORS } from '@/lib/domain/sectors';
 import { OrientationSpectrum } from '@/components/news/orientation-spectrum';
 
 export const metadata: Metadata = { title: 'Methodology' };
 
-export default function MethodologyPage() {
+export default async function MethodologyPage() {
+  // Flags are read at request time so an operator's FEATURE_* change shows without a rebuild.
+  await connection();
+  const flags = flagSnapshot();
   return (
     <article className="prose-body measure">
       <h1 className="text-3xl font-semibold tracking-tight">Methodology</h1>
@@ -125,6 +130,43 @@ export default function MethodologyPage() {
           publisher updates on the next scheduled fetch.
         </li>
       </ul>
+
+      <h2 id="features">Features on this instance</h2>
+      <p>
+        Each FreAlgo 2.0 feature can be switched off by the operator. Features that need curated,
+        sourced content or a review before launch stay off until that exists. AI-generated summaries
+        are not implemented.
+      </p>
+      <div className="table-scroll" role="region" aria-label="Feature flags" tabIndex={0}>
+        <table>
+          <caption className="sr-only">Feature flags and their state</caption>
+          <thead>
+            <tr>
+              <th scope="col">Feature</th>
+              <th scope="col">State</th>
+              <th scope="col">What it does</th>
+            </tr>
+          </thead>
+          <tbody>
+            {FLAG_NAMES.map((name) => {
+              const def = FLAGS[name];
+              const locked = 'locked' in def ? def.locked : undefined;
+              return (
+                <tr key={name} data-flag={name}>
+                  <th scope="row">
+                    <code>{flagEnvName(name)}</code>
+                  </th>
+                  <td>{flags[name] ? 'On' : locked ? 'Off (not available)' : 'Off'}</td>
+                  <td>
+                    {def.description}
+                    {locked ? ` ${locked}` : ''}
+                  </td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+      </div>
     </article>
   );
 }

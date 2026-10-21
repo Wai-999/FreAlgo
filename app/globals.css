@@ -1,23 +1,25 @@
 @import 'tailwindcss';
 
 /*
- * Design tokens (docs/architecture.md#design-system). Contrast pairs are verified by
+ * Design tokens (docs/architecture/overview.md#design-system). Contrast pairs are verified by
  * tests/unit/design-tokens.test.ts against WCAG 2.2 AA.
  */
 :root {
-  --bg: #000000;
-  --surface: #090d16;
-  --surface-raised: #101827;
-  --text: #f8fafc;
-  --muted: #a6b2c3;
-  --accent: #1d9bff;
-  --accent-hover: #65beff;
-  --border: #233044; /* decorative separators only (not a component boundary) */
+  /* FreAlgo 2.0 palette (upgrade spec §4); every text pair passes WCAG AA (test-verified). */
+  --bg: #05070b;
+  --surface: #10151f;
+  --surface-raised: #172130;
+  --text: #f5f7fa;
+  --muted: #a6b0c0;
+  --text-muted: var(--muted);
+  --accent: #00b8ff; /* electric blue: focus, selected map entities, primary actions only */
+  --accent-hover: #65d2ff;
+  --border: #243044; /* decorative separators only (not a component boundary) */
   --border-strong: #66768f; /* >= 3:1 boundary for inputs and controls */
-  --focus: #8cd1ff;
-  --danger: #ff6b75;
+  --focus: #77d7ff;
+  --danger: #ff7373;
   --warning: #f5c26b;
-  --success: #6fdc9a;
+  --success: #5ee0aa;
 
   --radius-sm: 6px;
   --radius-md: 10px;
@@ -229,4 +231,26 @@ html[data-motion='reduce'] .intro {
 }
 .prose-body li + li {
   margin-top: 0.3rem;
+}
+/* Data tables in prose (methodology flags, coverage). Wrapped in a focusable .table-scroll region
+   so wide tables scroll inside on narrow screens (WCAG 1.4.10) while keeping table semantics. */
+.prose-body .table-scroll {
+  max-width: 100%;
+  overflow-x: auto;
+  margin-top: 0.75rem;
+}
+.prose-body table {
+  border-collapse: collapse;
+  font-size: 0.95rem;
+}
+.prose-body th,
+.prose-body td {
+  padding: 0.45rem 0.75rem 0.45rem 0;
+  border-bottom: 1px solid var(--border);
+  text-align: left;
+  vertical-align: top;
+}
+.prose-body thead th {
+  color: var(--muted);
+  font-weight: 600;
 }

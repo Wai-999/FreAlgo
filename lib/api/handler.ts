@@ -73,7 +73,7 @@ export function apiHandler<P = Record<string, never>>(
     try {
       const rlHeaders: Record<string, string> = {};
       if (opts.rateLimit) {
-        // RATE_LIMIT_SCALE (default 1) exists only for controlled load tests; see operations.md.
+        // RATE_LIMIT_SCALE (default 1) exists only for controlled load tests; see docs/operations/runbook.md.
         const scale = Math.max(1, Math.min(10_000, Number(process.env.RATE_LIMIT_SCALE ?? 1) || 1));
         const rule = { ...opts.rateLimit, limit: opts.rateLimit.limit * scale };
         const rl = await checkRateLimit(rule, clientKey(req));

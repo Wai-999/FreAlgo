@@ -2,7 +2,7 @@
 # PostgreSQL logical backup (custom format, compressed) via the compose `postgres` service.
 #   scripts/ops/backup.sh [output-dir]       default: ./backups
 # Writes frealgo-<UTC timestamp>.dump and a .sha256 checksum (bare file name, so copies verify
-# anywhere with `shasum -a 256 -c`). Keep backups off-host in production (docs/operations.md §5);
+# anywhere with `shasum -a 256 -c`). Keep backups off-host in production (docs/operations/runbook.md §5);
 # this script never uploads anything itself.
 # Env: COMPOSE (default "docker compose"; production sets the -f/--env-file flags)
 #      KEEP=N keeps only the newest N backups in output-dir.

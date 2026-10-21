@@ -406,12 +406,12 @@ function Scene({
       </mesh>
       {hoverGeom ? (
         <lineSegments geometry={hoverGeom}>
-          <lineBasicMaterial color="#a6b2c3" transparent opacity={0.9} />
+          <lineBasicMaterial color="#a6b0c0" transparent opacity={0.9} />
         </lineSegments>
       ) : null}
       {selectedGeom ? (
         <lineSegments geometry={selectedGeom}>
-          <lineBasicMaterial color="#65beff" />
+          <lineBasicMaterial color="#65d2ff" />
         </lineSegments>
       ) : null}
     </>

@@ -1,7 +1,7 @@
 // FreAlgo data model (Prisma ORM 7, PostgreSQL 16+).
 // Connection URLs live in prisma.config.ts. Objects Prisma cannot express (pg_trgm extension,
 // CHECK constraints, the search-vector trigger) are added as raw SQL inside migrations; see
-// docs/architecture.md#database and prisma/migrations/*/migration.sql.
+// docs/architecture/overview.md#database and prisma/migrations/*/migration.sql.
 
 generator client {
   provider     = "prisma-client"

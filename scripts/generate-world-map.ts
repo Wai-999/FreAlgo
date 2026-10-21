@@ -1,5 +1,5 @@
 /**
- * Builds public/geo/world-map.v2.svg (bump the version when the output changes: the asset is
+ * Builds public/geo/world-map.v3.svg (bump the version when the output changes: the asset is
  * served as immutable): the flat (2D) map used as the no-JS / no-WebGL fallback and
  * as the stage skeleton before the globe loads. Served as a static, immutable asset so the map is
  * not inlined (twice: markup + server payload) into every page.
@@ -56,14 +56,14 @@ html,svg{background:transparent;margin:0}
 :root{color-scheme:dark}
 path{fill:#1a2638;stroke:#3a4a62;stroke-width:.4;vector-effect:non-scaling-stroke;transition:fill .12s}
 a[data-news] path{fill:#23415f}
-a:hover path,a[data-selected] path{fill:#1d9bff}
+a:hover path,a[data-selected] path{fill:#00b8ff}
 a{cursor:pointer}
 a:focus{outline:none}
 </style>
 ${parts.join('\n')}
 </svg>
 `;
-writeFileSync('public/geo/world-map.v2.svg', svg);
+writeFileSync('public/geo/world-map.v3.svg', svg);
 console.log(
-  `Wrote public/geo/world-map.v2.svg (${(svg.length / 1024).toFixed(1)} KB, ${parts.length} shapes)`,
+  `Wrote public/geo/world-map.v3.svg (${(svg.length / 1024).toFixed(1)} KB, ${parts.length} shapes)`,
 );

@@ -4,7 +4,7 @@ import gazetteer from './gazetteer.generated.json';
  * Deterministic, auditable country tagging (rules version below). Every tag records the term that
  * matched so operators and users can see *why* an article is linked to a country.
  *
- * Rules (docs/source-policy.md#tagging):
+ * Rules (docs/data/source-methodology.md#tagging):
  *  1. SOURCE_COUNTRY — the outlet's country (always).
  *  2. FEED_DEFAULT   — countries declared on the feed (country/section feeds).
  *  3. TEXT_MATCH     — a country name/alias/demonym appears in the headline or excerpt, matched

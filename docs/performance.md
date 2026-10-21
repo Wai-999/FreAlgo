@@ -166,7 +166,7 @@ issuing a query that matches 10 % of the corpus) reaches p97.5 545 ms. That cost
 ranking work itself, ~20 000 matches scored per request, and it grows linearly with corpus size.
 Next steps if real traffic shows it: rank only the newest N matches (disclosed in the UI), or
 move search to a dedicated engine. Article lists are deliberately **not** response-cached, so
-that publisher takedowns take effect immediately (see `docs/operations.md`).
+that publisher takedowns take effect immediately (see `docs/operations/runbook.md`).
 
 Reproduce:
 

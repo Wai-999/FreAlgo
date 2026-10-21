@@ -11,3 +11,5 @@ prisma/migrations/**/*.sql
 tests/fixtures/feeds
 CLAUDE_CODE_MASTER_PROMPT.md
 reports
+md files
+.claude

@@ -37,7 +37,7 @@ function memoryLimit(key: string, limit: number, windowSec: number): RateLimitRe
 
 export function clientKey(req: Request): string {
   // Behind a reverse proxy, the left-most X-Forwarded-For entry is the client. Without a proxy
-  // the header may be absent; requests then share one bucket (documented in operations.md).
+  // the header may be absent; requests then share one bucket (documented in docs/operations/runbook.md).
   const fwd = req.headers.get('x-forwarded-for')?.split(',')[0]?.trim();
   const ip = fwd || req.headers.get('x-real-ip') || 'unknown';
   const day = new Date().toISOString().slice(0, 10);

@@ -7,16 +7,18 @@ import { mkdirSync, readFileSync } from 'node:fs';
 import { chromium } from '@playwright/test';
 
 const base = process.argv[2] ?? 'http://localhost:3000';
+// Optional output directory (default reports/lighthouse), e.g. docs/audit/lighthouse-before.
+const outDir = process.argv[3] ?? 'reports/lighthouse';
 const pages = [
   ['home', '/?intro=0'],
   ['country-sheet', '/?country=MM&sector=agriculture&intro=0'],
   ['search', '/search?q=rice&intro=0'],
 ];
-mkdirSync('reports/lighthouse', { recursive: true });
+mkdirSync(outDir, { recursive: true });
 const chromePath = chromium.executablePath();
 const rows = [];
 for (const [name, path] of pages) {
-  const out = `reports/lighthouse/${name}`;
+  const out = `${outDir}/${name}`;
   try {
     execFileSync(
       'npx',

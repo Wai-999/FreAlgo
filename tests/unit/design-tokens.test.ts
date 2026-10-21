@@ -21,17 +21,18 @@ const token = (name: string) => {
 };
 
 describe('design tokens', () => {
-  it('match the specified palette', () => {
-    expect(token('bg').toLowerCase()).toBe('#000000');
-    expect(token('surface').toLowerCase()).toBe('#090d16');
-    expect(token('surface-raised').toLowerCase()).toBe('#101827');
-    expect(token('text').toLowerCase()).toBe('#f8fafc');
-    expect(token('muted').toLowerCase()).toBe('#a6b2c3');
-    expect(token('accent').toLowerCase()).toBe('#1d9bff');
-    expect(token('accent-hover').toLowerCase()).toBe('#65beff');
-    expect(token('border').toLowerCase()).toBe('#233044');
-    expect(token('focus').toLowerCase()).toBe('#8cd1ff');
-    expect(token('danger').toLowerCase()).toBe('#ff6b75');
+  it('match the FreAlgo 2.0 palette (upgrade spec §4)', () => {
+    expect(token('bg').toLowerCase()).toBe('#05070b');
+    expect(token('surface').toLowerCase()).toBe('#10151f');
+    expect(token('surface-raised').toLowerCase()).toBe('#172130');
+    expect(token('text').toLowerCase()).toBe('#f5f7fa');
+    expect(token('muted').toLowerCase()).toBe('#a6b0c0');
+    expect(token('accent').toLowerCase()).toBe('#00b8ff');
+    expect(token('accent-hover').toLowerCase()).toBe('#65d2ff');
+    expect(token('border').toLowerCase()).toBe('#243044');
+    expect(token('focus').toLowerCase()).toBe('#77d7ff');
+    expect(token('danger').toLowerCase()).toBe('#ff7373');
+    expect(token('success').toLowerCase()).toBe('#5ee0aa');
   });
 
   const backgrounds = ['bg', 'surface', 'surface-raised'];
@@ -44,10 +45,9 @@ describe('design tokens', () => {
     },
   );
 
-  it('accent meets AA for text on the page background and large text on surfaces', () => {
-    expect(contrast(token('accent'), token('bg'))).toBeGreaterThanOrEqual(4.5);
+  it('accent meets AA 4.5:1 for text on every surface', () => {
     for (const bg of backgrounds)
-      expect(contrast(token('accent'), token(bg))).toBeGreaterThanOrEqual(3);
+      expect(contrast(token('accent'), token(bg))).toBeGreaterThanOrEqual(4.5);
   });
 
   it('component boundaries (inputs, focus ring) meet 3:1', () => {

@@ -1,7 +1,7 @@
 # Deployment checklist
 
 Use this for the first production deploy and for every release. Background for each step is in
-`docs/operations.md`; security context in `docs/security-review.md`.
+`docs/operations/runbook.md`; security context in `docs/security-review.md`.
 
 ## A. One-time setup (external gates: these need the operator's accounts)
 
@@ -23,7 +23,7 @@ Use this for the first production deploy and for every release. Background for e
 - [ ] **Off-host backups**: a versioned object-storage bucket and a host cron or systemd timer for
       `scripts/ops/backup.sh` (daily) plus the copy job.
 - [ ] **Monitoring**: uptime checks on `/api/v1/health` and `/api/v1/health/freshness`, metrics
-      scraping with the bearer token, and the alert rules in `docs/operations.md` §7.
+      scraping with the bearer token, and the alert rules in `docs/operations/runbook.md` §7.
 - [ ] **Privacy notice**: fill in the controller name and contact on `/privacy` for your
       jurisdiction (legal review recommended).
 - [ ] **Sources**: for each feed you want live, review the publisher's terms and robots policy,
@@ -62,7 +62,7 @@ Verify:
 If something is wrong:
 
 - [ ] Roll back the image (redeploy the previous tag). If a migration must be reverted, follow
-      `docs/operations.md` §4, or restore the pre-deploy backup.
+      `docs/operations/runbook.md` §4, or restore the pre-deploy backup.
 
 ## C. Monthly
 

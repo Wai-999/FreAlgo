@@ -1,6 +1,6 @@
 /**
  * Security headers. CSP uses a per-request nonce for scripts ('strict-dynamic'); see
- * docs/decisions.md (ADR-009) for why style-src keeps 'unsafe-inline'.
+ * docs/architecture/decisions.md (ADR-009) for why style-src keeps 'unsafe-inline'.
  */
 export function buildContentSecurityPolicy(opts: {
   nonce: string;

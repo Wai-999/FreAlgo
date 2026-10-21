@@ -14,7 +14,7 @@ import {
  * response in FeedSource.providerConfig. The API key is read from the server environment variable
  * named in `apiKeyEnv`. It is never stored in the database and never reaches the browser.
  *
- * Using any third-party news API requires a licence and cost review (docs/source-policy.md).
+ * Using any third-party news API requires a licence and cost review (docs/data/source-methodology.md).
  * Without the key, the source fails with CONFIG_ERROR, which shows up on the freshness page.
  */
 export const licensedConfigSchema = z.object({

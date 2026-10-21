@@ -1,7 +1,7 @@
 /**
  * Source-orientation taxonomy.
  *
- * Design rules (docs/source-policy.md#labels):
+ * Design rules (docs/data/source-methodology.md#labels):
  *  - `orientation` is a *directional spectrum* field. Only the five positional values sit on the
  *    line; MIXED, UNRATED and DISPUTED are explicit non-positional states.
  *  - Descriptive ideology words ("liberal", "conservative", ...) are separate tags because their

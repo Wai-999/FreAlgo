@@ -4,7 +4,7 @@ html,svg{background:transparent;margin:0}
 :root{color-scheme:dark}
 path{fill:#1a2638;stroke:#3a4a62;stroke-width:.4;vector-effect:non-scaling-stroke;transition:fill .12s}
 a[data-news] path{fill:#23415f}
-a:hover path,a[data-selected] path{fill:#1d9bff}
+a:hover path,a[data-selected] path{fill:#00b8ff}
 a{cursor:pointer}
 a:focus{outline:none}
 </style>

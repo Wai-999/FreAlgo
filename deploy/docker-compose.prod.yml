@@ -6,7 +6,7 @@
 #   - Only Caddy publishes ports (80/443, automatic HTTPS for $DOMAIN). Postgres/Redis are private.
 #   - The app connects as a least-privilege role (frealgo_app); migrations run as the owner role.
 #   - Redis requires a password; fixtures and dev login are off; log rotation and memory limits.
-# External gates: a domain pointing at the host, and a host with Docker. See docs/operations.md.
+# External gates: a domain pointing at the host, and a host with Docker. See docs/operations/runbook.md.
 
 name: frealgo-prod
 

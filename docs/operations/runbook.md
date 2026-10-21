@@ -65,7 +65,7 @@ scripts/ops/smoke.sh https://$DOMAIN
 The `migrate` job runs `prisma migrate deploy` (as the owner role) followed by the idempotent seed
 (reference data plus the paused real-source registry; fixtures disabled). `web` and `worker` wait
 for it to succeed. To roll out a new version, rebuild and `up -d`: Compose replaces containers
-after `migrate` finishes. Follow `docs/deployment-checklist.md`.
+after `migrate` finishes. Follow `docs/operations/deployment-checklist.md`.
 
 Hosting on a PaaS works the same way. Build the `web` and `worker` targets as separate services,
 run the `migrate` target as a release command, and provide managed Postgres 16+ and Redis 7+

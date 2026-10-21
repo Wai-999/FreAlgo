@@ -15,7 +15,7 @@ docker compose up --build
 Then open http://localhost:3000. The stack starts PostgreSQL, Redis, a one-shot `migrate` job
 (migrations plus idempotent seed), the web app and the ingestion worker. Out of the box the app
 shows clearly badged **fixture** data. Real publisher feeds are registered paused until their
-terms are reviewed; see [docs/source-policy.md](docs/source-policy.md).
+terms are reviewed; see [docs/data/source-methodology.md](docs/data/source-methodology.md).
 
 ## Local development
 
@@ -48,9 +48,9 @@ npm run worker:dev              # ingestion worker (separate terminal)
 
 ## Documentation
 
-- [Architecture](docs/architecture.md) · [Decisions (ADRs)](docs/decisions.md) · [HTTP API](docs/api.md)
-- [Source & editorial policy](docs/source-policy.md) · [Publisher terms review](docs/source-terms-review.md) · [Milestones](docs/milestones.md)
-- [Operations runbook](docs/operations.md) · [Deployment checklist](docs/deployment-checklist.md)
+- [Architecture](docs/architecture/overview.md) · [Decisions (ADRs)](docs/architecture/decisions.md) · [HTTP API](docs/api.md)
+- [Source & editorial policy](docs/data/source-methodology.md) · [Publisher terms review](docs/source-terms-review.md) · [Milestones](docs/milestones.md)
+- [Operations runbook](docs/operations/runbook.md) · [Deployment checklist](docs/operations/deployment-checklist.md)
 - [Security review](docs/security-review.md) · [Privacy & accessibility audit](docs/privacy-accessibility-audit.md) · [Licences](docs/licenses.md)
 - [Performance](docs/performance.md) · [Release report](docs/release-report.md)
 
