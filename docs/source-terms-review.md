@@ -60,3 +60,17 @@ the BBC ambiguity noted above. Keep everything else paused. To widen coverage, e
 and C publishers you care most about (e.g. Myanmar Now, CBC) and record their answers in the
 activation notes. Coverage will be thin at launch: three outlets (UK, US and Brazil), plus
 text-matched mentions of other countries. Every country page says so.
+
+## Decision (2026-10-21)
+
+The site owner, Wai Yan Hein, reviewed this summary and approved **NPR, BBC News and Agência
+Brasil** for activation, accepting the BBC metadata-clause ambiguity. Every other feed stays
+paused. The decision, with per-outlet notes and terms URLs, is recorded in
+[`deploy/source-activations.json`](../deploy/source-activations.json). Production applies it with:
+
+```bash
+node --import tsx scripts/activate-sources.ts --from deploy/source-activations.json
+```
+
+The command is idempotent and writes an `AdminAuditLog` entry per feed. The four feeds were
+dry-run verified (fetched and parsed, nothing stored) on 2026-10-21.

@@ -1,0 +1,23 @@
+[
+  {
+    "slug": "npr",
+    "reviewer": "Wai Yan Hein (site owner)",
+    "reviewedOn": "2026-10-21",
+    "termsUrl": "https://www.npr.org/about-npr/179876898/terms-of-use#ContentFeeds",
+    "notes": "NPR Terms of Use, Content Feeds: headlines, summaries and links may be displayed, excerpted and linked on a personal, non-commercial site. Conditions kept: headlines, text and links are not altered; no implied endorsement; non-commercial."
+  },
+  {
+    "slug": "bbc-news",
+    "reviewer": "Wai Yan Hein (site owner)",
+    "reviewedOn": "2026-10-21",
+    "termsUrl": "https://www.bbc.co.uk/usingthebbc/terms-of-use/",
+    "notes": "BBC Terms of Use: the BBC News RSS feed may be added to a website if it is not changed and BBC branding is kept; business use needs permission. Conditions kept: unchanged headlines and links, credited to BBC News, no logos, non-commercial. Reviewer accepted the ambiguity of the clause on extracting metadata from feeds."
+  },
+  {
+    "slug": "agencia-brasil",
+    "reviewer": "Wai Yan Hein (site owner)",
+    "reviewedOn": "2026-10-21",
+    "termsUrl": "https://www.ebc.com.br/termos-de-uso-e-condicoes-gerais-do-portal-da-ebc",
+    "notes": "EBC portal terms of use: reproduction is authorised when the source is credited. Every story shows Agência Brasil as the source and links to the original."
+  }
+]
