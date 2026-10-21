@@ -75,7 +75,7 @@
     "@types/three": "0.186.0",
     "@types/topojson-client": "3.1.5",
     "cldr-core": "48.2.0",
-    "cron-parser": "4.9.0",
+    "cron-parser": "5.10.2",
     "esbuild": "0.28.2",
     "eslint": "10.13.0",
     "eslint-config-next": "16.4.2",
