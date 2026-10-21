@@ -1,16 +1,29 @@
 # Release readiness report: FreAlgo v1
 
-Date: 2026-10-20 · Branch: `build/frealgo-v1` (local; no remote configured)
+Date: 2026-10-20 · Repository: <https://github.com/Wai-999/FreAlgo> (`main`, CI green)
+
+## 0. Deployment record (2026-10-21)
+
+**Live at <https://frealgo.duckdns.org>.**
+
+- **Host:** Oracle Cloud Always Free, Ampere A1 (2 OCPU, 12 GB, Ubuntu 24.04 ARM), region
+  us-sanjose-1.
+- **Recipe:** `deploy/docker-compose.prod.yml` via `scripts/ops/deploy-remote.sh` (Caddy with a
+  Let's Encrypt certificate, private Postgres and Redis, least-privilege app role).
+- **Sources:** NPR, BBC News and Agência Brasil active per the owner's terms review
+  (`deploy/source-activations.json`); all other feeds paused. No fixture data in production.
+- **Verified on the public URL:** `scripts/ops/smoke.sh` passed (11/11). HSTS, CSP and frame
+  headers are present; `/api/v1/metrics` returns 404 publicly; HTTP redirects to HTTPS; first
+  fetch completed (4 feeds fresh, 0 errors).
+- **Not yet set up:** scheduled backups on the server with an off-host copy (see
+  `docs/deployment-checklist.md` §A), uptime monitoring, OIDC sign-in.
 
 ## 1. Status in one paragraph
 
-All five milestones are implemented and validated locally. Every gate passes: format, lint,
-typecheck, unit, integration, production build, cross-browser e2e, and a Compose smoke test. The
-scheduled worker was observed ingesting real publisher feeds end to end, and the restore drill
-passes. The system is **ready to deploy, but not deployed**. Hosting, a domain, a Git remote with
-hosted CI, an identity provider, and the publisher-terms reviews that unlock real feeds all need
-the operator's accounts and decisions (§8). Until those reviews happen, the default install shows
-clearly badged fixture data; real feeds are registered but paused.
+All five milestones are implemented and validated, and the site is deployed (§0). Every gate
+passes, locally and on GitHub Actions: format, lint, typecheck, unit, integration, production
+build, cross-browser e2e, and Docker builds. The scheduled worker was observed ingesting real
+publisher feeds end to end, and the restore drill passes. Remaining external items are in §8.
 
 ## 2. Commits
 
