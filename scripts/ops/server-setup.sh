@@ -21,8 +21,16 @@ log() { printf '\n== %s\n' "$*"; }
 if [ "${SKIP_SYSTEM:-0}" != 1 ]; then
   log "packages"
   if ! command -v docker >/dev/null || ! $SUDO docker compose version >/dev/null 2>&1; then
-    $SUDO apt-get update -qq
-    $SUDO env DEBIAN_FRONTEND=noninteractive apt-get install -y -qq \
+    # A fresh cloud server runs cloud-init and unattended upgrades on first boot; they hold the
+    # apt locks for several minutes ("Could not get lock /var/lib/apt/lists/lock").
+    if command -v cloud-init >/dev/null; then $SUDO cloud-init status --wait >/dev/null 2>&1 || true; fi
+    for _ in $(seq 1 90); do
+      $SUDO fuser /var/lib/dpkg/lock-frontend /var/lib/apt/lists/lock >/dev/null 2>&1 || break
+      echo "waiting for another apt process (first-boot updates)..."
+      sleep 10
+    done
+    $SUDO apt-get -o DPkg::Lock::Timeout=600 update -qq
+    $SUDO env DEBIAN_FRONTEND=noninteractive apt-get -o DPkg::Lock::Timeout=600 install -y -qq \
       docker.io docker-compose-v2 git openssl ca-certificates curl
     $SUDO systemctl enable --now docker
   fi
