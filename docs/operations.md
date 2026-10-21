@@ -90,15 +90,29 @@ must be an always-on process.
 
 ## 5. Backups and restore
 
-- **Backup.** `scripts/ops/backup.sh [dir]` writes a compressed `pg_dump` custom-format file plus
-  a SHA-256 checksum. Schedule it daily on the host (cron or systemd timer) with
-  `COMPOSE_FILE=deploy/docker-compose.prod.yml`, and copy the output off-host (object storage
-  with versioning). Keep 7 daily, 4 weekly and 6 monthly copies.
+- **Nightly backup (installed by `server-setup.sh`).** `/etc/cron.d/frealgo-backup` runs
+  `scripts/ops/backup.sh` at 02:37 UTC. It writes a compressed `pg_dump` (custom format) plus a
+  SHA-256 checksum to `/var/backups/frealgo` and keeps the newest 7. The log is at
+  `/var/log/frealgo-backup.log`.
+- **Off-server copy.** From your computer, run:
+
+  ```bash
+  scripts/ops/pull-backups.sh <server-ip>
+  ```
+
+  It copies new backups to `~/FreAlgo-backups` over SSH and verifies every checksum. It never
+  deletes local copies, so history accumulates beyond the server's 7 days. Run it weekly, or
+  schedule it. A copy on one laptop is still a single copy: for real safety, also keep the folder
+  in a synced or versioned location (e.g. iCloud Drive) or an object-storage bucket.
+
 - **Restore.** `scripts/ops/restore.sh <file> [target-db]` verifies the checksum and restores into
-  a scratch database by default. It refuses to overwrite `frealgo` unless explicitly confirmed.
-- **Drill.** `scripts/ops/restore-drill.sh` backs up, restores into a scratch DB, compares
-  per-table row counts and migration state, and drops the scratch DB. Run it monthly and after
-  schema changes. The last result is recorded in `docs/release-report.md`.
+  a scratch database by default. It refuses to overwrite `frealgo` unless
+  `I_UNDERSTAND_THIS_OVERWRITES_PRODUCTION=yes` is set. On the server, prefix commands with
+  `sudo env COMPOSE="docker compose -f deploy/docker-compose.prod.yml --env-file deploy/.env.production"`
+  from `/opt/frealgo`.
+- **Drill.** `scripts/ops/restore-drill.sh` backs up, restores into a scratch DB, compares row
+  counts and migration state table by table, then drops the scratch DB. Run it monthly and after
+  schema changes. It last passed on production on 2026-10-21 (69 articles, identical counts).
 - **Redis** holds no irreplaceable data. After a loss, the worker re-registers its schedulers at
   boot and the next tick enqueues everything that is due.
 
