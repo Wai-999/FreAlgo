@@ -94,9 +94,9 @@ export default async function WorldPulsePage({
             below.
           </desc>
           <defs>
-            <pattern id="pulse-none" width="4" height="4" patternUnits="userSpaceOnUse">
-              <rect width="4" height="4" fill="var(--surface)" />
-              <path d="M0 4L4 0" stroke="var(--border)" strokeWidth="0.6" />
+            <pattern id="pulse-none" width="8" height="8" patternUnits="userSpaceOnUse">
+              <rect width="8" height="8" fill="var(--surface)" />
+              <path d="M0 8L8 0" stroke="var(--border)" strokeWidth="1.2" />
             </pattern>
           </defs>
           {paths.map((p) => {

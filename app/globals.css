@@ -199,6 +199,55 @@ html[data-motion='reduce'] .intro {
 }
 
 /* --------------------------------------------------------------------------
+ * Country sheet (components/news/country-sheet.tsx). Mobile: the bottom sheet slides up and
+ * down; desktop: the anchored panel fades and slides in from the right. Server-rendered sheets
+ * have no data-enter, so they paint in place (no JavaScript needed, first paint not delayed).
+ * The reduced-motion rules above make every one of these changes instant.
+ * ------------------------------------------------------------------------ */
+.country-sheet {
+  transition: transform var(--dur-sheet) var(--ease-out); /* snap back after a drag */
+}
+.country-sheet[data-dragging] {
+  transition: none;
+}
+.country-sheet[data-enter] {
+  animation: sheet-in var(--dur-sheet) var(--ease-out);
+}
+.country-sheet[data-state='closing'] {
+  animation: sheet-out var(--dur-sheet) var(--ease-out) forwards;
+}
+@media (min-width: 1024px) {
+  .country-sheet[data-enter] {
+    animation-name: panel-in;
+  }
+  .country-sheet[data-state='closing'] {
+    animation-name: panel-out;
+  }
+}
+@keyframes sheet-in {
+  from {
+    transform: translateY(100%);
+  }
+}
+@keyframes sheet-out {
+  to {
+    transform: translateY(100%);
+  }
+}
+@keyframes panel-in {
+  from {
+    opacity: 0;
+    transform: translateX(24px);
+  }
+}
+@keyframes panel-out {
+  to {
+    opacity: 0;
+    transform: translateX(24px);
+  }
+}
+
+/* --------------------------------------------------------------------------
  * Small utilities that Tailwind does not provide directly.
  * ------------------------------------------------------------------------ */
 .measure {

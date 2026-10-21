@@ -1,5 +1,5 @@
 /**
- * Builds public/geo/world-map.v3.svg (bump the version when the output changes: the asset is
+ * Builds public/geo/world-map.v4.svg (bump the version when the output changes: the asset is
  * served as immutable): the flat (2D) map used as the no-JS / no-WebGL fallback and
  * as the stage skeleton before the globe loads. Served as a static, immutable asset so the map is
  * not inlined (twice: markup + server payload) into every page.
@@ -11,9 +11,13 @@
 import { readFileSync, writeFileSync } from 'node:fs';
 import { geoEqualEarth, geoPath } from 'd3-geo';
 import { identifyFeature, topologyToFeatures } from '../lib/geo/features';
+import { compactPath } from '../lib/geo/svg-path';
 
-const WIDTH = 960;
-const HEIGHT = 500;
+// Integer coordinates on a 1920×1000 grid: half a unit of the former 960×500 one-decimal grid,
+// far below a pixel at any display size, and they encode compactly (lib/geo/svg-path.ts).
+const WIDTH = 1920;
+const HEIGHT = 1000;
+const MARGIN = 16;
 const topology = JSON.parse(readFileSync('public/geo/countries-110m.v1.json', 'utf8'));
 const { countries } = JSON.parse(readFileSync('prisma/data/countries.json', 'utf8')) as {
   countries: { iso2: string; isoNumeric: string | null; name: string }[];
@@ -26,19 +30,20 @@ const names = new Map(countries.map((c) => [c.iso2, c.name]));
 const features = topologyToFeatures(topology).filter((f) => f.properties?.name !== 'Antarctica');
 const projection = geoEqualEarth().fitExtent(
   [
-    [8, 8],
-    [WIDTH - 8, HEIGHT - 8],
+    [MARGIN, MARGIN],
+    [WIDTH - MARGIN, HEIGHT - MARGIN],
   ],
   { type: 'FeatureCollection', features },
 );
-const path = geoPath(projection).digits(1);
+const path = geoPath(projection).digits(0);
 const esc = (s: string) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/"/g, '&quot;');
 
 const parts: string[] = [];
 for (const f of features) {
   const id = identifyFeature(f, numericToIso2);
-  const d = path(f);
-  if (!d) continue;
+  const raw = path(f);
+  if (!raw) continue;
+  const d = compactPath(raw);
   if (id.iso2) {
     const name = names.get(id.iso2) ?? id.name;
     parts.push(
@@ -63,7 +68,7 @@ a:focus{outline:none}
 ${parts.join('\n')}
 </svg>
 `;
-writeFileSync('public/geo/world-map.v3.svg', svg);
+writeFileSync('public/geo/world-map.v4.svg', svg);
 console.log(
-  `Wrote public/geo/world-map.v3.svg (${(svg.length / 1024).toFixed(1)} KB, ${parts.length} shapes)`,
+  `Wrote public/geo/world-map.v4.svg (${(svg.length / 1024).toFixed(1)} KB, ${parts.length} shapes)`,
 );

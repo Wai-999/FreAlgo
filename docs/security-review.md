@@ -69,9 +69,9 @@ Security headers on the new pages match the v1 pages (CSP with nonce, `frame-anc
 
 ## 4. Accepted risks
 
-- **`style-src 'unsafe-inline'`**: required by Next.js and Motion inline styles (ADR-009). Script
-  execution remains nonce-gated, so the residual risk is limited to CSS-based exfiltration on
-  pages that render no secrets.
+- **`style-src 'unsafe-inline'`**: required by the `style` attributes that Next.js and React SSR
+  emit (ADR-009). Script execution remains nonce-gated, so the residual risk is limited to
+  CSS-based exfiltration on pages that render no secrets.
 - **Rate limiting depends on the proxy** setting `X-Forwarded-For`. Exposed directly, clients
   could rotate the header. The production recipe only publishes Caddy, which overwrites it.
 - **In-process caches and API metrics are per instance.** That is acceptable at this scale;

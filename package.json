@@ -49,7 +49,6 @@
     "fast-xml-parser": "5.11.2",
     "ioredis": "5.11.1",
     "ipaddr.js": "2.5.0",
-    "motion": "14.4.0",
     "next": "16.4.2",
     "openid-client": "6.8.8",
     "pg": "8.23.1",

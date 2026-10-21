@@ -120,6 +120,35 @@ test.describe('country workspace', () => {
     await expect(sheet(page)).toHaveCount(0);
   });
 
+  test('mobile: the drag handle snaps back after a short drag and closes after a long one @cross', async ({
+    page,
+    isMobile,
+  }) => {
+    test.skip(!isMobile, 'mobile only');
+    await page.goto('/?country=KE&intro=0');
+    const box = (await page.getByTestId('sheet-handle').boundingBox())!;
+    const x = box.x + box.width / 2;
+    const y = box.y + box.height / 2;
+    const top = async () => Math.round((await sheet(page).boundingBox())!.y);
+    const start = await top();
+
+    await page.mouse.move(x, y);
+    await page.mouse.down();
+    await page.mouse.move(x, y + 60, { steps: 6 });
+    expect(await top()).toBeGreaterThan(start + 20); // follows the finger
+    await page.waitForTimeout(150); // finger rests: no fling
+    await page.mouse.up();
+    await expect.poll(top).toBe(start);
+    await expect(page).toHaveURL(/country=KE/);
+
+    await page.mouse.move(x, y);
+    await page.mouse.down();
+    await page.mouse.move(x, y + 260, { steps: 10 });
+    await page.mouse.up();
+    await expect(page).not.toHaveURL(/country=/);
+    await expect(sheet(page)).toHaveCount(0);
+  });
+
   test('invalid link parameters are ignored with a notice instead of an error', async ({
     page,
   }) => {

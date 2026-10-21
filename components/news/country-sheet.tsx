@@ -1,7 +1,17 @@
 'use client';
 
-import { AnimatePresence, LazyMotion, m, useDragControls, useReducedMotion } from 'motion/react';
-import { useEffect, useId, useRef, useSyncExternalStore, type ReactNode } from 'react';
+import {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useId,
+  useRef,
+  useState,
+  useSyncExternalStore,
+  type PointerEvent as ReactPointerEvent,
+  type ReactNode,
+} from 'react';
 import { CloseIcon } from '@/components/ui/icons';
 import { NavAnchor, useWorkspaceNav } from './nav-anchor';
 
@@ -23,14 +33,28 @@ function useMediaQuery(query: string, serverValue: boolean): boolean {
 const FOCUSABLE =
   'a[href], button:not([disabled]), input:not([disabled]), select, textarea, summary, [tabindex]:not([tabindex="-1"])';
 
-const loadMotionFeatures = () => import('./motion-features').then((mod) => mod.default);
+/** Drag distance (px) or release speed (px/s) that closes the mobile sheet. */
+const CLOSE_OFFSET = 120;
+const CLOSE_VELOCITY = 700;
+/** The sheet follows the finger with some resistance. */
+const DRAG_RESISTANCE = 0.6;
 
-/** Keeps the sheet mounted across country changes (spatial memory) and runs exit transitions. */
+/** Present while the last sheet plays its exit transition; call it when the transition ends. */
+const SheetExitContext = createContext<(() => void) | null>(null);
+
+/**
+ * Keeps the sheet mounted across country changes (spatial memory). When the URL closes it, the
+ * last sheet stays on screen until its CSS exit animation (app/globals.css) has finished.
+ */
 export function SheetPresence({ children }: { children: ReactNode }) {
+  const [last, setLast] = useState<ReactNode>(children);
+  if (children && children !== last) setLast(children);
+  const onExited = useCallback(() => setLast(null), []);
+  const exiting = !children && !!last;
   return (
-    <LazyMotion features={loadMotionFeatures} strict>
-      <AnimatePresence>{children}</AnimatePresence>
-    </LazyMotion>
+    <SheetExitContext.Provider value={exiting ? onExited : null}>
+      {children || (exiting ? last : null)}
+    </SheetExitContext.Provider>
   );
 }
 
@@ -39,6 +63,7 @@ export function SheetPresence({ children }: { children: ReactNode }) {
  *  Desktop (≥1024px): anchored, non-modal side panel (role=region); the map stays usable.
  *  Mobile: modal bottom sheet (role=dialog, aria-modal) with drag handle, explicit close button,
  *  focus trap, inert background and Escape. Without JavaScript it renders in place with a close link.
+ * Transitions are CSS (`.country-sheet` in app/globals.css), so they honour reduced motion.
  */
 export function CountrySheet({
   iso2,
@@ -59,15 +84,27 @@ export function CountrySheet({
   children: ReactNode;
 }) {
   const isDesktop = useMediaQuery('(min-width: 1024px)', true);
-  const reduceMotion = useReducedMotion();
   const nav = useWorkspaceNav();
+  const onExited = useContext(SheetExitContext);
+  const closing = onExited !== null;
   const headingId = useId();
   const sheetRef = useRef<HTMLElement>(null);
   const headingRef = useRef<HTMLHeadingElement>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
-  const dragControls = useDragControls();
-  const modal = !isDesktop;
+  const drag = useRef<{ pointerId: number; startY: number; y: number; t: number; v: number }>(null);
+  const dialog = !isDesktop;
+  // A closing sheet no longer traps focus or keeps the page inert.
+  const modal = dialog && !closing;
   const lastIso = useRef<string | null>(null);
+
+  // Server render and hydration paint the sheet in its final position (visible without JS and
+  // not delayed by an animation); only sheets opened on the client animate in.
+  const hydrated = useSyncExternalStore(
+    () => () => {},
+    () => true,
+    () => false,
+  );
+  const [animateIn] = useState(hydrated);
 
   const close = () => {
     try {
@@ -100,6 +137,7 @@ export function CountrySheet({
 
   // Escape closes; on mobile, Tab is trapped inside the dialog.
   useEffect(() => {
+    if (closing) return;
     const onKey = (e: KeyboardEvent) => {
       if (e.key === 'Escape' && !e.defaultPrevented) {
         const target = e.target as HTMLElement | null;
@@ -126,7 +164,7 @@ export function CountrySheet({
     document.addEventListener('keydown', onKey);
     return () => document.removeEventListener('keydown', onKey);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [modal, closeHref, iso2]);
+  }, [modal, closing, closeHref, iso2]);
 
   // Modal on mobile: make the rest of the page inert while the sheet is open.
   useEffect(() => {
@@ -138,44 +176,77 @@ export function CountrySheet({
     return () => nodes.forEach((n) => (n.inert = false));
   }, [modal]);
 
-  // Server render and hydration use the final position (so the sheet is visible without JS);
-  // client-side opens animate in.
-  const hydrated = useSyncExternalStore(
-    () => () => {},
-    () => true,
-    () => false,
-  );
-  const transition = reduceMotion
-    ? { duration: 0 }
-    : { duration: 0.22, ease: [0.22, 1, 0.36, 1] as const };
+  // Unmount after the exit animation; the timer covers browsers that skip animation events.
+  // Reopened before that (another country picked): drop any offset left by a drag-to-close.
+  useEffect(() => {
+    if (!onExited) {
+      if (!drag.current) sheetRef.current?.style.removeProperty('transform');
+      return;
+    }
+    const timer = window.setTimeout(onExited, 400);
+    return () => window.clearTimeout(timer);
+  }, [onExited]);
+
+  // Mobile drag handle: drag the sheet down to close it, or release to snap back.
+  const onDragStart = (e: ReactPointerEvent<HTMLDivElement>) => {
+    if (!modal || e.button !== 0) return;
+    e.currentTarget.setPointerCapture(e.pointerId);
+    drag.current = {
+      pointerId: e.pointerId,
+      startY: e.clientY,
+      y: e.clientY,
+      t: e.timeStamp,
+      v: 0,
+    };
+    sheetRef.current?.setAttribute('data-dragging', '');
+  };
+  const onDragMove = (e: ReactPointerEvent<HTMLDivElement>) => {
+    const d = drag.current;
+    if (!d || d.pointerId !== e.pointerId || !sheetRef.current) return;
+    const dt = e.timeStamp - d.t;
+    if (dt > 0) d.v = ((e.clientY - d.y) / dt) * 1000;
+    d.y = e.clientY;
+    d.t = e.timeStamp;
+    const offset = Math.max(0, e.clientY - d.startY) * DRAG_RESISTANCE;
+    sheetRef.current.style.transform = `translateY(${offset}px)`;
+  };
+  const onDragEnd = (e: ReactPointerEvent<HTMLDivElement>) => {
+    const d = drag.current;
+    if (!d || d.pointerId !== e.pointerId) return;
+    drag.current = null;
+    sheetRef.current?.removeAttribute('data-dragging');
+    // A pause before release means the finger stopped: no fling.
+    const velocity = e.timeStamp - d.t > 100 ? 0 : d.v;
+    const dismiss =
+      e.type === 'pointerup' && (e.clientY - d.startY > CLOSE_OFFSET || velocity > CLOSE_VELOCITY);
+    // Closing continues from the dragged position (exit animation); otherwise snap back.
+    if (dismiss && nav) close();
+    else sheetRef.current?.style.removeProperty('transform');
+  };
 
   return (
-    <m.section
-      key="country-sheet"
+    <section
       ref={sheetRef}
-      role={modal ? 'dialog' : 'region'}
+      role={dialog ? 'dialog' : 'region'}
       aria-modal={modal ? true : undefined}
       aria-labelledby={headingId}
+      inert={closing || undefined}
       data-testid="country-sheet"
-      data-mode={modal ? 'dialog' : 'panel'}
-      initial={hydrated ? (isDesktop ? { opacity: 0, x: 24 } : { y: '100%' }) : false}
-      animate={isDesktop ? { opacity: 1, x: 0 } : { y: 0 }}
-      exit={isDesktop ? { opacity: 0, x: 24 } : { y: '100%' }}
-      transition={transition}
-      drag={modal ? 'y' : false}
-      dragListener={false}
-      dragControls={dragControls}
-      dragConstraints={{ top: 0, bottom: 0 }}
-      dragElastic={{ top: 0, bottom: 0.6 }}
-      onDragEnd={(_, info) => {
-        if (info.offset.y > 120 || info.velocity.y > 700) close();
+      data-mode={dialog ? 'dialog' : 'panel'}
+      data-state={closing ? 'closing' : 'open'}
+      data-enter={animateIn ? '' : undefined}
+      onAnimationEnd={(e) => {
+        if (closing && e.target === e.currentTarget) onExited?.();
       }}
-      className="fixed inset-x-0 bottom-0 z-30 flex h-[86dvh] flex-col rounded-t-2xl border-t border-border-strong bg-surface shadow-2xl lg:absolute lg:inset-y-0 lg:right-0 lg:left-auto lg:z-20 lg:h-auto lg:w-[var(--sheet-w)] lg:rounded-none lg:border-t-0 lg:border-l lg:border-border lg:shadow-none"
+      className="country-sheet fixed inset-x-0 bottom-0 z-30 flex h-[86dvh] flex-col rounded-t-2xl border-t border-border-strong bg-surface shadow-2xl lg:absolute lg:inset-y-0 lg:right-0 lg:left-auto lg:z-20 lg:h-auto lg:w-[var(--sheet-w)] lg:rounded-none lg:border-t-0 lg:border-l lg:border-border lg:shadow-none"
     >
-      {modal ? (
+      {dialog ? (
         <div
           className="flex h-6 shrink-0 cursor-grab touch-none items-center justify-center active:cursor-grabbing"
-          onPointerDown={(e) => dragControls.start(e)}
+          onPointerDown={onDragStart}
+          onPointerMove={onDragMove}
+          onPointerUp={onDragEnd}
+          onPointerCancel={onDragEnd}
           aria-hidden="true"
           data-testid="sheet-handle"
         >
@@ -232,6 +303,6 @@ export function CountrySheet({
         {header ? <div className="space-y-3 border-b border-border py-3">{header}</div> : null}
         {children}
       </div>
-    </m.section>
+    </section>
   );
 }
