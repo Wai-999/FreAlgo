@@ -104,6 +104,23 @@ for (const s of sources.filter((x) => x.status === "ACTIVE")) {
   console.log(`refetch ${s.outlet?.slug ?? s.id} -> HTTP ${r.status}`);
 }' </dev/null
 
+if [ "${SKIP_SYSTEM:-0}" != 1 ]; then
+  log "daily database backup: 02:37 UTC, newest 7 kept in /var/backups/frealgo"
+  OWNER="$(id -un)"
+  $SUDO mkdir -p /var/backups/frealgo
+  $SUDO chown "$OWNER:$OWNER" /var/backups/frealgo
+  $SUDO chmod 700 /var/backups/frealgo
+  # Runs as root (Docker access); files are handed to the deploy user so they can be copied off
+  # the server with scripts/ops/pull-backups.sh.
+  $SUDO tee /etc/cron.d/frealgo-backup >/dev/null <<CRON
+# FreAlgo daily database backup (installed by scripts/ops/server-setup.sh; edits are overwritten).
+SHELL=/bin/sh
+PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+37 2 * * * root cd $APP_DIR && COMPOSE="docker compose -f deploy/docker-compose.prod.yml --env-file deploy/.env.production" KEEP=7 sh scripts/ops/backup.sh /var/backups/frealgo >>/var/log/frealgo-backup.log 2>&1; chown -R $OWNER:$OWNER /var/backups/frealgo
+CRON
+  $SUDO chmod 644 /etc/cron.d/frealgo-backup
+fi
+
 log "status"
 "${COMPOSE[@]}" ps --format 'table {{.Service}}\t{{.State}}\t{{.Status}}'
 echo "Done. Site: https://$DOMAIN (the TLS certificate is issued on the first request once DNS points here)."
