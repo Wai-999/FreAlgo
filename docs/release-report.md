@@ -15,8 +15,9 @@ Date: 2026-10-20 · Repository: <https://github.com/Wai-999/FreAlgo> (`main`, CI
 - **Verified on the public URL:** `scripts/ops/smoke.sh` passed (11/11). HSTS, CSP and frame
   headers are present; `/api/v1/metrics` returns 404 publicly; HTTP redirects to HTTPS; first
   fetch completed (4 feeds fresh, 0 errors).
-- **Not yet set up:** scheduled backups on the server with an off-host copy (see
-  `docs/deployment-checklist.md` §A), uptime monitoring, OIDC sign-in.
+- **Backups:** nightly at 02:37 UTC on the server, newest 7 kept; `scripts/ops/pull-backups.sh`
+  copies them off the server. Restore drill passed on production data (2026-10-21).
+- **Not yet set up:** uptime monitoring, OIDC sign-in.
 
 ## 1. Status in one paragraph
 
