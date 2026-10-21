@@ -49,7 +49,7 @@ npm run worker:dev              # ingestion worker (separate terminal)
 ## Documentation
 
 - [Architecture](docs/architecture.md) · [Decisions (ADRs)](docs/decisions.md) · [HTTP API](docs/api.md)
-- [Source & editorial policy](docs/source-policy.md) · [Milestones](docs/milestones.md)
+- [Source & editorial policy](docs/source-policy.md) · [Publisher terms review](docs/source-terms-review.md) · [Milestones](docs/milestones.md)
 - [Operations runbook](docs/operations.md) · [Deployment checklist](docs/deployment-checklist.md)
 - [Security review](docs/security-review.md) · [Privacy & accessibility audit](docs/privacy-accessibility-audit.md) · [Licences](docs/licenses.md)
 - [Performance](docs/performance.md) · [Release report](docs/release-report.md)
