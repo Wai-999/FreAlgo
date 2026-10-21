@@ -179,13 +179,18 @@ function buildMatcher(lang: string) {
     terms.push({ term, iso2, noBoundary: NO_SPACE_SCRIPT.test(term) });
   }
   terms.sort((a, b) => b.term.length - a.term.length);
-  const alternatives = terms.flatMap((t) => {
-    const forms = t.term === t.term.toUpperCase() ? [t.term] : [t.term, t.term.toUpperCase()];
-    return forms.map((f) =>
-      t.noBoundary ? escapeRe(f) : `(?<![\\p{L}\\p{N}])${escapeRe(f)}(?![\\p{L}\\p{N}])`,
-    );
-  });
-  const regex = new RegExp(alternatives.join('|'), 'gu');
+  const forms = (t: Term) =>
+    (t.term === t.term.toUpperCase() ? [t.term] : [t.term, t.term.toUpperCase()]).map(escapeRe);
+  const bounded = terms.filter((t) => !t.noBoundary).flatMap(forms);
+  const unbounded = terms.filter((t) => t.noBoundary).flatMap(forms);
+  // Word boundaries wrap the whole alternation once. Repeating them per term compiled ~2 000
+  // copies of the \p{L} class and took 0.4–1.8 s per language on first use (5 s+ on CI).
+  // Backtracking into the group keeps the per-term semantics: if the longest name fails the
+  // trailing check, shorter alternatives are still tried.
+  const parts: string[] = [];
+  if (bounded.length) parts.push(`(?<![\\p{L}\\p{N}])(?:${bounded.join('|')})(?![\\p{L}\\p{N}])`);
+  if (unbounded.length) parts.push(`(?:${unbounded.join('|')})`);
+  const regex = new RegExp(parts.join('|'), 'gu');
   const built = { regex, byTerm };
   cache.set(key, built);
   return built;

@@ -3,7 +3,16 @@ import { CHROMIUM_WEBGL } from '../../playwright.config';
 
 // Software WebGL (SwiftShader) for this file only, at 1x pixel density: SwiftShader rasterises
 // on the CPU, so 4x fewer pixels keeps these tests fast and stable.
-test.use({ launchOptions: { args: CHROMIUM_WEBGL }, deviceScaleFactor: 1 });
+// The flags are Chromium-only: Linux WebKit refuses to launch with unknown arguments (CI).
+test.use({
+  launchOptions: [
+    async ({ browserName }, use) => {
+      await use(browserName === 'chromium' ? { args: CHROMIUM_WEBGL } : {});
+    },
+    { scope: 'worker' },
+  ],
+  deviceScaleFactor: 1,
+});
 // SwiftShader can stall under heavy host memory pressure; a genuinely failing test still fails
 // after retries, and Playwright reports recovered runs as "flaky".
 test.describe.configure({ timeout: 60_000, retries: 2 });

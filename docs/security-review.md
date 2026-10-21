@@ -70,5 +70,5 @@ answers during fetches, and admin-entered URLs and text.
 
 - Independent penetration test and container image CVE scanning in a registry (needs hosting
   and a registry; see the release report).
-- Dependency update automation (Renovate or Dependabot) needs the GitHub remote.
+- Dependency update automation: `.github/dependabot.yml` (npm, Docker, GitHub Actions) is active since the push to GitHub.
 - WAF and DDoS protection at the edge depend on the hosting provider.

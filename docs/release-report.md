@@ -150,7 +150,7 @@ The e2e suite covers:
 5. Reduce client JavaScript on `/` to close the LCP gap.
 6. Decide on a licensed rating dataset, or an in-house reviewed labelling process with published
    methodology.
-7. Add Renovate or Dependabot and a container image scan in CI once the remote exists.
+7. Add a container image scan to CI (Dependabot is already active on GitHub).
 
 ## 10. Decisions the product does not conceal
 
