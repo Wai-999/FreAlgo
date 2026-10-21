@@ -7,6 +7,7 @@
 # Env: DOMAIN (required) · REPO (git URL) · BRANCH (main) · APP_DIR (/opt/frealgo)
 #      SKIP_SYSTEM=1 skips packages, firewall and git (to test the stack from a local checkout).
 #
+# Docker commands read stdin from /dev/null so the script also works when piped (bash -s).
 # Secrets are generated once on the host into deploy/.env.production (mode 600, git-ignored) and
 # are never printed. Owner-approved feed activations come from deploy/source-activations.json.
 set -euo pipefail
@@ -74,12 +75,12 @@ fi
 
 COMPOSE=($SUDO docker compose -f deploy/docker-compose.prod.yml --env-file "$ENV_FILE")
 log "build and start (first build takes several minutes)"
-"${COMPOSE[@]}" up -d --build --remove-orphans
+"${COMPOSE[@]}" up -d --build --remove-orphans </dev/null
 
 log "waiting for the web app"
 healthy=0
 for _ in $(seq 1 60); do
-  if "${COMPOSE[@]}" exec -T web wget -qO- http://127.0.0.1:3000/api/v1/health >/dev/null 2>&1; then
+  if "${COMPOSE[@]}" exec -T web wget -qO- http://127.0.0.1:3000/api/v1/health </dev/null >/dev/null 2>&1; then
     healthy=1
     break
   fi
@@ -89,7 +90,7 @@ done
 
 log "owner-approved feed activations (deploy/source-activations.json; idempotent)"
 "${COMPOSE[@]}" run --rm --no-deps migrate \
-  node --import tsx scripts/activate-sources.ts --from deploy/source-activations.json
+  node --import tsx scripts/activate-sources.ts --from deploy/source-activations.json </dev/null
 
 log "first fetch of active feeds now, instead of waiting for the next 3-hour tick"
 "${COMPOSE[@]}" exec -T web node --input-type=module -e '
@@ -101,7 +102,7 @@ const { sources } = await res.json();
 for (const s of sources.filter((x) => x.status === "ACTIVE")) {
   const r = await fetch(`${base}/api/v1/admin/sources/${s.id}/refetch`, { method: "POST", headers });
   console.log(`refetch ${s.outlet?.slug ?? s.id} -> HTTP ${r.status}`);
-}'
+}' </dev/null
 
 log "status"
 "${COMPOSE[@]}" ps --format 'table {{.Service}}\t{{.State}}\t{{.Status}}'

@@ -18,8 +18,11 @@ case "$DOMAIN" in *[!a-z0-9.-]*) echo "invalid domain: $DOMAIN" >&2; exit 2 ;; e
 case "$BRANCH" in *[!A-Za-z0-9._/-]*) echo "invalid branch: $BRANCH" >&2; exit 2 ;; esac
 
 echo "== deploying $REPO ($BRANCH) to $SSH_USER@$HOST as https://$DOMAIN"
-ssh -i "$KEY" -o StrictHostKeyChecking=accept-new -o ServerAliveInterval=30 "$SSH_USER@$HOST" \
-  "DOMAIN='$DOMAIN' REPO='$REPO' BRANCH='$BRANCH' bash -s" <"$(dirname "$0")/server-setup.sh"
+remote() { ssh -i "$KEY" -o StrictHostKeyChecking=accept-new -o ServerAliveInterval=30 "$SSH_USER@$HOST" "$@"; }
+# Copy the script and run it as a file: piping it (bash -s) lets any command that reads stdin
+# swallow the rest of the script.
+remote 'cat > /tmp/frealgo-server-setup.sh' <"$(dirname "$0")/server-setup.sh"
+remote "DOMAIN='$DOMAIN' REPO='$REPO' BRANCH='$BRANCH' bash /tmp/frealgo-server-setup.sh" </dev/null
 
 echo "== smoke test (the first HTTPS request triggers certificate issuance)"
 for _ in 1 2 3 4 5 6; do
