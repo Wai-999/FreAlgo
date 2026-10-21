@@ -40,6 +40,22 @@ sessions, and `ADMIN_API_TOKEN` and `METRICS_TOKEN` independently.
 
 ## 3. Deploy (production recipe)
 
+**One command (Ubuntu server reachable over SSH, DNS pointing at it):**
+
+```bash
+scripts/ops/deploy-remote.sh <server-ip> <domain>      # e.g. 203.0.113.10 frealgo.duckdns.org
+```
+
+It runs `scripts/ops/server-setup.sh` on the server. That script is idempotent, so re-run it for
+every release. It installs Docker, opens ports 80/443 in the host firewall, pulls `main` from
+GitHub, generates secrets once into `deploy/.env.production` (mode 600, never printed), builds and
+starts the stack, applies the owner-approved activations from `deploy/source-activations.json`,
+triggers a first fetch, and finally runs the smoke test against `https://<domain>`. Verified end
+to end on 2026-10-21 against a local run of the production stack (`SKIP_SYSTEM=1`). Secrets live
+only on the server: read them with `ssh … cat /opt/frealgo/deploy/.env.production` when needed.
+
+**Manual equivalent:**
+
 ```bash
 cp deploy/env.production.example deploy/.env.production    # fill in real values
 docker compose -f deploy/docker-compose.prod.yml --env-file deploy/.env.production up -d --build

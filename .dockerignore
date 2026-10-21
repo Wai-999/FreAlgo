@@ -5,6 +5,9 @@ generated
 .git
 .env
 .env.*
+# Secrets anywhere in the tree (e.g. deploy/.env.production) must never enter the build context.
+**/.env
+**/.env.*
 !.env.example
 coverage
 playwright-report

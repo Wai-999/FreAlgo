@@ -31,6 +31,8 @@ FROM deps AS migrate
 COPY lib ./lib
 COPY scripts ./scripts
 COPY tsconfig.json ./
+# Owner-approved feed activations, applied by scripts/ops/server-setup.sh.
+COPY deploy/source-activations.json ./deploy/
 USER node
 CMD ["sh", "-c", "npx prisma migrate deploy && node --import tsx prisma/seed.ts"]
 
