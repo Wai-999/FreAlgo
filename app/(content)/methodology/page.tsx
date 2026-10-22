@@ -148,6 +148,33 @@ export default async function MethodologyPage() {
         </li>
       </ul>
 
+      <h2 id="discover">Discover: how things are chosen</h2>
+      <ul>
+        <li>
+          <strong>Surprise me</strong> picks one country uniformly at random from every country with
+          at least one story about it in the last 7 days (after your optional region, language and
+          sector choices), sorted by ISO code. The position is SHA-256 of the seed, modulo the
+          number of eligible countries. Every country has the same chance, however many stories it
+          has. The seed is shown, so the same link always gives the same result.
+        </li>
+        <li>
+          <strong>Daily discovery</strong> picks one story from those published on the latest
+          complete UTC day that are about at least one country, ordered by publication time, using
+          the seed “daily:&lt;date&gt;”. If no story qualifies, there is no discovery that day.
+        </li>
+        <li>
+          Discover has no trending lists, streaks, scores or quizzes, and nothing is weighted by
+          popularity or by what you read.
+        </li>
+      </ul>
+
+      <h2 id="why">Why a story appears</h2>
+      <p>
+        Every list explains each story under “Why this story?”. It lists the filters it matches
+        (with the stored evidence, such as the matched word), the ordering rule and the publication
+        time. The same choices always give the same list. Your reading is never recorded or used.
+      </p>
+
       <h2 id="features">Features on this instance</h2>
       <p>
         Each FreAlgo 2.0 feature can be switched off by the operator. Features that need curated,

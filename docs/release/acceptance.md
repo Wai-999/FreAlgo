@@ -47,3 +47,32 @@ timestamps are UTC.
 - Rules are lexical and miss implicit subjects.
 - No current source signals opinion pieces in its feed, so article types stay unknown.
 - New sources (Global Voices) need the owner's activation decision.
+
+## M3: Hybrid editorial UX and My World (2026-10-22)
+
+| Criterion                                             | Evidence                                                                                                                                                                                                                         |
+| ----------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 360 px-to-desktop layouts with no horizontal overflow | 320 px reflow tests for the new and v1 pages; screenshots at 1440 px and Pixel 7 (`docs/screenshots/v2/`)                                                                                                                        |
+| Keyboard and screen-reader flows                      | `tests/e2e/hybrid.spec.ts` navigation and keyboard tests; labelled landmarks; `docs/release/accessibility-report.md`                                                                                                             |
+| User filter persistence                               | My World reads choices saved in this browser and opens a URL of explicit choices; preferences import/export/reset in Settings (`hybrid.spec.ts` "My World", "import")                                                            |
+| No engagement sorting or infinite scroll              | Sorts are newest, oldest, headline A–Z, outlet A–Z and text relevance (search only); every list has finite pages ending in "You are caught up"; scrolling loads nothing (5 browsers)                                             |
+| Original links work                                   | "Original reporting" depth links to `https://` publisher URLs with `target=_blank` and `rel=noopener noreferrer` (`hybrid.spec.ts`)                                                                                              |
+| Deterministic Surprise Me                             | Uniform over eligible countries, SHA-256(seed), seed shown, permalink. Same seed gives the same pick on the page and the API (`discover.test.ts`, `hybrid.spec.ts`, near-uniform check over 20 000 seeds in `hybrid-ux.test.ts`) |
+| Why am I seeing this?                                 | Every list card; reasons computed only from the filters, the stored tag evidence and the sort (`hybrid-ux.test.ts`)                                                                                                              |
+| Welcome animation with skip and reduced motion        | 1.1 s (spec 0.6–1.2 s), Skip button, skipped under reduced motion (`shell.spec.ts`)                                                                                                                                              |
+
+**Gates:**
+
+- format, lint, typecheck: pass;
+- unit: 213;
+- integration: 92;
+- build: pass;
+- e2e: 179 passed, 47 skipped by design, 0 failed after one test-scoping fix.
+
+**Feature-gate decisions (spec §1):**
+
+- **Knowledge checks:** not built. They would need editorial questions and answers, and
+  generated quizzes risk fabrication.
+- **Constructive Developments:** not built. Classifying "progress" automatically would be
+  framing without evidence; it needs an editor-curated collection.
+- **Perspectives:** off until M4 provides event clusters.

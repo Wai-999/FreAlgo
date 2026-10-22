@@ -12,6 +12,7 @@ import { FilterForm } from './filter-form';
 import { NavAnchor } from './nav-anchor';
 import { Pagination } from './pagination';
 import { SectorNav } from './sector-nav';
+import { ReadingDepthNav } from './reading-depth-nav';
 import { StoryCard } from './story-card';
 
 /** Server-rendered contents of the country sheet for the current URL state. */
@@ -37,6 +38,7 @@ export async function CountryWorkspace({
   const name = coverage.country.name;
   const homeOnly = coverage.stories.publisherHomeOnly;
   const includeHome = query.scope === 'all';
+  const depth = query.depth ?? 'deep';
   // Closing keeps sector and filters (so the next country opens with the same view).
   const closeHref = exploreHref({ ...query, country: undefined, cursor: undefined });
   const sectorHref = (slug: string | null) =>
@@ -76,6 +78,10 @@ export async function CountryWorkspace({
         </p>
       ) : null}
       <SectorNav selected={sector} hrefFor={sectorHref} />
+      <ReadingDepthNav
+        current={depth}
+        hrefFor={(d) => exploreHref({ ...query, depth: d === 'deep' ? undefined : d })}
+      />
       <details className="rounded-md border border-border" data-testid="filters-panel">
         <summary className="flex min-h-11 cursor-pointer list-none items-center justify-between gap-3 px-3 text-sm [&::-webkit-details-marker]:hidden">
           <span>
@@ -100,11 +106,14 @@ export async function CountryWorkspace({
               from: query.from?.toISOString().slice(0, 10),
               to: query.to?.toISOString().slice(0, 10),
               sort: query.sort,
+              type: query.type,
+              scope: query.scope,
             }}
+            showScope
             hidden={{
               country: query.country,
               sector: sector ?? undefined,
-              scope: includeHome ? 'all' : undefined,
+              depth: query.depth,
             }}
             outlets={coverage.outlets.map((o) => ({ slug: o.slug, name: o.name }))}
             languages={coverage.languagesAvailable.map((code) => ({
@@ -162,7 +171,12 @@ export async function CountryWorkspace({
       ) : (
         <div data-testid="story-list">
           {result.items.map((a) => (
-            <StoryCard key={a.id} article={a} />
+            <StoryCard
+              key={a.id}
+              article={a}
+              depth={depth}
+              why={{ query, sort: result.page.sort }}
+            />
           ))}
         </div>
       )}

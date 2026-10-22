@@ -129,6 +129,16 @@ export class UnknownCountryError extends Error {
   }
 }
 
+/** Columns shared by every list query (keep in step with Row). */
+const ROW_COLUMNS = Prisma.sql`a."titleSort" AS tkey,
+      a.title, a.excerpt, a."canonicalUrl", a.language, a.author, a."publishedAtRaw",
+      a."publishedOffsetMinutes", a."publishedAtEstimated", a."firstSeenAt", a."isFixture",
+      a."articleLabel", a."articleLabelNote", a."articleType", a."articleTypeBasis",
+      o.id AS "outletId", o.slug AS "outletSlug", o.name AS "outletName", o.paywall,
+      o.orientation, o."ideologyTags", o."labelStatus", o."labelConfidence", o."labelMethodology",
+      o."labelSourceUrl", o."labelReviewedAt", o."labelContext", o."labelIsMachine",
+      oc.iso2 AS "outletCountryIso2", oc.name AS "outletCountryName"`;
+
 export async function listArticles(
   prisma: PrismaClient,
   query: ArticleQuery,
@@ -265,14 +275,7 @@ export async function listArticles(
 
   const inner = Prisma.sql`
     SELECT ${idCol} AS id, ${pubCol} AS pub, lower(o.name) AS oname, ${scoreExpr} AS score,
-      a."titleSort" AS tkey,
-      a.title, a.excerpt, a."canonicalUrl", a.language, a.author, a."publishedAtRaw",
-      a."publishedOffsetMinutes", a."publishedAtEstimated", a."firstSeenAt", a."isFixture",
-      a."articleLabel", a."articleLabelNote", a."articleType", a."articleTypeBasis",
-      o.id AS "outletId", o.slug AS "outletSlug", o.name AS "outletName", o.paywall,
-      o.orientation, o."ideologyTags", o."labelStatus", o."labelConfidence", o."labelMethodology",
-      o."labelSourceUrl", o."labelReviewedAt", o."labelContext", o."labelIsMachine",
-      oc.iso2 AS "outletCountryIso2", oc.name AS "outletCountryName"
+      ${ROW_COLUMNS}
     FROM ${from}
     JOIN "MediaOutlet" o ON o.id = a."outletId"
     LEFT JOIN "Country" oc ON oc.id = o."countryId"
@@ -386,6 +389,29 @@ export async function listArticles(
       totalIsCapped: (countRow[0]?.n ?? 0) > COUNT_CAP,
     },
   };
+}
+
+/**
+ * Full list items for specific article ids, in the order given (events, perspectives, discover).
+ * Same columns, hydration and provenance as listArticles; removed/quarantined stories are skipped.
+ */
+export async function getArticleItems(
+  prisma: PrismaClient,
+  ids: string[],
+  opts: { includeFixtures: boolean },
+): Promise<ArticleListItem[]> {
+  if (!ids.length) return [];
+  const rows = await prisma.$queryRaw<Row[]>`
+    SELECT a.id AS id, a."publishedAt" AS pub, lower(o.name) AS oname, 0::numeric AS score,
+      ${ROW_COLUMNS}
+    FROM "Article" a
+    JOIN "MediaOutlet" o ON o.id = a."outletId"
+    LEFT JOIN "Country" oc ON oc.id = o."countryId"
+    WHERE a.id IN (${Prisma.join(ids)}) AND a.status = 'PUBLISHED'
+      AND (${opts.includeFixtures} OR NOT a."isFixture")`;
+  const order = new Map(ids.map((id, i) => [id, i]));
+  rows.sort((a, b) => order.get(a.id)! - order.get(b.id)!);
+  return hydrate(prisma, rows, false);
 }
 
 async function hydrate(

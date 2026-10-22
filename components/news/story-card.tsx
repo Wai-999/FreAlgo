@@ -3,6 +3,7 @@ import { formatPublisherLocal, formatUtc, languageName } from '@/lib/format';
 import { safeHref } from '@/lib/security/safe-url';
 import { Badge, FixtureBadge } from '@/components/ui/badge';
 import { ExternalIcon } from '@/components/ui/icons';
+import { whyReasons, type ReadingDepth, type WhyContext } from '@/lib/explore/why';
 import { LocalTime } from './local-time';
 import { SourceLabel } from './source-label';
 
@@ -42,9 +43,15 @@ const PAYWALL_TEXT: Record<string, string | null> = {
 export function StoryCard({
   article,
   headingLevel = 3,
+  depth = 'deep',
+  why,
 }: {
   article: ArticleListItem;
   headingLevel?: 2 | 3;
+  /** Reading depth (FreAlgo 2.0): quick overview, deep context or original reporting. */
+  depth?: ReadingDepth;
+  /** When given, a "Why this story?" disclosure explains the story's presence and position. */
+  why?: WhyContext;
 }) {
   const H = headingLevel === 2 ? 'h2' : 'h3';
   // Publisher-local time is only informative when the feed declared a non-UTC offset.
@@ -57,11 +64,14 @@ export function StoryCard({
   // outlet line, so publisher-home links are not repeated as tags (ADR V2-001).
   const aboutCountries = article.countries.filter((c) => c.role !== 'PUBLISHER_HOME');
   const lang = article.language ?? undefined;
+  const deep = depth === 'deep';
+  const href = safeHref(article.url) ?? undefined;
   return (
     <article
       aria-labelledby={`story-${article.id}`}
       className="border-b border-border py-5 first:pt-2"
       data-testid="story-card"
+      data-depth={depth}
     >
       <p className="flex flex-wrap items-center gap-x-2 gap-y-1 text-sm text-muted">
         <span className="font-medium text-text">{article.outlet.name}</span>
@@ -103,7 +113,7 @@ export function StoryCard({
           <span> · time estimated (the feed gave no date)</span>
         ) : null}
       </p>
-      {article.excerpt ? (
+      {depth === 'quick' ? null : article.excerpt ? (
         <p className="measure mt-2 text-base text-text/90" lang={lang} dir="auto">
           {article.excerpt}
         </p>
@@ -112,7 +122,23 @@ export function StoryCard({
           Headline only: the publisher&apos;s terms do not cover excerpts here.
         </p>
       )}
-      {article.sectors.length || aboutCountries.length ? (
+      {depth === 'original' && href ? (
+        <p className="mt-3">
+          <a
+            href={href}
+            target="_blank"
+            rel="noopener noreferrer"
+            referrerPolicy="no-referrer"
+            className="inline-flex min-h-11 items-center gap-2 rounded-md border border-border-strong px-4 text-sm font-medium text-text no-underline hover:border-accent"
+            data-testid="original-link"
+          >
+            Read the original report at {article.outlet.name}
+            <ExternalIcon className="size-4 text-muted" />
+            <span className="sr-only"> (opens in a new tab)</span>
+          </a>
+        </p>
+      ) : null}
+      {deep && (article.sectors.length || aboutCountries.length) ? (
         <ul className="mt-3 flex flex-wrap gap-2" aria-label="Tags">
           {article.sectors.map((s) => (
             <li key={s.slug}>
@@ -151,13 +177,27 @@ export function StoryCard({
             labelIsMachine: article.outlet.label.isMachine,
           }}
         />
-        <p className="px-1 text-xs text-muted">
-          Story-level label:{' '}
-          {article.articleLabel
-            ? `${article.articleLabel.orientation} (${article.articleLabel.note ?? 'reviewed'})`
-            : 'not classified'}
-        </p>
+        {deep ? (
+          <p className="px-1 text-xs text-muted">
+            Story-level label:{' '}
+            {article.articleLabel
+              ? `${article.articleLabel.orientation} (${article.articleLabel.note ?? 'reviewed'})`
+              : 'not classified'}
+          </p>
+        ) : null}
       </div>
+      {why ? (
+        <details className="mt-2 text-sm" data-testid="why-this-story">
+          <summary className="inline-flex min-h-11 cursor-pointer items-center text-muted hover:text-text">
+            Why this story?
+          </summary>
+          <ul className="measure mt-1 list-disc space-y-1 pl-5 text-muted">
+            {whyReasons(article, why).map((r) => (
+              <li key={r}>{r}</li>
+            ))}
+          </ul>
+        </details>
+      ) : null}
     </article>
   );
 }

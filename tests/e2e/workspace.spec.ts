@@ -159,7 +159,13 @@ test.describe('without JavaScript', () => {
 test.describe('search', () => {
   test('explains relevance and supports user-chosen order', async ({ page }) => {
     await page.goto('/search?q=harvest&intro=0');
-    await expect(page.getByText(/never popularity, engagement or political lean/)).toBeVisible();
+    // The page intro (each card's "Why this story?" repeats the rule inside a closed disclosure).
+    await expect(
+      page
+        .getByRole('main')
+        .locator('p.measure')
+        .filter({ hasText: /never popularity, engagement or political lean/ }),
+    ).toBeVisible();
     await expect(page.getByTestId('ordering-note')).toContainText('Text relevance');
     await page.goto('/search?q=harvest&sort=oldest');
     await expect(page.getByTestId('ordering-note')).toContainText('Oldest first');

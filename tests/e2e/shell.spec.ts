@@ -73,10 +73,15 @@ test.describe('intro', () => {
     await expect(intro).toBeHidden();
   });
 
-  test('finishes within ~1.5s without interaction', async ({ page }) => {
+  test('finishes within the spec budget (≤ 1.2 s of animation) without interaction', async ({
+    page,
+  }) => {
     await page.goto('/');
     await expect(page.getByTestId('intro')).toBeVisible();
-    await expect(page.getByTestId('intro')).toBeHidden({ timeout: 2_500 });
+    const t0 = Date.now();
+    // 1.1 s of animation after first paint; the margin covers slow CI rendering, not a longer intro.
+    await expect(page.getByTestId('intro')).toBeHidden({ timeout: 2_000 });
+    expect(Date.now() - t0).toBeLessThan(2_000);
   });
 
   test('is bypassed entirely with prefers-reduced-motion @cross', async ({ browser }) => {

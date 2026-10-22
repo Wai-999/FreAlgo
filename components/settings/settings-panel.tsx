@@ -1,8 +1,8 @@
 'use client';
 
 import { useState } from 'react';
-import { clearPreferences, usePreferences } from '@/lib/preferences/store';
-import type { Preferences } from '@/lib/preferences/schema';
+import { clearPreferences, usePreferences, writePreferences } from '@/lib/preferences/store';
+import { parsePreferences, type Preferences } from '@/lib/preferences/schema';
 
 /**
  * Explicit, reversible personal settings. Stored in this browser; copied to the server only
@@ -210,6 +210,30 @@ export function SettingsPanel({
           >
             Export (JSON)
           </button>
+          <label className={`${btn} cursor-pointer`}>
+            Import (JSON)
+            <input
+              type="file"
+              accept="application/json,.json"
+              className="sr-only"
+              data-testid="prefs-import"
+              onChange={async (e) => {
+                const file = e.target.files?.[0];
+                if (!file) return;
+                const text = await file.text();
+                try {
+                  JSON.parse(text);
+                } catch {
+                  setStatus('That file is not valid JSON; nothing was changed.');
+                  return;
+                }
+                // Same validation as stored preferences: unknown or invalid fields fall back.
+                writePreferences(parsePreferences(text));
+                setStatus('Imported preferences from the file.');
+                e.target.value = '';
+              }}
+            />
+          </label>
           <button
             type="button"
             className={btn}

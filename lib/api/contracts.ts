@@ -64,6 +64,8 @@ export const articleQuerySchema = z
     period: z.enum(PERIODS).optional(),
     scope: z.enum(SCOPES).optional(),
     type: multi(z.enum(ARTICLE_TYPES), ARTICLE_TYPES.length),
+    /** Presentation only (reading depth); ignored by the APIs. */
+    depth: z.enum(['quick', 'deep', 'original']).optional(),
     from: date.optional(),
     to: date.optional(),
     sort: z.enum(SORTS).optional(),
@@ -141,6 +143,7 @@ export function toSearchParams(
   add('period', q.period);
   add('scope', q.scope);
   add('type', q.type);
+  add('depth', q.depth);
   add('from', q.from);
   add('to', q.to);
   add('sort', q.sort);

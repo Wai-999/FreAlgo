@@ -140,7 +140,7 @@ html[data-motion='reduce'] *::after {
 }
 
 /* --------------------------------------------------------------------------
- * Intro (<= 1.5s total). Shown only when the head script sets data-intro="play"
+ * Intro (1.1 s total; spec 0.6–1.2 s). Shown only when the head script sets data-intro="play"
  * (first visit in a session, motion allowed, not disabled in preferences).
  * Without JavaScript it never appears, so it can never block content.
  * ------------------------------------------------------------------------ */
@@ -151,7 +151,7 @@ html[data-motion='reduce'] *::after {
   display: none;
   place-items: center;
   background: var(--bg);
-  animation: intro-out 300ms ease-in 1200ms forwards;
+  animation: intro-out 250ms ease-in 850ms forwards;
 }
 html[data-intro='play'] .intro {
   display: grid;
@@ -170,15 +170,15 @@ html[data-motion='reduce'] .intro {
   background: var(--muted);
   transform-origin: left center;
   transform: scaleX(0);
-  animation: intro-line 600ms var(--ease-out) 100ms forwards;
+  animation: intro-line 450ms var(--ease-out) 50ms forwards;
 }
 .intro__title {
   opacity: 0;
-  animation: intro-fade 500ms ease-out 350ms forwards;
+  animation: intro-fade 350ms ease-out 150ms forwards;
 }
 .intro__tagline {
   opacity: 0;
-  animation: intro-fade 500ms ease-out 600ms forwards;
+  animation: intro-fade 350ms ease-out 350ms forwards;
 }
 @keyframes intro-line {
   to {

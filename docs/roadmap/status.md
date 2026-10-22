@@ -39,7 +39,18 @@ the feature gate.
 
 ## M3: Hybrid editorial UX and My World
 
-⏳ Not started.
+| Item                                                                                                                    | State                       | Evidence                                                         |
+| ----------------------------------------------------------------------------------------------------------------------- | --------------------------- | ---------------------------------------------------------------- |
+| Primary nav Explore · Stories · Discover · Perspectives · My World; transparency pages one click away; no prefetch (D5) | ✅                          | `components/shell/site-header.tsx`                               |
+| Stories: finite chronological collections, sector collections, filters (type, scope)                                    | ✅                          | `app/(content)/stories/page.tsx`                                 |
+| Reading depths: Quick overview, Deep context, Original reporting                                                        | ✅                          | `components/news/story-card.tsx`, `reading-depth-nav.tsx`        |
+| Why am I seeing this? on every list card                                                                                | ✅                          | `lib/explore/why.ts`                                             |
+| Discover: seeded Surprise Me (page + API), daily discovery + archive                                                    | ✅                          | `lib/discover/select.ts`, `/discover`, `/api/v1/discover/random` |
+| My World: explicit local choices → shareable URL; import/export/reset                                                   | ✅                          | `app/(content)/my-world`, Settings                               |
+| Welcome intro 1.1 s with skip and reduced motion                                                                        | ✅                          | `app/globals.css`                                                |
+| Country picker keyboard race (D2)                                                                                       | ✅ fixed                    | `components/globe/country-picker.tsx`                            |
+| Knowledge checks, Constructive Developments                                                                             | ✖ feature gate              | `docs/release/acceptance.md` (M3)                                |
+| Perspectives page                                                                                                       | ⏳ M4 (flag off until then) |                                                                  |
 
 ## M4: Evidence-backed intelligence and discovery
 
