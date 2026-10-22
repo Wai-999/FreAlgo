@@ -11,11 +11,24 @@ const browser = await chromium.launch();
 const desktop = { viewport: { width: 1440, height: 900 }, deviceScaleFactor: 1 };
 const phone = devices['Pixel 7'];
 const prefs = JSON.stringify({
-  version: 1, showIntro: false, motion: 'system', globeEnabled: true, preferredSort: 'newest',
-  pinnedCountries: ['MM', 'KE'], sectors: [], orientations: [], languages: [], outletIds: [], syncToAccount: false,
+  version: 1,
+  showIntro: false,
+  motion: 'system',
+  globeEnabled: true,
+  preferredSort: 'newest',
+  pinnedCountries: ['MM', 'KE'],
+  sectors: [],
+  orientations: [],
+  languages: [],
+  outletIds: [],
+  syncToAccount: false,
 });
 
-async function shot(name, path, { device = desktop, before, withPrefs = false, fullPage = false } = {}) {
+async function shot(
+  name,
+  path,
+  { device = desktop, before, withPrefs = false, fullPage = false } = {},
+) {
   const ctx = await browser.newContext({ ...device, reducedMotion: 'reduce' });
   await ctx.addInitScript(() => {
     const p = HTMLCanvasElement.prototype;
@@ -48,7 +61,9 @@ await shot('08-nav-phone-menu', '/stories', {
   device: phone,
   before: (p) => p.locator('header details').filter({ hasText: 'Menu' }).locator('summary').click(),
 });
-await shot('09-status-quality', '/status', { before: (p) => p.locator('#quality').scrollIntoViewIfNeeded() });
+await shot('09-status-quality', '/status', {
+  before: (p) => p.locator('#quality').scrollIntoViewIfNeeded(),
+});
 await shot('10-methodology-features', '/methodology', {
   before: (p) => p.locator('#features').scrollIntoViewIfNeeded(),
 });
