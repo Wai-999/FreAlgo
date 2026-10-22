@@ -389,4 +389,41 @@ export const REAL_SOURCES: RegistryOutlet[] = [
       },
     ],
   },
+  {
+    // Added for FreAlgo 2.0 (global inclusion): Creative Commons Attribution 3.0 content per
+    // https://globalvoices.org/about/global-voices-attribution-policy/ (checked 2026-10-22).
+    // Feeds declare <language>en-US regardless of edition, so each feed sets its language here.
+    // Only editions that published within two weeks of the check are registered.
+    slug: 'global-voices',
+    name: 'Global Voices',
+    homepageUrl: 'https://globalvoices.org',
+    countryIso2: 'NL',
+    language: 'en',
+    ownershipType: 'NONPROFIT',
+    ownershipNotes:
+      'International non-profit citizen-media network (Stichting Global Voices, Amsterdam). Content licensed CC BY 3.0.',
+    paywall: 'NONE',
+    feeds: [
+      { url: 'https://globalvoices.org/feed/', name: 'Global Voices – English', language: 'en' },
+      { url: 'https://es.globalvoices.org/feed/', name: 'Global Voices – Español', language: 'es' },
+      {
+        url: 'https://fr.globalvoices.org/feed/',
+        name: 'Global Voices – Français',
+        language: 'fr',
+      },
+      {
+        url: 'https://pt.globalvoices.org/feed/',
+        name: 'Global Voices – Português',
+        language: 'pt',
+      },
+      { url: 'https://ar.globalvoices.org/feed/', name: 'Global Voices – العربية', language: 'ar' },
+      { url: 'https://bn.globalvoices.org/feed/', name: 'Global Voices – বাংলা', language: 'bn' },
+      { url: 'https://ru.globalvoices.org/feed/', name: 'Global Voices – Русский', language: 'ru' },
+      {
+        url: 'https://it.globalvoices.org/feed/',
+        name: 'Global Voices – Italiano',
+        language: 'it',
+      },
+    ],
+  },
 ];

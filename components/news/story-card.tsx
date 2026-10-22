@@ -16,6 +16,18 @@ const BASIS_TEXT: Record<string, string> = {
   FEED_DEFAULT_SECTOR: 'feed default',
 };
 
+const ROLE_TEXT: Record<string, string> = {
+  SUBJECT: 'about this country',
+  FEED_SCOPE: 'from a feed covering this country',
+};
+
+const TYPE_LABEL: Record<string, string | null> = {
+  OPINION: 'Opinion',
+  ANALYSIS: 'Analysis',
+  NEWS: null,
+  UNKNOWN: null,
+};
+
 const PAYWALL_TEXT: Record<string, string | null> = {
   NONE: null,
   UNKNOWN: null,
@@ -40,6 +52,10 @@ export function StoryCard({
     ? formatPublisherLocal(article.publishedAt, article.publishedOffsetMinutes)
     : null;
   const paywall = PAYWALL_TEXT[article.outlet.paywall];
+  const typeLabel = TYPE_LABEL[article.articleType];
+  // Country tags show what the story is about; where the publisher is based is already in the
+  // outlet line, so publisher-home links are not repeated as tags (ADR V2-001).
+  const aboutCountries = article.countries.filter((c) => c.role !== 'PUBLISHER_HOME');
   const lang = article.language ?? undefined;
   return (
     <article
@@ -49,9 +65,16 @@ export function StoryCard({
     >
       <p className="flex flex-wrap items-center gap-x-2 gap-y-1 text-sm text-muted">
         <span className="font-medium text-text">{article.outlet.name}</span>
+        {article.author ? <span>· by {article.author.slice(0, 80)}</span> : null}
         {article.outlet.country ? <span>· {article.outlet.country.name}</span> : null}
         <span>· {languageName(article.language)}</span>
         {article.isFixture ? <FixtureBadge /> : null}
+        {typeLabel ? (
+          <Badge title={`Labelled by the publisher (${article.articleTypeBasis ?? 'signal'})`}>
+            {typeLabel}
+            <span className="sr-only"> (labelled by the publisher)</span>
+          </Badge>
+        ) : null}
         {paywall ? <Badge>{paywall}</Badge> : null}
       </p>
       <H
@@ -89,7 +112,7 @@ export function StoryCard({
           Headline only: the publisher&apos;s terms do not cover excerpts here.
         </p>
       )}
-      {article.sectors.length || article.countries.length ? (
+      {article.sectors.length || aboutCountries.length ? (
         <ul className="mt-3 flex flex-wrap gap-2" aria-label="Tags">
           {article.sectors.map((s) => (
             <li key={s.slug}>
@@ -100,13 +123,13 @@ export function StoryCard({
               </Badge>
             </li>
           ))}
-          {article.countries.map((c) => (
+          {aboutCountries.map((c) => (
             <li key={c.iso2}>
               <Badge
-                title={`Country relevance: ${BASIS_TEXT[c.basis] ?? c.basis}${c.matchedTerm ? `, matched "${c.matchedTerm}"` : ''}`}
+                title={`Country: ${ROLE_TEXT[c.role] ?? c.role} (${BASIS_TEXT[c.basis] ?? c.basis}${c.matchedTerm ? `, matched "${c.matchedTerm}"` : ''})`}
               >
                 {c.name}
-                <span className="sr-only">: {BASIS_TEXT[c.basis] ?? c.basis}</span>
+                <span className="sr-only">: {ROLE_TEXT[c.role] ?? c.role}</span>
               </Badge>
             </li>
           ))}

@@ -245,6 +245,7 @@ export function FilterForm({
             : []),
           ['newest', 'Newest first'],
           ['oldest', 'Oldest first'],
+          ['alphabetical', 'Headline (A–Z)'],
           ['outlet', 'Outlet name (A–Z)'],
           ...(showQuery ? [['relevance', 'Text relevance (search only)']] : []),
         ].map(([value, label]) => (

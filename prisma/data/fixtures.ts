@@ -273,7 +273,8 @@ export interface FixtureArticle {
   /** Hours before the seed time when first created (never changed on re-seed). */
   hoursAgo: number;
   sectors: SectorSlug[];
-  countries: { iso2: string; basis: 'SOURCE_COUNTRY' | 'TEXT_MATCH'; term?: string }[];
+  /** Home country = the fixture feed's declared national scope (FEED_DEFAULT → role FEED_SCOPE). */
+  countries: { iso2: string; basis: 'FEED_DEFAULT' | 'TEXT_MATCH'; term?: string }[];
 }
 
 const SECTOR_ORDER = Object.keys(TOPICS) as SectorSlug[];
@@ -309,7 +310,7 @@ export function buildFixtureArticles(perOutlet = 14): FixtureArticle[] {
         hoursAgo: 2 + oi * 1.5 + i * 9,
         sectors,
         countries: [
-          { iso2: country, basis: 'SOURCE_COUNTRY' },
+          { iso2: country, basis: 'FEED_DEFAULT' },
           ...(mentions
             ? [{ iso2: mention.iso2, basis: 'TEXT_MATCH' as const, term: mention.term }]
             : []),

@@ -1,93 +1,117 @@
 {
-  "measuredAt": "2026-10-20T14:28:59.402Z",
+  "measuredAt": "2026-10-22T19:26:29.180Z",
   "data": {
     "a": 200011,
-    "ac": 277695,
-    "asec": 140167,
-    "seedMs": 21807
+    "ac": 277753,
+    "asec": 139831,
+    "seedMs": 24283
   },
   "summary": [
     {
       "scenario": "country MM, newest (page 1)",
-      "wallMs": 17,
-      "slowestStatementMs": 5.3,
-      "access": "Seq Scan: Country; Index Only Scan: \"ArticleCountry_countryId_publishedAt_articleId_idx\"; Index Scan: \"Article_pkey\"; Index Scan: \"MediaOutlet_pkey\"; Index Scan: \"Country_pkey\"; Bitmap Index Scan: ArticleCountry_countryId_publishedAt_articleId_idx; Index Scan: \"ArticleCountry_pkey\"; Index Scan: \"ArticleSector_pkey\"; Bitmap Index Scan: Sector_pkey"
+      "wallMs": 18,
+      "slowestStatementMs": 6.1,
+      "access": "Index Scan: \"Country_iso2_key\"; Index Scan: \"ArticleCountry_countryId_publishedAt_articleId_idx\"; Index Scan: \"Article_pkey\"; Index Scan: \"MediaOutlet_pkey\"; Index Scan: \"Country_pkey\"; Bitmap Index Scan: ArticleCountry_countryId_role_publishedAt_articleId_idx; Index Scan: \"ArticleCountry_pkey\"; Index Scan: \"ArticleSector_pkey\"; Seq Scan: Country; Bitmap Index Scan: Sector_pkey"
+    },
+    {
+      "scenario": "country US, about + publisher home (scope=all)",
+      "wallMs": 18,
+      "slowestStatementMs": 5.9,
+      "access": "Index Scan: \"Country_iso2_key\"; Index Scan: \"ArticleCountry_countryId_publishedAt_articleId_idx\"; Index Scan: \"Article_pkey\"; Index Scan: \"MediaOutlet_pkey\"; Index Scan: \"Country_pkey\"; Bitmap Index Scan: ArticleCountry_countryId_publishedAt_articleId_idx; Index Scan: \"ArticleCountry_pkey\"; Index Scan: \"ArticleSector_pkey\"; Seq Scan: Country; Bitmap Index Scan: Sector_pkey"
+    },
+    {
+      "scenario": "country BR, about only (publisher-heavy country)",
+      "wallMs": 8,
+      "slowestStatementMs": 2.8,
+      "access": "Index Scan: \"Country_iso2_key\"; Index Scan: \"ArticleCountry_countryId_publishedAt_articleId_idx\"; Index Scan: \"Article_pkey\"; Index Scan: \"MediaOutlet_pkey\"; Index Scan: \"Country_pkey\"; Seq Scan: ArticleCountry; Index Scan: \"ArticleSector_pkey\"; Index Scan: \"ArticleCountry_pkey\"; Bitmap Index Scan: Sector_pkey; Seq Scan: Country"
+    },
+    {
+      "scenario": "opinion only, newest",
+      "wallMs": 1,
+      "slowestStatementMs": 0,
+      "access": "Index Scan: \"Article_articleType_publishedAt_id_idx\"; Index Scan: \"MediaOutlet_pkey\"; Index Scan: \"Country_pkey\""
+    },
+    {
+      "scenario": "alphabetical, page 1",
+      "wallMs": 16,
+      "slowestStatementMs": 0.4,
+      "access": "Index Scan: \"Article_titleSort_id_idx\"; Index Scan: \"MediaOutlet_pkey\"; Index Scan: \"Country_pkey\"; Seq Scan: Article; Seq Scan: MediaOutlet; Index Scan: \"ArticleSector_pkey\"; Index Scan: \"ArticleCountry_pkey\"; Bitmap Index Scan: Sector_pkey; Seq Scan: Country"
     },
     {
       "scenario": "country US, newest (page 3 via cursor)",
-      "wallMs": 16,
-      "slowestStatementMs": 12.1,
-      "access": "Seq Scan: Country; Index Only Scan: \"ArticleCountry_countryId_publishedAt_articleId_idx\"; Index Scan: \"Article_pkey\"; Index Scan: \"MediaOutlet_pkey\"; Index Scan: \"Country_pkey\"; Bitmap Index Scan: ArticleCountry_countryId_publishedAt_articleId_idx; Index Scan: \"ArticleSector_pkey\"; Index Scan: \"ArticleCountry_pkey\"; Bitmap Index Scan: Sector_pkey"
+      "wallMs": 10,
+      "slowestStatementMs": 5.1,
+      "access": "Index Scan: \"Country_iso2_key\"; Index Scan: \"ArticleCountry_countryId_publishedAt_articleId_idx\"; Index Scan: \"Article_pkey\"; Index Scan: \"MediaOutlet_pkey\"; Index Scan: \"Country_pkey\"; Bitmap Index Scan: ArticleCountry_countryId_role_publishedAt_articleId_idx; Index Scan: \"ArticleSector_pkey\"; Index Scan: \"ArticleCountry_pkey\"; Bitmap Index Scan: Sector_pkey; Seq Scan: Country"
     },
     {
       "scenario": "country US + sector + orientation, oldest",
-      "wallMs": 21,
-      "slowestStatementMs": 14.1,
-      "access": "Seq Scan: Country; Index Scan: \"Sector_slug_key\"; Seq Scan: ArticleSector; Bitmap Index Scan: ArticleCountry_countryId_publishedAt_articleId_idx; Index Scan: \"Article_pkey\"; Seq Scan: MediaOutlet; Index Scan: \"MediaOutlet_pkey\"; Index Scan: \"ArticleSector_pkey\"; Index Scan: \"ArticleCountry_pkey\"; Bitmap Index Scan: Sector_pkey"
+      "wallMs": 20,
+      "slowestStatementMs": 14.5,
+      "access": "Index Scan: \"Country_iso2_key\"; Index Scan: \"Sector_slug_key\"; Seq Scan: ArticleSector; Bitmap Index Scan: ArticleCountry_countryId_role_publishedAt_articleId_idx; Index Scan: \"Article_pkey\"; Index Scan: \"MediaOutlet_pkey\"; Seq Scan: Country; Seq Scan: MediaOutlet; Index Scan: \"ArticleSector_pkey\"; Index Scan: \"ArticleCountry_pkey\"; Bitmap Index Scan: Sector_pkey"
     },
     {
       "scenario": "country US + politics + center-right, oldest (load-test URL)",
-      "wallMs": 16,
-      "slowestStatementMs": 13.9,
-      "access": "Seq Scan: Country; Index Scan: \"Sector_slug_key\"; Seq Scan: MediaOutlet; Seq Scan: ArticleSector; Bitmap Index Scan: ArticleCountry_countryId_publishedAt_articleId_idx; Index Scan: \"Article_pkey\"; Index Scan: \"MediaOutlet_pkey\""
+      "wallMs": 20,
+      "slowestStatementMs": 13.3,
+      "access": "Index Scan: \"Country_iso2_key\"; Index Scan: \"Sector_slug_key\"; Seq Scan: MediaOutlet; Seq Scan: ArticleSector; Bitmap Index Scan: ArticleCountry_countryId_role_publishedAt_articleId_idx; Index Scan: \"Article_pkey\"; Index Scan: \"MediaOutlet_pkey\"; Index Scan: \"Country_pkey\""
     },
     {
       "scenario": "country KE + last 7 days",
-      "wallMs": 6,
-      "slowestStatementMs": 0.4,
-      "access": "Seq Scan: Country; Index Only Scan: \"ArticleCountry_countryId_publishedAt_articleId_idx\"; Index Scan: \"Article_pkey\"; Index Scan: \"MediaOutlet_pkey\"; Index Scan: \"Country_pkey\"; Bitmap Index Scan: ArticleCountry_countryId_publishedAt_articleId_idx; Index Scan: \"ArticleSector_pkey\"; Index Scan: \"ArticleCountry_pkey\"; Bitmap Index Scan: Sector_pkey"
+      "wallMs": 5,
+      "slowestStatementMs": 0.3,
+      "access": "Index Scan: \"Country_iso2_key\"; Index Scan: \"ArticleCountry_countryId_publishedAt_articleId_idx\"; Index Scan: \"Article_pkey\"; Index Scan: \"MediaOutlet_pkey\"; Index Scan: \"Country_pkey\"; Bitmap Index Scan: ArticleCountry_countryId_role_publishedAt_articleId_idx; Index Scan: \"ArticleSector_pkey\"; Index Scan: \"ArticleCountry_pkey\"; Bitmap Index Scan: Sector_pkey; Seq Scan: Country"
     },
     {
       "scenario": "region Africa, newest",
-      "wallMs": 20,
-      "slowestStatementMs": 15.4,
-      "access": "Seq Scan: Country; Index Scan: \"Article_pkey\"; Index Only Scan: \"ArticleCountry_pkey\"; Index Scan: \"MediaOutlet_pkey\"; Index Scan: \"Article_status_publishedAt_id_idx\"; Index Scan: \"Country_pkey\"; Index Scan: \"ArticleCountry_pkey\"; Index Scan: \"ArticleSector_pkey\"; Bitmap Index Scan: Sector_pkey"
+      "wallMs": 23,
+      "slowestStatementMs": 18.8,
+      "access": "Seq Scan: Country; Index Scan: \"Article_pkey\"; Index Scan: \"ArticleCountry_pkey\"; Index Scan: \"MediaOutlet_pkey\"; Index Scan: \"Article_status_publishedAt_id_idx\"; Index Scan: \"Country_pkey\"; Index Scan: \"ArticleSector_pkey\"; Bitmap Index Scan: Sector_pkey"
     },
     {
       "scenario": "global newest, no filters",
-      "wallMs": 21,
+      "wallMs": 4,
       "slowestStatementMs": 0.4,
       "access": "Index Scan: \"Article_status_publishedAt_id_idx\"; Index Scan: \"MediaOutlet_pkey\"; Index Scan: \"Country_pkey\"; Seq Scan: Article; Seq Scan: MediaOutlet; Index Scan: \"ArticleCountry_pkey\"; Index Scan: \"ArticleSector_pkey\"; Seq Scan: Country; Bitmap Index Scan: Sector_pkey"
     },
     {
       "scenario": "search \"rice harvest\", relevance",
-      "wallMs": 274,
-      "slowestStatementMs": 213.2,
+      "wallMs": 284,
+      "slowestStatementMs": 206.4,
       "access": "Seq Scan: MediaOutlet; Bitmap Index Scan: Article_searchVector_idx; Bitmap Index Scan: Article_title_trgm_idx; Index Scan: \"MediaOutlet_countryId_orientation_idx\"; Index Scan: \"Country_pkey\"; Index Scan: \"Article_status_publishedAt_id_idx\"; Index Scan: \"MediaOutlet_pkey\"; Index Scan: \"ArticleCountry_pkey\"; Index Scan: \"ArticleSector_pkey\"; Seq Scan: Country; Bitmap Index Scan: Sector_pkey"
     },
     {
       "scenario": "search \"ceasefire\" in country IN",
-      "wallMs": 65,
-      "slowestStatementMs": 36.4,
-      "access": "Seq Scan: Country; Seq Scan: MediaOutlet; Bitmap Index Scan: ArticleCountry_countryId_publishedAt_articleId_idx; Index Scan: \"Article_pkey\"; Index Scan: \"MediaOutlet_pkey\"; Index Scan: \"Country_pkey\"; Index Scan: \"ArticleCountry_pkey\"; Index Scan: \"ArticleSector_pkey\"; Bitmap Index Scan: Sector_pkey"
+      "wallMs": 54,
+      "slowestStatementMs": 20.3,
+      "access": "Index Scan: \"Country_iso2_key\"; Seq Scan: MediaOutlet; Bitmap Index Scan: ArticleCountry_countryId_role_publishedAt_articleId_idx; Index Scan: \"Article_pkey\"; Index Scan: \"MediaOutlet_pkey\"; Index Scan: \"Country_pkey\"; Index Scan: \"ArticleSector_pkey\"; Index Scan: \"ArticleCountry_pkey\"; Bitmap Index Scan: Sector_pkey; Seq Scan: Country"
     },
     {
       "scenario": "search \"hurricanes\" (selective)",
-      "wallMs": 11,
-      "slowestStatementMs": 2.8,
+      "wallMs": 14,
+      "slowestStatementMs": 3.7,
       "access": "Seq Scan: MediaOutlet; Bitmap Index Scan: Article_searchVector_idx; Bitmap Index Scan: Article_title_trgm_idx; Index Scan: \"MediaOutlet_pkey\"; Index Scan: \"Country_pkey\""
     },
     {
       "scenario": "search \"ceasfire\" (typo, trigram only)",
-      "wallMs": 193,
-      "slowestStatementMs": 95,
+      "wallMs": 201,
+      "slowestStatementMs": 95.9,
       "access": "Seq Scan: MediaOutlet; Bitmap Index Scan: Article_searchVector_idx; Bitmap Index Scan: Article_title_trgm_idx; Index Scan: \"MediaOutlet_pkey\"; Index Scan: \"Country_pkey\""
     },
     {
       "scenario": "country summaries (globe/list)",
-      "wallMs": 52,
-      "slowestStatementMs": 57.9,
+      "wallMs": 62,
+      "slowestStatementMs": 79,
       "access": "Seq Scan: Country; Seq Scan: FeedSource; Seq Scan: MediaOutlet; Seq Scan: ArticleCountry; Seq Scan: Article"
     },
     {
       "scenario": "country coverage (MM)",
-      "wallMs": 10,
-      "slowestStatementMs": 0,
-      "access": "Seq Scan: Country; Index Scan: \"MediaOutlet_countryId_orientation_idx\"; Bitmap Index Scan: FeedSource_outletId_idx"
+      "wallMs": 29,
+      "slowestStatementMs": 11.1,
+      "access": "Index Scan: \"Country_iso2_key\"; Index Scan: \"MediaOutlet_countryId_orientation_idx\"; Bitmap Index Scan: FeedSource_outletId_idx; Bitmap Index Scan: ArticleCountry_countryId_role_publishedAt_articleId_idx; Index Scan: \"Article_pkey\""
     },
     {
       "scenario": "freshness report",
-      "wallMs": 3,
+      "wallMs": 8,
       "slowestStatementMs": 0,
       "access": "Seq Scan: MediaOutlet; Seq Scan: FeedSource; Seq Scan: IngestionRun"
     }

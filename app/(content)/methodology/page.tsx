@@ -77,24 +77,41 @@ export default async function MethodologyPage() {
 
       <h2 id="tagging">Country and sector tags</h2>
       <p>
-        Tags are assigned by deterministic, versioned rules, and each tag records why it was
-        applied:
+        Tags are assigned by deterministic, versioned rules. Each tag records why it was applied,
+        and each country link records what it means:
       </p>
       <ul>
         <li>
-          <strong>Source country</strong>: the outlet is based in that country.
+          <strong>About this country</strong>: the headline or excerpt names the country (the
+          matched word is shown), or an editor tagged it. Upper-case “US” counts; the word “us” and
+          “US$” amounts do not.
         </li>
         <li>
-          <strong>Feed default</strong>: the feed is a country- or topic-specific section.
+          <strong>From a feed covering this country</strong>: the publisher&apos;s feed is declared
+          as covering one country (for example a national-news feed). This is an assumption from the
+          feed, not evidence from the text, and is labelled as such.
         </li>
         <li>
-          <strong>Text match</strong>: a country name appears in the headline or excerpt.
+          <strong>Publisher based here</strong>: the outlet&apos;s home country. This says nothing
+          about the story, so it is <em>not</em> counted as coverage of that country. A BBC story
+          about Russia counts for Russia, not the United Kingdom. Country pages can include these
+          stories on request.
         </li>
         <li>
-          <strong>Keyword rule</strong> / <strong>feed category</strong>: sector vocabulary or the
-          publisher&apos;s own category matched.
+          <strong>Sectors</strong>: the publisher&apos;s own category, a feed&apos;s declared
+          section, or keyword rules. Keyword rules exist for English, Portuguese, Spanish and
+          French; other languages rely on categories and feed sections.
+        </li>
+        <li>
+          <strong>Opinion and analysis</strong>: shown only when the publisher signals it (category,
+          URL section such as <code>/opinion/</code>, or a headline prefix such as “Opinion:”). Most
+          feeds do not say, so most stories carry no type label. FreAlgo never guesses it.
         </li>
       </ul>
+      <p>
+        When the rules improve, stored stories are re-tagged automatically. Each tag shows the rule
+        version that produced it.
+      </p>
       <p>Sectors (a story may carry several):</p>
       <ul>
         {SECTORS.map((s) => (

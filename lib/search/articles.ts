@@ -1,5 +1,6 @@
 import { Prisma, type PrismaClient } from '@/generated/prisma/client';
 import { effectiveSort, resolveDateRange, type ArticleQuery, type Sort } from '@/lib/api/contracts';
+import { rolesForScope, type CountryRole } from '@/lib/domain/country-roles';
 import type { LabelStatus, Orientation } from '@/lib/domain/orientation';
 import { decodeCursor, encodeCursor, type CursorPayload } from './cursor';
 
@@ -51,7 +52,17 @@ export interface ArticleListItem {
   };
   /** Article-level label: null means "not classified" (never inferred from the outlet). */
   articleLabel: { level: 'article'; orientation: Orientation; note: string | null } | null;
-  countries: { iso2: string; name: string; basis: string; matchedTerm: string | null }[];
+  /** Publisher-signalled kind of piece; UNKNOWN when the publisher gave no signal. */
+  articleType: 'NEWS' | 'OPINION' | 'ANALYSIS' | 'UNKNOWN';
+  articleTypeBasis: string | null;
+  /** Each country link with its role (about / feed scope / publisher home) and evidence. */
+  countries: {
+    iso2: string;
+    name: string;
+    basis: string;
+    role: CountryRole;
+    matchedTerm: string | null;
+  }[];
   sectors: { slug: string; name: string; basis: string; ruleId: string | null }[];
   /** Present only for sort=relevance: textual match score (not a quality or political score). */
   relevance?: number;
@@ -75,6 +86,7 @@ interface Row {
   pub: Date;
   oname: string;
   score: string;
+  tkey: string;
   title: string;
   excerpt: string | null;
   canonicalUrl: string;
@@ -87,6 +99,8 @@ interface Row {
   isFixture: boolean;
   articleLabel: Orientation | null;
   articleLabelNote: string | null;
+  articleType: ArticleListItem['articleType'];
+  articleTypeBasis: string | null;
   outletId: string;
   outletSlug: string;
   outletName: string;
@@ -142,13 +156,22 @@ export async function listArticles(
     ? Prisma.sql`"ArticleCountry" ac JOIN "Article" a ON a.id = ac."articleId"`
     : Prisma.sql`"Article" a`;
 
+  // Country scope (ADR V2-001): by default only stories *about* a country (text evidence or the
+  // feed's declared scope) count; scope=all adds stories from publishers based there.
+  // Enum literals from a fixed whitelist (never user input), compared without a cast so the
+  // (countryId, role, publishedAt) index and role statistics apply.
+  const roles = Prisma.raw(
+    rolesForScope(query.scope ?? 'about')
+      .map((r) => `'${r}'::"CountryRole"`)
+      .join(', '),
+  );
   const where: Prisma.Sql[] = [Prisma.sql`a.status = 'PUBLISHED'`];
   if (!opts.includeFixtures) where.push(Prisma.sql`NOT a."isFixture"`);
   if (countryId) {
     where.push(
       driveByCountry
-        ? Prisma.sql`ac."countryId" = ${countryId}`
-        : Prisma.sql`EXISTS (SELECT 1 FROM "ArticleCountry" acx WHERE acx."articleId" = a.id AND acx."countryId" = ${countryId})`,
+        ? Prisma.sql`ac."countryId" = ${countryId} AND ac.role IN (${roles})`
+        : Prisma.sql`EXISTS (SELECT 1 FROM "ArticleCountry" acx WHERE acx."articleId" = a.id AND acx."countryId" = ${countryId} AND acx.role IN (${roles}))`,
     );
   }
   // Region and sector filters are resolved to ids first (both tables are tiny). Filtering the tag
@@ -173,7 +196,8 @@ export async function listArticles(
     where.push(
       regionCountryIds.length
         ? Prisma.sql`EXISTS (SELECT 1 FROM "ArticleCountry" acr
-            WHERE acr."articleId" = a.id AND acr."countryId" IN (${Prisma.join(regionCountryIds)}))`
+            WHERE acr."articleId" = a.id AND acr."countryId" IN (${Prisma.join(regionCountryIds)})
+              AND acr.role IN (${roles}))`
         : Prisma.sql`FALSE`,
     );
   }
@@ -188,6 +212,14 @@ export async function listArticles(
   if (query.outlet?.length) where.push(Prisma.sql`o.slug IN (${Prisma.join(query.outlet)})`);
   if (query.orientation?.length)
     where.push(Prisma.sql`o.orientation::text IN (${Prisma.join(query.orientation)})`);
+  if (query.type?.length) {
+    where.push(
+      // Enum literals from the validated whitelist (ARTICLE_TYPES), uncast so the type index applies.
+      Prisma.sql`a."articleType" IN (${Prisma.raw(
+        query.type.map((t) => `'${t.toUpperCase()}'::"ArticleType"`).join(', '),
+      )})`,
+    );
+  }
   if (query.language?.length) {
     where.push(
       Prisma.sql`split_part(lower(coalesce(a.language, '')), '-', 1) IN (${Prisma.join(query.language)})`,
@@ -233,9 +265,10 @@ export async function listArticles(
 
   const inner = Prisma.sql`
     SELECT ${idCol} AS id, ${pubCol} AS pub, lower(o.name) AS oname, ${scoreExpr} AS score,
+      a."titleSort" AS tkey,
       a.title, a.excerpt, a."canonicalUrl", a.language, a.author, a."publishedAtRaw",
       a."publishedOffsetMinutes", a."publishedAtEstimated", a."firstSeenAt", a."isFixture",
-      a."articleLabel", a."articleLabelNote",
+      a."articleLabel", a."articleLabelNote", a."articleType", a."articleTypeBasis",
       o.id AS "outletId", o.slug AS "outletSlug", o.name AS "outletName", o.paywall,
       o.orientation, o."ideologyTags", o."labelStatus", o."labelConfidence", o."labelMethodology",
       o."labelSourceUrl", o."labelReviewedAt", o."labelContext", o."labelIsMachine",
@@ -266,6 +299,15 @@ export async function listArticles(
     case 'oldest':
       order = Prisma.sql`x.pub ${desc(false)}, x.id ${desc(false)}`;
       if (cursor) keyset = tupleAfter(false, k[0]!, k[1]!);
+      break;
+    case 'alphabetical':
+      // A→Z by headline (case-insensitive), id as tie-breaker; strictly keyset-paged.
+      order = Prisma.sql`x.tkey ${desc(false)}, x.id ${desc(false)}`;
+      if (cursor) {
+        keyset = reverse
+          ? Prisma.sql`(x.tkey, x.id) < (${k[0]!}, ${k[1]!})`
+          : Prisma.sql`(x.tkey, x.id) > (${k[0]!}, ${k[1]!})`;
+      }
       break;
     case 'outlet':
       order = Prisma.sql`x.oname ${desc(false)}, x.pub ${desc(true)}, x.id ${desc(true)}`;
@@ -312,6 +354,7 @@ export async function listArticles(
   const keyOf = (r: Row): string[] => {
     const ts = r.pub.toISOString();
     if (sort === 'outlet') return [r.oname, ts, r.id];
+    if (sort === 'alphabetical') return [r.tkey, r.id];
     if (sort === 'relevance') return [Number(r.score).toFixed(6), ts, r.id];
     return [ts, r.id];
   };
@@ -358,6 +401,7 @@ async function hydrate(
       select: {
         articleId: true,
         basis: true,
+        role: true,
         matchedTerm: true,
         country: { select: { iso2: true, name: true } },
       },
@@ -372,7 +416,8 @@ async function hydrate(
       },
     }),
   ]);
-  const basisOrder = ['SOURCE_COUNTRY', 'FEED_DEFAULT', 'TEXT_MATCH', 'MANUAL'];
+  // About-the-country links first, then feed scope, then where the publisher is based.
+  const roleOrder: CountryRole[] = ['SUBJECT', 'FEED_SCOPE', 'PUBLISHER_HOME'];
   return rows.map((r) => ({
     id: r.id,
     title: r.title,
@@ -410,17 +455,20 @@ async function hydrate(
     articleLabel: r.articleLabel
       ? { level: 'article', orientation: r.articleLabel, note: r.articleLabelNote }
       : null,
+    articleType: r.articleType,
+    articleTypeBasis: r.articleTypeBasis,
     countries: countries
       .filter((c) => c.articleId === r.id)
       .sort(
         (a, b) =>
-          basisOrder.indexOf(a.basis) - basisOrder.indexOf(b.basis) ||
+          roleOrder.indexOf(a.role) - roleOrder.indexOf(b.role) ||
           a.country.name.localeCompare(b.country.name),
       )
       .map((c) => ({
         iso2: c.country.iso2,
         name: c.country.name,
         basis: c.basis,
+        role: c.role,
         matchedTerm: c.matchedTerm,
       })),
     sectors: sectors

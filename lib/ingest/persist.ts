@@ -1,7 +1,20 @@
 import { Prisma, type PrismaClient } from '@/generated/prisma/client';
+import { ARTICLE_TYPE_RULES_VERSION, classifyArticleType } from './tagging/article-type';
 import { COUNTRY_RULES_VERSION, tagCountries } from './tagging/countries';
 import { SECTOR_RULES_VERSION, tagSectors } from './tagging/sectors';
 import type { NormalizedItem } from './normalize';
+
+/**
+ * Combined tagging rules version stored on each article. Bumping any rule set changes it, and
+ * scripts/retag-articles.ts (run by the migrate job) re-tags stored articles below it.
+ */
+export const TAGGING_RULES_VERSION =
+  COUNTRY_RULES_VERSION * 10_000 + SECTOR_RULES_VERSION * 100 + ARTICLE_TYPE_RULES_VERSION;
+
+/** Publisher categories kept for provenance and re-tagging (bounded). */
+export function boundedCategories(categories: string[]): string[] {
+  return [...new Set(categories.map((c) => c.trim().slice(0, 80)).filter(Boolean))].slice(0, 10);
+}
 
 /**
  * Transaction-safe, idempotent article upsert.
@@ -26,7 +39,20 @@ export type PersistOutcome = 'inserted' | 'updated' | 'unchanged';
 const RULE_COUNTRY_BASES = ['SOURCE_COUNTRY', 'FEED_DEFAULT', 'TEXT_MATCH'] as const;
 const RULE_SECTOR_BASES = ['FEED_DEFAULT', 'FEED_CATEGORY', 'KEYWORD_RULE'] as const;
 
-function computeTags(ctx: PersistContext, item: NormalizedItem) {
+type TagInput = Pick<
+  NormalizedItem,
+  'title' | 'excerpt' | 'language' | 'categories' | 'canonicalUrl'
+>;
+type TagContext = Pick<
+  PersistContext,
+  | 'sourceCountryIso2'
+  | 'feedDefaultIso2'
+  | 'feedDefaultSectors'
+  | 'countryIdByIso2'
+  | 'sectorIdBySlug'
+>;
+
+function computeTags(ctx: TagContext, item: TagInput) {
   const countries = tagCountries({
     title: item.title,
     excerpt: item.excerpt,
@@ -42,7 +68,12 @@ function computeTags(ctx: PersistContext, item: NormalizedItem) {
     feedDefaultSlugs: ctx.feedDefaultSectors,
     validSlugs: new Set(ctx.sectorIdBySlug.keys()),
   });
-  return { countries, sectors };
+  const articleType = classifyArticleType({
+    url: item.canonicalUrl,
+    categories: item.categories,
+    title: item.title,
+  });
+  return { countries, sectors, articleType };
 }
 
 type Tx = Prisma.TransactionClient;
@@ -51,19 +82,18 @@ async function writeTags(
   tx: Tx,
   articleId: string,
   publishedAt: Date,
-  ctx: PersistContext,
-  item: NormalizedItem,
+  ctx: TagContext,
+  item: TagInput,
 ) {
-  const { countries, sectors } = computeTags(ctx, item);
-  const countryIds = countries.map((c) => ctx.countryIdByIso2.get(c.iso2)!);
-  const sectorIds = sectors.map((s) => ctx.sectorIdBySlug.get(s.slug)!);
+  const { countries, sectors, articleType } = computeTags(ctx, item);
 
-  // Remove rule-derived tags that no longer apply; MANUAL tags are never touched.
+  // Replace rule-derived tags (so a changed basis/role/rule id is applied); MANUAL tags are kept and
+  // win on conflict because the createMany below skips existing (articleId, countryId) pairs.
   await tx.articleCountry.deleteMany({
-    where: { articleId, basis: { in: [...RULE_COUNTRY_BASES] }, countryId: { notIn: countryIds } },
+    where: { articleId, basis: { in: [...RULE_COUNTRY_BASES] } },
   });
   await tx.articleSector.deleteMany({
-    where: { articleId, basis: { in: [...RULE_SECTOR_BASES] }, sectorId: { notIn: sectorIds } },
+    where: { articleId, basis: { in: [...RULE_SECTOR_BASES] } },
   });
   if (countries.length) {
     await tx.articleCountry.createMany({
@@ -71,6 +101,7 @@ async function writeTags(
         articleId,
         countryId: ctx.countryIdByIso2.get(c.iso2)!,
         basis: c.basis,
+        role: c.role,
         matchedTerm: c.matchedTerm ? `${c.matchedTerm} (rules v${COUNTRY_RULES_VERSION})` : null,
         publishedAt,
       })),
@@ -90,6 +121,42 @@ async function writeTags(
       skipDuplicates: true,
     });
   }
+  await tx.article.update({
+    where: { id: articleId },
+    data: {
+      articleType: articleType.type,
+      articleTypeBasis: articleType.basis,
+      taggedRulesVersion: TAGGING_RULES_VERSION,
+    },
+  });
+}
+
+/**
+ * Re-tag a stored article with the current rules (used by scripts/retag-articles.ts). Uses the
+ * stored headline, excerpt, language, URL and publisher categories; never touches MANUAL tags.
+ */
+export async function retagStoredArticle(
+  prisma: PrismaClient,
+  ctx: TagContext,
+  article: {
+    id: string;
+    publishedAt: Date;
+    title: string;
+    excerpt: string | null;
+    language: string | null;
+    canonicalUrl: string;
+    feedCategories: string[];
+  },
+): Promise<void> {
+  await prisma.$transaction((tx) =>
+    writeTags(tx, article.id, article.publishedAt, ctx, {
+      title: article.title,
+      excerpt: article.excerpt,
+      language: article.language,
+      canonicalUrl: article.canonicalUrl,
+      categories: article.feedCategories,
+    }),
+  );
 }
 
 async function findExisting(tx: Tx, ctx: PersistContext, item: NormalizedItem) {
@@ -139,6 +206,7 @@ async function persistOnce(
           status: item.status,
           statusReason: item.statusReason,
           isFixture: ctx.isFixture,
+          feedCategories: boundedCategories(item.categories),
         },
         select: { id: true, publishedAt: true },
       });
@@ -161,6 +229,7 @@ async function persistOnce(
         author: item.author,
         imageUrl: item.imageUrl,
         contentHash: item.contentHash,
+        feedCategories: boundedCategories(item.categories),
         ...(existing.externalId ? {} : item.externalId ? { externalId: item.externalId } : {}),
         ...(upgradeDate
           ? {

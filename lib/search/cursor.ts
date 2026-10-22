@@ -9,6 +9,7 @@ import { SORTS, type Sort } from '@/lib/api/contracts';
  *
  * Keys per sort:
  *   newest/oldest: [publishedAtISO, id]
+ *   alphabetical:  [lower(headline) (first 200 chars), id]
  *   outlet:        [outletName, publishedAtISO, id]
  *   relevance:     [score (fixed 6dp string), publishedAtISO, id]
  */
@@ -29,7 +30,13 @@ const payloadSchema = z.object({
   p: z.number().int().min(1).max(100_000),
 });
 
-const KEY_COUNT: Record<Sort, number> = { newest: 2, oldest: 2, outlet: 3, relevance: 3 };
+const KEY_COUNT: Record<Sort, number> = {
+  newest: 2,
+  oldest: 2,
+  alphabetical: 2,
+  outlet: 3,
+  relevance: 3,
+};
 
 export class InvalidCursorError extends Error {
   constructor(message = 'Invalid or expired cursor') {
@@ -55,8 +62,9 @@ export function decodeCursor(cursor: string, expectedSort: Sort): CursorPayload 
   if (c.s !== expectedSort)
     throw new InvalidCursorError('Cursor was issued for a different sort order');
   if (c.k.length !== KEY_COUNT[c.s]) throw new InvalidCursorError();
-  const tsIndex = c.k.length - 2;
-  if (Number.isNaN(Date.parse(c.k[tsIndex]!))) throw new InvalidCursorError();
+  // Every sort except alphabetical carries a timestamp just before the id.
+  if (c.s !== 'alphabetical' && Number.isNaN(Date.parse(c.k[c.k.length - 2]!)))
+    throw new InvalidCursorError();
   if (c.s === 'relevance' && !/^-?\d+(\.\d+)?$/.test(c.k[0]!)) throw new InvalidCursorError();
   return c;
 }

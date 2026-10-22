@@ -33,7 +33,10 @@ export async function CountryWorkspace({
 
   const sector = query.sector?.length === 1 ? query.sector[0]! : null;
   const summary = filterSummary({ ...query, sector: undefined });
-  const listKey = `${query.country}|${(query.sector ?? []).join(',')}|${summary.text}|${query.sort ?? ''}|${query.cursor ?? ''}`;
+  const listKey = `${query.country}|${(query.sector ?? []).join(',')}|${summary.text}|${query.sort ?? ''}|${query.scope ?? ''}|${query.cursor ?? ''}`;
+  const name = coverage.country.name;
+  const homeOnly = coverage.stories.publisherHomeOnly;
+  const includeHome = query.scope === 'all';
   // Closing keeps sector and filters (so the next country opens with the same view).
   const closeHref = exploreHref({ ...query, country: undefined, cursor: undefined });
   const sectorHref = (slug: string | null) =>
@@ -45,6 +48,33 @@ export async function CountryWorkspace({
   const header = (
     <>
       <CoverageNotice coverage={coverage} />
+      {homeOnly > 0 || includeHome ? (
+        // ADR V2-001: stories from outlets based here but about elsewhere are not this country's
+        // coverage; say so, and let the reader include them explicitly.
+        <p
+          className="rounded-md border border-border px-3 py-2 text-sm text-muted"
+          data-testid="scope-notice"
+        >
+          {includeHome ? (
+            <>
+              Also showing {homeOnly} {homeOnly === 1 ? 'story' : 'stories'} from publishers based
+              in {name} that {homeOnly === 1 ? 'is' : 'are'} about other places.{' '}
+              <NavAnchor href={exploreHref({ ...query, scope: undefined, cursor: undefined })}>
+                Show only stories about {name}
+              </NavAnchor>
+            </>
+          ) : (
+            <>
+              {homeOnly} {homeOnly === 1 ? 'story' : 'stories'} from publishers based in {name}{' '}
+              {homeOnly === 1 ? 'is' : 'are'} about other places, so{' '}
+              {homeOnly === 1 ? 'it is' : 'they are'} not counted as {name} coverage.{' '}
+              <NavAnchor href={exploreHref({ ...query, scope: 'all', cursor: undefined })}>
+                Include them
+              </NavAnchor>
+            </>
+          )}
+        </p>
+      ) : null}
       <SectorNav selected={sector} hrefFor={sectorHref} />
       <details className="rounded-md border border-border" data-testid="filters-panel">
         <summary className="flex min-h-11 cursor-pointer list-none items-center justify-between gap-3 px-3 text-sm [&::-webkit-details-marker]:hidden">
@@ -71,7 +101,11 @@ export async function CountryWorkspace({
               to: query.to?.toISOString().slice(0, 10),
               sort: query.sort,
             }}
-            hidden={{ country: query.country, sector: sector ?? undefined }}
+            hidden={{
+              country: query.country,
+              sector: sector ?? undefined,
+              scope: includeHome ? 'all' : undefined,
+            }}
             outlets={coverage.outlets.map((o) => ({ slug: o.slug, name: o.name }))}
             languages={coverage.languagesAvailable.map((code) => ({
               code,

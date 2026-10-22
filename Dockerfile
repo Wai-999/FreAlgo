@@ -34,7 +34,8 @@ COPY tsconfig.json ./
 # Owner-approved feed activations, applied by scripts/ops/server-setup.sh.
 COPY deploy/source-activations.json ./deploy/
 USER node
-CMD ["sh", "-c", "npx prisma migrate deploy && node --import tsx prisma/seed.ts"]
+# Migrations, idempotent seed, then re-tag articles tagged by older rules (no-op when current).
+CMD ["sh", "-c", "npx prisma migrate deploy && node --import tsx prisma/seed.ts && node --import tsx scripts/retag-articles.ts"]
 
 # ---- web ----
 FROM base AS web

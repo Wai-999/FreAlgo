@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { matchCountries, tagCountries } from '@/lib/ingest/tagging/countries';
 import { tagSectors } from '@/lib/ingest/tagging/sectors';
+import { classifyArticleType } from '@/lib/ingest/tagging/article-type';
 import { SECTOR_SLUGS } from '@/lib/domain/sectors';
 
 const iso = (text: string, lang = 'en') => matchCountries(text, lang).map((m) => m.iso2);
@@ -48,8 +49,8 @@ describe('country text matching', () => {
   });
 });
 
-describe('tagCountries', () => {
-  it('records the basis of every tag and never duplicates a country', () => {
+describe('tagCountries (rules v2: roles)', () => {
+  it('lets text evidence win over the publisher country and records every role', () => {
     const tags = tagCountries({
       title: 'Myanmar farmers export rice to Thailand',
       excerpt: null,
@@ -58,10 +59,79 @@ describe('tagCountries', () => {
       feedDefaultIso2: ['MM', 'BD'],
     });
     expect(tags).toEqual([
-      { iso2: 'MM', basis: 'SOURCE_COUNTRY', matchedTerm: null },
-      { iso2: 'BD', basis: 'FEED_DEFAULT', matchedTerm: null },
-      { iso2: 'TH', basis: 'TEXT_MATCH', matchedTerm: 'Thailand' },
+      { iso2: 'MM', basis: 'TEXT_MATCH', role: 'SUBJECT', matchedTerm: 'Myanmar' },
+      { iso2: 'TH', basis: 'TEXT_MATCH', role: 'SUBJECT', matchedTerm: 'Thailand' },
+      { iso2: 'BD', basis: 'FEED_DEFAULT', role: 'FEED_SCOPE', matchedTerm: null },
     ]);
+  });
+
+  it('assigns a cross-border story to its subjects, not its publisher (production example)', () => {
+    const tags = tagCountries({
+      title: 'US citizen Stephen Hubbard freed by Russia as Trump envoy meets Putin',
+      excerpt: null,
+      language: 'en',
+      sourceCountryIso2: 'GB', // BBC
+      feedDefaultIso2: [],
+    });
+    const byIso = Object.fromEntries(tags.map((t) => [t.iso2, t.role]));
+    expect(byIso).toEqual({ US: 'SUBJECT', RU: 'SUBJECT', GB: 'PUBLISHER_HOME' });
+  });
+
+  it('marks a story that names no country as publisher-home only', () => {
+    expect(
+      tagCountries({
+        title: 'Scientists discover a new species of deep-sea octopus',
+        excerpt: null,
+        language: 'en',
+        sourceCountryIso2: 'GB',
+        feedDefaultIso2: [],
+      }),
+    ).toEqual([{ iso2: 'GB', basis: 'SOURCE_COUNTRY', role: 'PUBLISHER_HOME', matchedTerm: null }]);
+  });
+
+  it('matches the upper-case US but not the pronoun "us" or a US$ currency amount', () => {
+    expect(matchCountries('Tell us what you think', 'en')).toEqual([]);
+    expect(matchCountries('Brazil borrows US$5bn from lenders', 'en').map((m) => m.iso2)).toEqual([
+      'BR',
+    ]);
+    expect(matchCountries('US and EU agree on tariffs', 'en').map((m) => m.iso2)).toEqual(['US']);
+  });
+});
+
+describe('classifyArticleType', () => {
+  it('uses publisher evidence only and defaults to UNKNOWN', () => {
+    expect(
+      classifyArticleType({ url: 'https://ex.com/world/a', categories: ['Opinion'], title: 'x' }),
+    ).toEqual({ type: 'OPINION', basis: 'category "Opinion"' });
+    expect(
+      classifyArticleType({
+        url: 'https://ex.com/commentisfree/2026/x',
+        categories: [],
+        title: 'x',
+      }),
+    ).toMatchObject({ type: 'OPINION', basis: 'URL path /commentisfree/' });
+    expect(
+      classifyArticleType({
+        url: 'https://ex.com/a',
+        categories: [],
+        title: 'Analysis: why rice matters',
+      }),
+    ).toMatchObject({ type: 'ANALYSIS' });
+    expect(
+      classifyArticleType({ url: 'https://ex.com/a', categories: ['Opinião'], title: 'x' }),
+    ).toMatchObject({ type: 'OPINION' });
+  });
+
+  it('does not mistake slugs or news sections for opinion', () => {
+    for (const url of [
+      'https://ex.com/world/leader-of-the-opposition-resigns',
+      'https://ex.com/news/comments-sought-on-plan',
+      'https://ex.com/politics/2026/10/21/budget',
+    ]) {
+      expect(
+        classifyArticleType({ url, categories: ['World', 'Politics'], title: 'Budget passes' }),
+      ).toEqual({ type: 'UNKNOWN', basis: null });
+    }
   });
 });
 
@@ -113,5 +183,31 @@ describe('tagSectors', () => {
         validSlugs: valid,
       }),
     ).toEqual([]);
+  });
+});
+
+describe('tagSectors (rules v2: languages)', () => {
+  const valid = new Set<string>(SECTOR_SLUGS);
+  it('applies Portuguese rules to Portuguese articles only', () => {
+    const pt = tagSectors({
+      title: 'Senado aprova reforma tributária; inflação desacelera',
+      excerpt: null,
+      language: 'pt-BR',
+      categories: [],
+      feedDefaultSlugs: [],
+      validSlugs: valid,
+    }).map((t) => t.ruleId);
+    expect(pt).toEqual(
+      expect.arrayContaining(['politics.kw.pt.v2', 'business-economics.kw.pt.v2']),
+    );
+    const en = tagSectors({
+      title: 'Senado aprova reforma tributária',
+      excerpt: null,
+      language: 'en',
+      categories: [],
+      feedDefaultSlugs: [],
+      validSlugs: valid,
+    });
+    expect(en).toEqual([]);
   });
 });

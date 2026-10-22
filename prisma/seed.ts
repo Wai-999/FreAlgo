@@ -9,6 +9,7 @@
  * Re-seeding never changes a real feed's status, terms review or an outlet's label: those are
  * operator decisions recorded through the admin tools with an audit trail.
  */
+import { roleForBasis } from '../lib/domain/country-roles';
 import { readFileSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -164,8 +165,15 @@ export async function seedFixtures(prisma: PrismaClient, now = new Date()): Prom
         excerptAllowed: o.excerptAllowed,
         licenseNotes: 'Fixture feed (not fetched).',
         isFixture: true,
+        // Fictional local outlets publish national-news feeds: the home country is the feed scope.
+        defaultCountryIso2: [o.countryIso2],
       },
-      update: { outletId: outlet.id, excerptAllowed: o.excerptAllowed, isFixture: true },
+      update: {
+        outletId: outlet.id,
+        excerptAllowed: o.excerptAllowed,
+        isFixture: true,
+        defaultCountryIso2: [o.countryIso2],
+      },
     });
     feedIds.set(o.slug, feed.id);
   }
@@ -181,11 +189,28 @@ export async function seedFixtures(prisma: PrismaClient, now = new Date()): Prom
       where: { canonicalUrlHash: hash },
       select: { id: true, publishedAt: true },
     });
+    const countryTags = a.countries
+      .filter((c) => countries.has(c.iso2))
+      .map((c) => ({
+        countryId: countries.get(c.iso2)!,
+        basis: c.basis,
+        role: roleForBasis(c.basis),
+        matchedTerm: c.term ?? null,
+      }));
     if (existing) {
-      // Re-seed keeps the original timestamps so cursors and tests stay stable.
+      // Re-seed keeps the original timestamps so cursors and tests stay stable, and rebuilds the
+      // curated country tags so fixture roles follow the current model.
       await prisma.article.update({
         where: { id: existing.id },
         data: { title: a.title, excerpt: a.excerpt, language: a.language, contentHash },
+      });
+      await prisma.articleCountry.deleteMany({ where: { articleId: existing.id } });
+      await prisma.articleCountry.createMany({
+        data: countryTags.map((c) => ({
+          ...c,
+          articleId: existing.id,
+          publishedAt: existing.publishedAt,
+        })),
       });
       continue;
     }
@@ -204,16 +229,7 @@ export async function seedFixtures(prisma: PrismaClient, now = new Date()): Prom
         publishedOffsetMinutes: 0,
         contentHash,
         isFixture: true,
-        countries: {
-          create: a.countries
-            .filter((c) => countries.has(c.iso2))
-            .map((c) => ({
-              countryId: countries.get(c.iso2)!,
-              basis: c.basis,
-              matchedTerm: c.term ?? null,
-              publishedAt,
-            })),
-        },
+        countries: { create: countryTags.map((c) => ({ ...c, publishedAt })) },
         sectors: {
           create: a.sectors.map((slug) => ({
             sectorId: sectors.get(slug)!,

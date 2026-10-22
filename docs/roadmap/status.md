@@ -21,16 +21,21 @@ the feature gate.
 
 ## M2: Reliable global coverage and provenance
 
-⏳ Not started. Scope:
-
-- country roles (subject / publisher home / feed scope);
-- gazetteer fixes for US/U.S. and demonyms;
-- feed-scope rule;
-- Portuguese sector rules;
-- article type (news/opinion);
-- source quality dashboard and public `sources/health` alias;
-- coverage gap report;
-- registering CC-licensed sources (paused, pending owner review).
+| Item                                                                                   | State                  | Evidence                                                                                          |
+| -------------------------------------------------------------------------------------- | ---------------------- | ------------------------------------------------------------------------------------------------- |
+| Country roles: subject / feed scope / publisher home (migration + backfill + rollback) | ✅                     | `prisma/migrations/*v2_country_roles_article_type`, `lib/domain/country-roles.ts`                 |
+| Tagging rules v2: text evidence wins, "US" alias (not "us"/"US$"), roles               | ✅                     | `lib/ingest/tagging/countries.ts`, `tests/unit/tagging.test.ts`                                   |
+| Multilingual sector rules (en, pt, es, fr)                                             | ✅                     | `lib/ingest/tagging/sectors.ts`                                                                   |
+| Article type on publisher evidence only                                                | ✅                     | `lib/ingest/tagging/article-type.ts`                                                              |
+| Publisher categories stored; rules version per article; automatic re-tag on deploy     | ✅                     | `scripts/retag-articles.ts`, `tests/integration/retag.test.ts`, Dockerfile migrate step           |
+| Country pages show "about" by default, `scope=all` on request, with an explanation     | ✅                     | `components/news/country-workspace.tsx`, articles-api tests                                       |
+| Article-type filter, alphabetical sort (keyset), indexes                               | ✅                     | `lib/search/articles.ts`, `prisma/migrations/*v2_sort_and_type_indexes`                           |
+| Source quality dashboard + `/api/v1/sources/health`                                    | ✅                     | `lib/db/quality.ts`, `/status#quality`                                                            |
+| Coverage gap report                                                                    | ✅                     | [`docs/data/coverage-report.md`](../data/coverage-report.md) (`scripts/audit/coverage-report.ts`) |
+| New sources only with verified permission and reachable feeds                          | ✅ (registered paused) | Global Voices (CC BY 3.0, 8 editions, dry-run 8/8); `docs/source-terms-review.md`                 |
+| Ingestion runbook, data methodology                                                    | ✅                     | `docs/operations/ingestion-runbook.md`, `docs/data/source-methodology.md` §6–7                    |
+| Migration rehearsal on production data                                                 | ✅                     | `docs/release/acceptance.md` (M2)                                                                 |
+| Activate Global Voices                                                                 | ⛔ owner decision      | `docs/source-terms-review.md`                                                                     |
 
 ## M3: Hybrid editorial UX and My World
 

@@ -1,26 +1,31 @@
+import type { CountryRole } from '../../domain/country-roles';
 import gazetteer from './gazetteer.generated.json';
 
 /**
  * Deterministic, auditable country tagging (rules version below). Every tag records the term that
  * matched so operators and users can see *why* an article is linked to a country.
  *
- * Rules (docs/data/source-methodology.md#tagging):
- *  1. SOURCE_COUNTRY — the outlet's country (always).
- *  2. FEED_DEFAULT   — countries declared on the feed (country/section feeds).
- *  3. TEXT_MATCH     — a country name/alias/demonym appears in the headline or excerpt, matched
+ * Rules v2 (docs/data/source-methodology.md#tagging). Each tag has a basis (how it was produced)
+ * and a role (what it means, ADR V2-001); text evidence wins over assumptions:
+ *  1. TEXT_MATCH     → SUBJECT. A country name/alias/demonym appears in the headline or excerpt, matched
  *     case-sensitively on word boundaries (no boundaries for scripts written without spaces).
  *     Terms shared by several countries ("Congo", "Korea") or common words ("Jordan", "Chad",
  *     "Georgia") count only when a disambiguating term also appears. Longest match wins, so
  *     "Papua New Guinea" never also yields "Guinea". At most MAX_TEXT_MATCHES per article.
+ *  2. FEED_DEFAULT   → FEED_SCOPE. Countries the feed declares as its scope (national feeds).
+ *  3. SOURCE_COUNTRY → PUBLISHER_HOME. The outlet's home country, only if not already tagged above:
+ *     it records where the publisher is based, not what the story is about.
+ * v2 changes: text evidence is no longer hidden by the publisher's country, roles are explicit,
+ * and the unambiguous upper-case "US" is an alias (case-sensitive, so the pronoun never matches).
  */
-export const COUNTRY_RULES_VERSION = 1;
+export const COUNTRY_RULES_VERSION = 2;
 export const MAX_TEXT_MATCHES = 5;
 
 const NAMES = (gazetteer as { names: Record<string, Record<string, string[]>> }).names;
 
 /** Curated English aliases and demonyms (only unambiguous forms). */
 const EXTRA: Record<string, string[]> = {
-  US: ['United States', 'U.S.', 'USA', 'Washington DC'],
+  US: ['United States', 'U.S.', 'US', 'USA', 'U.S.A.', 'Washington DC'],
   GB: ['Britain', 'British', 'UK', 'U.K.', 'England', 'Scotland', 'Wales', 'Northern Ireland'],
   MM: ['Burma', 'Burmese', 'Myanmar', 'မြန်မာ'],
   CN: ['China', 'Chinese', 'Beijing', '中国'],
@@ -211,6 +216,8 @@ export function matchCountries(text: string, lang: string | null): CountryMatch[
     const term = m[0];
     const iso2 = byTerm.get(term);
     if (!iso2) continue;
+    // "US$5bn" is a currency, not a mention of the United States.
+    if (term === 'US' && text[(m.index ?? 0) + term.length] === '$') continue;
     const plain = Object.keys(AMBIGUOUS).find((k) => k === term || k.toUpperCase() === term);
     if (plain || BLOCKLIST.has(term)) {
       const rule = AMBIGUOUS[plain ?? term];
@@ -225,6 +232,7 @@ export function matchCountries(text: string, lang: string | null): CountryMatch[
 export type CountryTag = {
   iso2: string;
   basis: 'SOURCE_COUNTRY' | 'FEED_DEFAULT' | 'TEXT_MATCH';
+  role: CountryRole;
   matchedTerm: string | null;
 };
 
@@ -236,20 +244,23 @@ export function tagCountries(input: {
   feedDefaultIso2: string[];
 }): CountryTag[] {
   const tags = new Map<string, CountryTag>();
-  if (input.sourceCountryIso2) {
-    tags.set(input.sourceCountryIso2, {
-      iso2: input.sourceCountryIso2,
-      basis: 'SOURCE_COUNTRY',
-      matchedTerm: null,
-    });
-  }
-  for (const iso2 of input.feedDefaultIso2) {
-    if (!tags.has(iso2)) tags.set(iso2, { iso2, basis: 'FEED_DEFAULT', matchedTerm: null });
-  }
   const text = `${input.title}\n${input.excerpt ?? ''}`;
   for (const m of matchCountries(text, input.language)) {
     if (!tags.has(m.iso2))
-      tags.set(m.iso2, { iso2: m.iso2, basis: 'TEXT_MATCH', matchedTerm: m.term });
+      tags.set(m.iso2, { iso2: m.iso2, basis: 'TEXT_MATCH', role: 'SUBJECT', matchedTerm: m.term });
+  }
+  for (const iso2 of input.feedDefaultIso2) {
+    if (!tags.has(iso2))
+      tags.set(iso2, { iso2, basis: 'FEED_DEFAULT', role: 'FEED_SCOPE', matchedTerm: null });
+  }
+  const home = input.sourceCountryIso2;
+  if (home && !tags.has(home)) {
+    tags.set(home, {
+      iso2: home,
+      basis: 'SOURCE_COUNTRY',
+      role: 'PUBLISHER_HOME',
+      matchedTerm: null,
+    });
   }
   return [...tags.values()];
 }

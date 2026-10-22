@@ -1,13 +1,14 @@
 import type { SectorSlug } from '../../domain/sectors';
 
 /**
- * Deterministic sector tagging, rules version 1. Each tag stores the rule id that produced it.
+ * Deterministic sector tagging, rules version 2. Each tag stores the rule id that produced it.
  *  1. FEED_DEFAULT  — sectors declared on the feed (e.g. a business-section feed)
  *  2. FEED_CATEGORY — the publisher's own <category> mapped through CATEGORY_MAP (multilingual)
- *  3. KEYWORD_RULE  — whole-word keyword rules on headline + excerpt (English; extendable)
+ *  3. KEYWORD_RULE  — whole-word keyword rules on headline + excerpt, per language. v2 adds
+ *     Portuguese, Spanish and French rule sets; other languages rely on 1 and 2.
  * No match => no sector tag (the story still appears under "All").
  */
-export const SECTOR_RULES_VERSION = 1;
+export const SECTOR_RULES_VERSION = 2;
 
 export type SectorTag = {
   slug: SectorSlug;
@@ -91,9 +92,10 @@ const CATEGORY_MAP: Record<string, SectorSlug> = {
   文化: 'culture',
 };
 
-const KEYWORD_RULES: { id: string; slug: SectorSlug; terms: string[] }[] = [
+const KEYWORD_RULES: { id: string; lang: string; slug: SectorSlug; terms: string[] }[] = [
   {
     id: 'politics.kw.v1',
+    lang: 'en',
     slug: 'politics',
     terms: [
       'election',
@@ -132,6 +134,7 @@ const KEYWORD_RULES: { id: string; slug: SectorSlug; terms: string[] }[] = [
   },
   {
     id: 'business.kw.v1',
+    lang: 'en',
     slug: 'business-economics',
     terms: [
       'economy',
@@ -175,6 +178,7 @@ const KEYWORD_RULES: { id: string; slug: SectorSlug; terms: string[] }[] = [
   },
   {
     id: 'education.kw.v1',
+    lang: 'en',
     slug: 'education',
     terms: [
       'school',
@@ -199,6 +203,7 @@ const KEYWORD_RULES: { id: string; slug: SectorSlug; terms: string[] }[] = [
   },
   {
     id: 'technology.kw.v1',
+    lang: 'en',
     slug: 'technology',
     terms: [
       'technology',
@@ -228,6 +233,7 @@ const KEYWORD_RULES: { id: string; slug: SectorSlug; terms: string[] }[] = [
   },
   {
     id: 'agriculture.kw.v1',
+    lang: 'en',
     slug: 'agriculture',
     terms: [
       'agriculture',
@@ -262,6 +268,7 @@ const KEYWORD_RULES: { id: string; slug: SectorSlug; terms: string[] }[] = [
   },
   {
     id: 'history.kw.v1',
+    lang: 'en',
     slug: 'history-context',
     terms: [
       'history',
@@ -283,6 +290,7 @@ const KEYWORD_RULES: { id: string; slug: SectorSlug; terms: string[] }[] = [
   },
   {
     id: 'culture.kw.v1',
+    lang: 'en',
     slug: 'culture',
     terms: [
       'culture',
@@ -315,6 +323,426 @@ const KEYWORD_RULES: { id: string; slug: SectorSlug; terms: string[] }[] = [
       'sports',
     ],
   },
+  // ---- Portuguese (v2) ----
+  {
+    id: 'politics.kw.pt.v2',
+    lang: 'pt',
+    slug: 'politics',
+    terms: [
+      'eleição',
+      'eleições',
+      'eleitoral',
+      'eleitores',
+      'congresso',
+      'senado',
+      'senador',
+      'senadores',
+      'câmara dos deputados',
+      'deputado',
+      'deputados',
+      'deputada',
+      'ministro',
+      'ministra',
+      'ministério',
+      'presidente da república',
+      'governo federal',
+      'governador',
+      'governadora',
+      'prefeito',
+      'prefeita',
+      'partido',
+      'votação',
+      'parlamento',
+      'Supremo Tribunal Federal',
+      'STF',
+      'Planalto',
+      'reforma ministerial',
+      'projeto de lei',
+    ],
+  },
+  {
+    id: 'business-economics.kw.pt.v2',
+    lang: 'pt',
+    slug: 'business-economics',
+    terms: [
+      'economia',
+      'econômico',
+      'econômica',
+      'inflação',
+      'PIB',
+      'juros',
+      'Selic',
+      'Banco Central',
+      'mercado financeiro',
+      'exportações',
+      'importações',
+      'empresas',
+      'indústria',
+      'comércio',
+      'imposto',
+      'impostos',
+      'reforma tributária',
+      'orçamento',
+      'desemprego',
+      'emprego formal',
+      'salário mínimo',
+      'Ibovespa',
+      'investimentos',
+      'Petrobras',
+      'arrecadação',
+    ],
+  },
+  {
+    id: 'education.kw.pt.v2',
+    lang: 'pt',
+    slug: 'education',
+    terms: [
+      'educação',
+      'escola',
+      'escolas',
+      'ensino',
+      'Enem',
+      'universidade',
+      'universidades',
+      'estudantes',
+      'professores',
+      'alunos',
+      'MEC',
+      'vestibular',
+      'ensino médio',
+      'alfabetização',
+    ],
+  },
+  {
+    id: 'technology.kw.pt.v2',
+    lang: 'pt',
+    slug: 'technology',
+    terms: [
+      'tecnologia',
+      'ciência',
+      'cientistas',
+      'pesquisadores',
+      'inteligência artificial',
+      'satélite',
+      'internet',
+      'telecomunicações',
+      'inovação',
+      'astronomia',
+      'vacina',
+      'vacinas',
+    ],
+  },
+  {
+    id: 'agriculture.kw.pt.v2',
+    lang: 'pt',
+    slug: 'agriculture',
+    terms: [
+      'agricultura',
+      'agronegócio',
+      'agropecuária',
+      'safra',
+      'colheita',
+      'soja',
+      'milho',
+      'café',
+      'pecuária',
+      'gado',
+      'agricultores',
+      'Embrapa',
+      'plantio',
+      'fertilizantes',
+      'agricultura familiar',
+    ],
+  },
+  {
+    id: 'history-context.kw.pt.v2',
+    lang: 'pt',
+    slug: 'history-context',
+    terms: [
+      'história',
+      'ditadura militar',
+      'memorial',
+      'patrimônio histórico',
+      'centenário',
+      'bicentenário',
+    ],
+  },
+  {
+    id: 'culture.kw.pt.v2',
+    lang: 'pt',
+    slug: 'culture',
+    terms: [
+      'cultura',
+      'música',
+      'cinema',
+      'filme',
+      'festival',
+      'carnaval',
+      'futebol',
+      'esporte',
+      'esportes',
+      'Copa do Mundo',
+      'Olimpíadas',
+      'literatura',
+      'museu',
+      'teatro',
+      'exposição',
+    ],
+  },
+  // ---- Spanish (v2) ----
+  {
+    id: 'politics.kw.es.v2',
+    lang: 'es',
+    slug: 'politics',
+    terms: [
+      'elecciones',
+      'electoral',
+      'votación',
+      'congreso',
+      'senado',
+      'senador',
+      'diputado',
+      'diputados',
+      'parlamento',
+      'ministro',
+      'ministra',
+      'gobierno',
+      'presidente del gobierno',
+      'presidenta',
+      'partido',
+      'oposición',
+      'coalición',
+      'reforma constitucional',
+    ],
+  },
+  {
+    id: 'business-economics.kw.es.v2',
+    lang: 'es',
+    slug: 'business-economics',
+    terms: [
+      'economía',
+      'económico',
+      'económica',
+      'inflación',
+      'PIB',
+      'tipos de interés',
+      'tasas de interés',
+      'banco central',
+      'exportaciones',
+      'importaciones',
+      'empresas',
+      'industria',
+      'comercio',
+      'impuestos',
+      'presupuesto',
+      'desempleo',
+      'empleo',
+      'salario mínimo',
+      'bolsa',
+    ],
+  },
+  {
+    id: 'education.kw.es.v2',
+    lang: 'es',
+    slug: 'education',
+    terms: [
+      'educación',
+      'escuela',
+      'escuelas',
+      'universidad',
+      'universidades',
+      'estudiantes',
+      'profesores',
+      'docentes',
+      'alumnos',
+      'enseñanza',
+    ],
+  },
+  {
+    id: 'technology.kw.es.v2',
+    lang: 'es',
+    slug: 'technology',
+    terms: [
+      'tecnología',
+      'ciencia',
+      'científicos',
+      'investigadores',
+      'inteligencia artificial',
+      'satélite',
+      'internet',
+      'innovación',
+    ],
+  },
+  {
+    id: 'agriculture.kw.es.v2',
+    lang: 'es',
+    slug: 'agriculture',
+    terms: [
+      'agricultura',
+      'agrícola',
+      'cosecha',
+      'cultivos',
+      'ganadería',
+      'ganado',
+      'campesinos',
+      'agricultores',
+      'maíz',
+      'trigo',
+      'fertilizantes',
+    ],
+  },
+  {
+    id: 'history-context.kw.es.v2',
+    lang: 'es',
+    slug: 'history-context',
+    terms: ['historia', 'dictadura', 'memoria histórica', 'aniversario', 'centenario'],
+  },
+  {
+    id: 'culture.kw.es.v2',
+    lang: 'es',
+    slug: 'culture',
+    terms: [
+      'cultura',
+      'música',
+      'cine',
+      'película',
+      'festival',
+      'fútbol',
+      'deporte',
+      'deportes',
+      'literatura',
+      'museo',
+      'teatro',
+      'exposición',
+    ],
+  },
+  // ---- French (v2) ----
+  {
+    id: 'politics.kw.fr.v2',
+    lang: 'fr',
+    slug: 'politics',
+    terms: [
+      'élection',
+      'élections',
+      'électoral',
+      'scrutin',
+      'vote',
+      'Assemblée nationale',
+      'Sénat',
+      'sénateur',
+      'député',
+      'députés',
+      'ministre',
+      'gouvernement',
+      'président de la République',
+      'Premier ministre',
+      'parti',
+      'opposition',
+      'coalition',
+      'Élysée',
+      'Matignon',
+    ],
+  },
+  {
+    id: 'business-economics.kw.fr.v2',
+    lang: 'fr',
+    slug: 'business-economics',
+    terms: [
+      'économie',
+      'économique',
+      'inflation',
+      'PIB',
+      'taux d’intérêt',
+      "taux d'intérêt",
+      'Banque centrale',
+      'exportations',
+      'importations',
+      'entreprises',
+      'industrie',
+      'commerce',
+      'impôts',
+      'budget',
+      'chômage',
+      'emploi',
+      'salaire minimum',
+      'Bourse',
+    ],
+  },
+  {
+    id: 'education.kw.fr.v2',
+    lang: 'fr',
+    slug: 'education',
+    terms: [
+      'éducation',
+      'école',
+      'écoles',
+      'université',
+      'universités',
+      'étudiants',
+      'enseignants',
+      'élèves',
+      'baccalauréat',
+      'enseignement',
+    ],
+  },
+  {
+    id: 'technology.kw.fr.v2',
+    lang: 'fr',
+    slug: 'technology',
+    terms: [
+      'technologie',
+      'science',
+      'scientifiques',
+      'chercheurs',
+      'intelligence artificielle',
+      'satellite',
+      'internet',
+      'innovation',
+      'numérique',
+    ],
+  },
+  {
+    id: 'agriculture.kw.fr.v2',
+    lang: 'fr',
+    slug: 'agriculture',
+    terms: [
+      'agriculture',
+      'agricole',
+      'agriculteurs',
+      'récolte',
+      'récoltes',
+      'cultures',
+      'élevage',
+      'bétail',
+      'céréales',
+      'blé',
+      'engrais',
+    ],
+  },
+  {
+    id: 'history-context.kw.fr.v2',
+    lang: 'fr',
+    slug: 'history-context',
+    terms: ['histoire', 'mémoire', 'anniversaire', 'centenaire', 'commémoration'],
+  },
+  {
+    id: 'culture.kw.fr.v2',
+    lang: 'fr',
+    slug: 'culture',
+    terms: [
+      'culture',
+      'musique',
+      'cinéma',
+      'film',
+      'festival',
+      'football',
+      'sport',
+      'littérature',
+      'musée',
+      'théâtre',
+      'exposition',
+    ],
+  },
 ];
 
 function escapeRe(s: string): string {
@@ -332,9 +760,9 @@ const COMPILED = KEYWORD_RULES.map((r) => ({
   ),
 }));
 
-/** Keyword rules are English-only; other languages rely on feed defaults and categories. */
-function keywordRulesApply(language: string | null): boolean {
-  return !language || language.toLowerCase().startsWith('en');
+/** Keyword rules for the article's language (base subtag; unknown language → English). */
+function baseLanguage(language: string | null): string {
+  return (language ?? 'en').toLowerCase().split('-')[0] || 'en';
 }
 
 export function tagSectors(input: {
@@ -362,9 +790,10 @@ export function tagSectors(input: {
       tags.set(slug, { slug, basis: 'FEED_CATEGORY', ruleId: `category:${key.slice(0, 40)}` });
     }
   }
-  if (!keywordRulesApply(input.language)) return [...tags.values()];
+  const lang = baseLanguage(input.language);
   const text = `${input.title}\n${input.excerpt ?? ''}`;
   for (const rule of COMPILED) {
+    if (rule.lang !== lang) continue;
     if (!tags.has(rule.slug) && rule.regex.test(text)) {
       tags.set(rule.slug, { slug: rule.slug, basis: 'KEYWORD_RULE', ruleId: rule.id });
     }

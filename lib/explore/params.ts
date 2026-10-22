@@ -77,6 +77,17 @@ export function filterSummary(q: ArticleQuery): { text: string; count: number } 
 export const SORT_LABEL: Record<string, string> = {
   newest: 'Newest first',
   oldest: 'Oldest first',
+  alphabetical: 'Headline (A–Z)',
   outlet: 'Outlet name (A–Z)',
   relevance: 'Text relevance',
+};
+
+/** Plain-language ordering rule shown with every list and returned by the API. */
+export const SORT_EXPLANATION: Record<string, string> = {
+  newest: 'Ordered by publication time, newest first.',
+  oldest: 'Ordered by publication time, oldest first.',
+  alphabetical: 'Ordered alphabetically by headline (case-insensitive), as published.',
+  outlet: 'Ordered alphabetically by outlet name, then newest first.',
+  relevance:
+    'Ordered by how closely the headline and excerpt match your words (text relevance only, never popularity, engagement or political lean); ties broken by newest first.',
 };

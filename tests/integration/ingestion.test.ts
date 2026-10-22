@@ -1,4 +1,5 @@
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
+import { TAGGING_RULES_VERSION } from '@/lib/ingest/persist';
 import { seedCountries, seedSectors } from '@/prisma/seed';
 import { runSource, resetLookupCache } from '@/workers/run-source';
 import { clearRobotsCache } from '@/workers/providers/rss';
@@ -91,8 +92,16 @@ describe('feed ingestion pipeline', () => {
       },
     });
     const countries = Object.fromEntries(rice.countries.map((c) => [c.country.iso2, c]));
-    expect(countries.MM).toMatchObject({ basis: 'SOURCE_COUNTRY' });
-    expect(countries.TH).toMatchObject({ basis: 'TEXT_MATCH', matchedTerm: 'Thailand (rules v1)' });
+    // ADR V2-001: the story is about Thailand; Myanmar is only where the publisher is based.
+    expect(countries.MM).toMatchObject({ basis: 'SOURCE_COUNTRY', role: 'PUBLISHER_HOME' });
+    expect(countries.TH).toMatchObject({
+      basis: 'TEXT_MATCH',
+      role: 'SUBJECT',
+      matchedTerm: 'Thailand (rules v2)',
+    });
+    expect(rice.feedCategories).toEqual(['Agriculture']);
+    expect(rice.articleType).toBe('UNKNOWN');
+    expect(rice.taggedRulesVersion).toBe(TAGGING_RULES_VERSION);
     const sectors = Object.fromEntries(rice.sectors.map((s) => [s.sector.slug, s]));
     expect(sectors.agriculture).toMatchObject({ basis: 'FEED_CATEGORY' });
     // Denormalized publishedAt matches the article (ADR-005).
