@@ -1,9 +1,10 @@
 /**
  * Ingestion worker entry point (deployed separately from the web app).
  *
- *  - Registers two cluster-wide BullMQ job schedulers (idempotent across replicas):
+ *  - Registers three cluster-wide BullMQ job schedulers (idempotent across replicas):
  *      ingest-tick       INGEST_CRON (default "0 *\/3 * * *", UTC) -> enqueue due sources
  *      maintenance-daily 04:17 UTC                                  -> retention cleanup
+ *      events-cluster    hourly at :20 UTC                          -> group reports into events
  *  - Consumes fetch-source jobs with bounded concurrency + per-host limits
  *  - Moves jobs that exhausted their retries to the dead-letter queue
  *  - Serves /healthz and /metrics on WORKER_HEALTH_PORT (not published publicly)

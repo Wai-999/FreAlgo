@@ -44,7 +44,7 @@ describe('migrations + seed', () => {
     expect(first.countries).toBe(250);
     expect(first.sectors).toBe(7);
     expect(first.outlets).toBe(12);
-    expect(first.articles).toBe(168);
+    expect(first.articles).toBe(179); // 168 placeholders + 11 reports of 3 fictional events
 
     const snapshot = await prisma.article.findMany({
       select: { id: true, publishedAt: true },

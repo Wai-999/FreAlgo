@@ -10,6 +10,7 @@ import { StoryCard } from '@/components/news/story-card';
 import { toSearchParams, type ArticleQuery } from '@/lib/api/contracts';
 import { getPrisma } from '@/lib/db/client';
 import { listCountrySummaries } from '@/lib/db/countries';
+import { listEvents } from '@/lib/db/events';
 import { getEnv } from '@/lib/env';
 import {
   SORT_EXPLANATION,
@@ -49,13 +50,15 @@ export default async function StoriesPage({
     return p ? `/stories?${p}` : '/stories';
   };
 
-  const [countries, outlets] = await Promise.all([
+  const showEvents = isEnabled('eventClustering') && !query.cursor;
+  const [countries, outlets, events] = await Promise.all([
     listCountrySummaries({ includeFixtures: env.SHOW_FIXTURES }),
     getPrisma().mediaOutlet.findMany({
       where: env.SHOW_FIXTURES ? {} : { isFixture: false },
       orderBy: { name: 'asc' },
       select: { slug: true, name: true },
     }),
+    showEvents ? listEvents(getPrisma(), { includeFixtures: env.SHOW_FIXTURES, limit: 3 }) : null,
   ]);
   const regions = [
     ...new Set(countries.flatMap((c) => [c.region, c.subregion]).filter((r): r is string => !!r)),
@@ -124,6 +127,35 @@ export default async function StoriesPage({
           hrefFor={(d) => href(query, { depth: d === 'deep' ? null : d })}
         />
       </div>
+      {events?.items.length ? (
+        <section
+          aria-labelledby="events-strip-h"
+          className="mt-6 rounded-lg border border-border bg-surface p-4"
+          data-testid="events-strip"
+        >
+          <h2 id="events-strip-h" className="text-base font-semibold">
+            Latest events
+          </h2>
+          <p className="text-sm text-muted">
+            Reports grouped by shared headline wording, newest first.
+          </p>
+          <ul className="mt-2 space-y-1 text-sm">
+            {events.items.map((e) => (
+              <li key={e.id}>
+                <Link href={`/stories/${e.slug}`} prefetch={false}>
+                  {e.title}
+                </Link>{' '}
+                <span className="text-muted">
+                  ({e.reports} reports, {e.outlets} {e.outlets === 1 ? 'outlet' : 'outlets'})
+                </span>
+              </li>
+            ))}
+          </ul>
+          <p className="mt-2 text-sm">
+            <Link href="/stories/events">All events</Link>
+          </p>
+        </section>
+      ) : null}
       <div className="mt-6 grid gap-8 lg:grid-cols-[320px_1fr]">
         <details className="rounded-lg border border-border bg-surface lg:hidden">
           <summary className="flex min-h-11 cursor-pointer list-none items-center px-3 text-sm [&::-webkit-details-marker]:hidden">

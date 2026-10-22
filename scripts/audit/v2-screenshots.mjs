@@ -1,4 +1,5 @@
-// FreAlgo 2.0 screenshots (M3+): new sections at desktop and phone sizes.
+// FreAlgo 2.0 screenshots (M3+): new sections at desktop and phone sizes. Shots 16–18 need
+// FEATURE_JOURNEYS, FEATURE_WORLD_PULSE and FEATURE_COUNTRY_CONNECTIONS on the target server.
 //   node scripts/audit/v2-screenshots.mjs [baseUrl] [outDir]
 // Uses the 2D map (WebGL disabled) for determinism; fixture data is badged in the UI.
 import { mkdirSync } from 'node:fs';
@@ -67,4 +68,21 @@ await shot('09-status-quality', '/status', {
 await shot('10-methodology-features', '/methodology', {
   before: (p) => p.locator('#features').scrollIntoViewIfNeeded(),
 });
+
+// M4: events, Story Mode, Perspectives, journeys, World Pulse, connections (fixture data).
+const events = await (await fetch(`${base}/api/v1/events?minOutlets=2&limit=50`)).json();
+const salween = events.items.find((e) => e.title.includes('Salween'))?.slug;
+await shot('11-events-list', '/stories/events');
+if (salween) {
+  await shot('12-story-mode', `/stories/${salween}`, { fullPage: true });
+  await shot('13-story-mode-phone', `/stories/${salween}`, {
+    device: phone,
+    before: (p) => p.locator('#timeline').scrollIntoViewIfNeeded(),
+  });
+  await shot('14-perspectives', `/perspectives/${salween}`, { fullPage: true });
+  await shot('15-perspectives-phone', `/perspectives/${salween}`, { device: phone });
+}
+await shot('16-journey-step', '/discover/journeys/fixture-river-and-sun?step=3');
+await shot('17-world-pulse', '/world-pulse');
+await shot('18-connections', '/connections?country=MM');
 await browser.close();

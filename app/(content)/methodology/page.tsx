@@ -5,6 +5,14 @@ import { FLAG_NAMES, FLAGS, flagEnvName, flagSnapshot } from '@/lib/flags';
 import { LABEL_STATUS_INFO, ORIENTATIONS, ORIENTATION_INFO } from '@/lib/domain/orientation';
 import { SECTORS } from '@/lib/domain/sectors';
 import { OrientationSpectrum } from '@/components/news/orientation-spectrum';
+import {
+  CLUSTER_METHOD_VERSION,
+  JOIN,
+  JOIN_MEAN,
+  MIN_SHARED,
+  WINDOW_HOURS,
+} from '@/lib/events/cluster';
+import { PULSE_BUCKETS } from '@/lib/db/pulse';
 
 export const metadata: Metadata = { title: 'Methodology' };
 
@@ -174,6 +182,96 @@ export default async function MethodologyPage() {
         (with the stored evidence, such as the matched word), the ordering rule and the publication
         time. The same choices always give the same list. Your reading is never recorded or used.
       </p>
+
+      <h2 id="events">Events: how reports are grouped</h2>
+      <p>
+        An event is a group of reports that FreAlgo’s grouping method (version{' '}
+        {CLUSTER_METHOD_VERSION}) judged to be about the same thing. It is deterministic and uses
+        only headlines and the countries their text names; there is no model, embedding or
+        engagement signal.
+      </p>
+      <ol>
+        <li>
+          Each headline becomes a set of words (lower-cased, without common words and numbers) plus
+          the countries its text names. A feed’s default country and where the outlet is based are
+          not used.
+        </li>
+        <li>
+          Rare words count more: each word is weighted by how few of the last 7 days’ reports in the
+          same language use it.
+        </li>
+        <li>
+          Two reports match when the weight of their shared words is at least {JOIN * 100}% of the
+          shorter headline’s, they share at least {MIN_SHARED} uncommon words, they share a name (a
+          country both texts name, or a capitalised word such as a person or place), and they do not
+          name different countries.
+        </li>
+        <li>
+          Reports are taken oldest first. A report joins an event whose latest report is at most{' '}
+          {WINDOW_HOURS} hours away when it matches one member and its average similarity to all
+          members is at least {JOIN_MEAN * 100}%; otherwise it may start an event with another
+          unmatched report. Events only grow: they are never split, merged or re-ordered by size.
+        </li>
+        <li>
+          The event is shown under the member headline most similar to the others, word for word and
+          attributed to its outlet. FreAlgo writes no titles or summaries.
+        </li>
+      </ol>
+      <p>
+        <strong>Known limits.</strong> Reports in different languages are never grouped. Languages
+        written without spaces (Chinese, Japanese, Thai, Burmese) are not grouped. Two different
+        events with similar headlines in the same three days can be grouped together, and the same
+        event can stay split when outlets word it differently. Each report in an event lists the
+        words it shared and its similarity, so a wrong grouping is visible. The evaluation is in{' '}
+        <code>docs/data/event-clustering-evaluation.md</code>.
+      </p>
+
+      <h2 id="perspectives">Perspectives: what is compared</h2>
+      <ul>
+        <li>
+          Each outlet’s own headlines in the event, in order of its first report, with its
+          source-level label (status, methodology, source, review date and national context). Labels
+          describe outlets, never single stories.
+        </li>
+        <li>
+          News, opinion and analysis are shown only when the publisher says so. Article-level
+          framing is not classified.
+        </li>
+        <li>
+          “Shared wording” lists words most headlines use. It is not a verified fact: FreAlgo does
+          not check what outlets agree on, and it does not extract or assess claims.
+        </li>
+        <li>
+          Coverage gaps compare the event with the outlets that had reports in FreAlgo in the last 7
+          days: missing labelled orientations, unrated or disputed labels, other languages, and
+          named countries with no outlet based there. A gap is a gap in FreAlgo’s sources, not proof
+          that a perspective does not exist.
+        </li>
+      </ul>
+
+      <h2 id="timelines">Timelines, journeys and connections</h2>
+      <ul>
+        <li>
+          A Story Mode timeline lists the reports by publication time. Curated entries can be added
+          by a named person; each needs a date (only as precise as it is known), a source link, and
+          a label: fact, interpretation or analogy. Entries dated in the future appear as “next
+          known dates”. FreAlgo never predicts dates.
+        </li>
+        <li>
+          Story Journeys are curated sequences of places. Each step states its connection to the
+          previous one, labels it, cites evidence and names what is uncertain. They never play by
+          themselves.
+        </li>
+        <li>
+          World Pulse shades the map by the number of reports about each country (raw counts in
+          bands starting at {PULSE_BUCKETS.join(', ')}). It measures FreAlgo’s coverage, not
+          importance.
+        </li>
+        <li>
+          Country connections list countries named together in reports of the same event. That is
+          the only relationship shown.
+        </li>
+      </ul>
 
       <h2 id="features">Features on this instance</h2>
       <p>

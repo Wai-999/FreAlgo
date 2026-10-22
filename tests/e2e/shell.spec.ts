@@ -28,7 +28,7 @@ test.describe('application shell', () => {
   test('deep link selects a country', async ({ page }) => {
     await page.goto('/?country=MM&intro=0');
     await expect(
-      page.getByTestId('country-sheet').getByRole('heading', { name: 'Myanmar' }),
+      page.getByTestId('country-sheet').getByRole('heading', { name: 'Myanmar', exact: true }),
     ).toBeVisible();
   });
 
@@ -110,7 +110,7 @@ test.describe('without JavaScript', () => {
     await page.locator('a[data-country="KE"]').first().click();
     await expect(page).toHaveURL(/country=KE/);
     await expect(
-      page.getByTestId('country-sheet').getByRole('heading', { name: 'Kenya' }),
+      page.getByTestId('country-sheet').getByRole('heading', { name: 'Kenya', exact: true }),
     ).toBeVisible();
     expect(await page.getByTestId('story-card').count()).toBeGreaterThan(0);
   });
@@ -123,7 +123,7 @@ test.describe('flat map links', () => {
     await page.frameLocator('[data-testid="world-map-svg"]').locator('a[data-iso2="KE"]').click();
     await expect(page).toHaveURL(/country=KE/);
     await expect(
-      page.getByTestId('country-sheet').getByRole('heading', { name: 'Kenya' }),
+      page.getByTestId('country-sheet').getByRole('heading', { name: 'Kenya', exact: true }),
     ).toBeVisible();
   });
 });
@@ -136,7 +136,7 @@ test.describe('flat map without JavaScript', () => {
     await page.frameLocator('[data-testid="world-map-svg"]').locator('a[data-iso2="BR"]').click();
     await expect(page).toHaveURL(/country=BR/);
     await expect(
-      page.getByTestId('country-sheet').getByRole('heading', { name: 'Brazil' }),
+      page.getByTestId('country-sheet').getByRole('heading', { name: 'Brazil', exact: true }),
     ).toBeVisible();
   });
 });

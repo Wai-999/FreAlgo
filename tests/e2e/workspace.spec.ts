@@ -17,7 +17,7 @@ test.describe('country workspace', () => {
     await expect(page.locator('a[data-country="KE"]')).toBeFocused();
     await page.keyboard.press('Enter');
     await expect(page).toHaveURL(/country=KE/);
-    await expect(sheet(page).getByRole('heading', { name: 'Kenya' })).toBeFocused();
+    await expect(sheet(page).getByRole('heading', { name: 'Kenya', exact: true })).toBeFocused();
     await expect(sheet(page)).toHaveAttribute('data-mode', 'panel');
     await page.keyboard.press('Escape');
     await expect(sheet(page)).toHaveCount(0);
@@ -27,7 +27,7 @@ test.describe('country workspace', () => {
 
   test('deep link opens a country on a sector', async ({ page }) => {
     await page.goto('/?country=MM&sector=agriculture&intro=0');
-    await expect(sheet(page).getByRole('heading', { name: 'Myanmar' })).toBeVisible();
+    await expect(sheet(page).getByRole('heading', { name: 'Myanmar', exact: true })).toBeVisible();
     await expect(
       page.getByTestId('sector-nav').getByRole('link', { name: 'Agriculture' }),
     ).toHaveAttribute('aria-current', 'page');
@@ -47,7 +47,7 @@ test.describe('country workspace', () => {
     await page.locator('a[data-country="KE"]').click();
     await expect(page).toHaveURL(/country=KE/);
     await expect(page).toHaveURL(/sector=politics/);
-    await expect(sheet(page).getByRole('heading', { name: 'Kenya' })).toBeVisible();
+    await expect(sheet(page).getByRole('heading', { name: 'Kenya', exact: true })).toBeVisible();
     const after = await sheet(page).boundingBox();
     expect(Math.round(after!.x)).toBe(Math.round(before!.x));
     expect(Math.round(after!.width)).toBe(Math.round(before!.width));
@@ -134,7 +134,7 @@ test.describe('without JavaScript', () => {
 
   test('country sheet, sector links and pagination work as plain HTML', async ({ page }) => {
     await page.goto('/?country=KE&limit=5');
-    await expect(sheet(page).getByRole('heading', { name: 'Kenya' })).toBeVisible();
+    await expect(sheet(page).getByRole('heading', { name: 'Kenya', exact: true })).toBeVisible();
     await page.getByRole('link', { name: 'Next' }).click();
     await expect(page.getByText(/Page 2 of/)).toBeVisible();
     await page

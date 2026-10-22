@@ -18,6 +18,7 @@ export async function truncateContent(client: PrismaClient = testPrisma()): Prom
   await client.$executeRawUnsafe(`
     TRUNCATE "ArticleCountry", "ArticleSector", "Article", "IngestionQuarantine", "IngestionRun",
       "FeedSource", "OutletLabelHistory", "LabelAppeal", "MediaOutlet", "UserPreference",
-      "AdminAuditLog", "ClientEventCounter" RESTART IDENTITY CASCADE
+      "AdminAuditLog", "ClientEventCounter", "NewsEvent", "EventArticle", "TimelineEntry",
+      "StoryJourney", "JourneyNode", "EventExclusion" RESTART IDENTITY CASCADE
   `);
 }

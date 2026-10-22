@@ -1,6 +1,8 @@
 import { DelayedError, UnrecoverableError, type Job } from 'bullmq';
 import type { Logger } from 'pino';
 import type { PrismaClient } from '@/generated/prisma/client';
+import { runEventClustering } from '@/lib/events/job';
+import { isEnabled } from '@/lib/flags';
 import type { FetchSourceJobData, IngestJobName } from '@/lib/queue/ingest-queue';
 import type { HostLimiter } from './host-limiter';
 import { runMaintenance } from './maintenance';
@@ -43,6 +45,13 @@ export function createProcessor(deps: ProcessorDeps) {
       case 'maintenance': {
         const res = await runMaintenance(deps.prisma, deps.retentionDays, now());
         deps.logger.info(res, 'maintenance complete');
+        return res;
+      }
+      case 'cluster-events': {
+        // Switchable without a deploy: FEATURE_EVENT_CLUSTERING=false stops new grouping.
+        if (!isEnabled('eventClustering')) return { skipped: 'flag-off' };
+        const res = await runEventClustering(deps.prisma, { now: now() });
+        deps.logger.info(res, 'event clustering complete');
         return res;
       }
       case 'fetch-source': {

@@ -1,0 +1,213 @@
+{
+  "_note": "FICTIONAL test headlines for evaluating event clustering (FreAlgo 2.0, M4). Not real news. 'event' is the ground-truth label; null = should stay alone.",
+  "items": [
+    {
+      "id": "a1",
+      "event": "quake",
+      "outlet": "o1",
+      "h": 0,
+      "lang": "en",
+      "countries": ["NP"],
+      "title": "Magnitude 6.8 earthquake strikes western Nepal, dozens injured"
+    },
+    {
+      "id": "a2",
+      "event": "quake",
+      "outlet": "o2",
+      "h": 2,
+      "lang": "en",
+      "countries": ["NP"],
+      "title": "Nepal earthquake: rescuers search collapsed homes in Jumla"
+    },
+    {
+      "id": "a3",
+      "event": "quake",
+      "outlet": "o3",
+      "h": 5,
+      "lang": "en",
+      "countries": ["NP"],
+      "title": "Strong earthquake in western Nepal damages schools and roads"
+    },
+    {
+      "id": "a4",
+      "event": "quake",
+      "outlet": "o2",
+      "h": 30,
+      "lang": "en",
+      "countries": ["NP", "IN"],
+      "title": "India sends relief flights after western Nepal earthquake"
+    },
+    {
+      "id": "b1",
+      "event": "rates",
+      "outlet": "o1",
+      "h": 1,
+      "lang": "en",
+      "countries": ["KE"],
+      "title": "Kenya central bank cuts interest rate to 9.5 percent"
+    },
+    {
+      "id": "b2",
+      "event": "rates",
+      "outlet": "o4",
+      "h": 3,
+      "lang": "en",
+      "countries": ["KE"],
+      "title": "Central Bank of Kenya lowers benchmark interest rate again"
+    },
+    {
+      "id": "b3",
+      "event": "rates",
+      "outlet": "o3",
+      "h": 9,
+      "lang": "en",
+      "countries": ["KE"],
+      "title": "Kenyan shilling steady after central bank rate cut"
+    },
+    {
+      "id": "c1",
+      "event": "summit",
+      "outlet": "o2",
+      "h": 4,
+      "lang": "en",
+      "countries": ["ID", "MY"],
+      "title": "Indonesia and Malaysia leaders meet on palm oil exports dispute"
+    },
+    {
+      "id": "c2",
+      "event": "summit",
+      "outlet": "o5",
+      "h": 6,
+      "lang": "en",
+      "countries": ["ID", "MY"],
+      "title": "Palm oil exports top agenda as Malaysia and Indonesia leaders meet"
+    },
+    {
+      "id": "d1",
+      "event": "eleicao",
+      "outlet": "o6",
+      "h": 2,
+      "lang": "pt",
+      "countries": ["BR"],
+      "title": "Tribunal Superior Eleitoral divulga calendário das eleições municipais"
+    },
+    {
+      "id": "d2",
+      "event": "eleicao",
+      "outlet": "o7",
+      "h": 7,
+      "lang": "pt",
+      "countries": ["BR"],
+      "title": "Calendário das eleições municipais é divulgado pelo Tribunal Superior Eleitoral"
+    },
+    {
+      "id": "e1",
+      "event": "storm",
+      "outlet": "o1",
+      "h": 10,
+      "lang": "en",
+      "countries": ["PH"],
+      "title": "Typhoon Halo makes landfall in northern Philippines"
+    },
+    {
+      "id": "e2",
+      "event": "storm",
+      "outlet": "o3",
+      "h": 12,
+      "lang": "en",
+      "countries": ["PH"],
+      "title": "Typhoon Halo: thousands evacuated in northern Philippines"
+    },
+    {
+      "id": "e3",
+      "event": "storm",
+      "outlet": "o5",
+      "h": 20,
+      "lang": "en",
+      "countries": ["PH"],
+      "title": "Philippines counts damage after Typhoon Halo"
+    },
+    {
+      "id": "x1",
+      "event": null,
+      "outlet": "o1",
+      "h": 3,
+      "lang": "en",
+      "countries": ["NP"],
+      "title": "Nepal tourism board launches new trekking permit system"
+    },
+    {
+      "id": "x2",
+      "event": null,
+      "outlet": "o4",
+      "h": 8,
+      "lang": "en",
+      "countries": ["KE"],
+      "title": "Kenya marathon runners prepare for Berlin race"
+    },
+    {
+      "id": "x3",
+      "event": null,
+      "outlet": "o2",
+      "h": 11,
+      "lang": "en",
+      "countries": ["PH"],
+      "title": "Philippines approves budget for new school buildings"
+    },
+    {
+      "id": "x4",
+      "event": null,
+      "outlet": "o3",
+      "h": 14,
+      "lang": "en",
+      "countries": ["ID"],
+      "title": "Indonesia opens new capital city office complex"
+    },
+    {
+      "id": "x5",
+      "event": null,
+      "outlet": "o5",
+      "h": 15,
+      "lang": "en",
+      "countries": ["US"],
+      "title": "US central bank holds interest rates steady"
+    },
+    {
+      "id": "x6",
+      "event": null,
+      "outlet": "o1",
+      "h": 16,
+      "lang": "en",
+      "countries": ["GB"],
+      "title": "UK leaders meet unions over rail strike"
+    },
+    {
+      "id": "x7",
+      "event": null,
+      "outlet": "o6",
+      "h": 18,
+      "lang": "pt",
+      "countries": ["BR"],
+      "title": "Ministério da Saúde amplia campanha de vacinação"
+    },
+    {
+      "id": "x8",
+      "event": "quake",
+      "outlet": "o2",
+      "h": 90,
+      "lang": "en",
+      "countries": ["NP"],
+      "title": "Western Nepal earthquake survivors receive shelter kits"
+    },
+    {
+      "id": "x9",
+      "event": "quake",
+      "outlet": "o4",
+      "h": 13,
+      "lang": "es",
+      "countries": ["NP"],
+      "title": "Fuerte terremoto sacude el oeste de Nepal",
+      "crossLanguage": true
+    }
+  ]
+}

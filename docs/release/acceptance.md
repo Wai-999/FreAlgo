@@ -75,4 +75,41 @@ timestamps are UTC.
   generated quizzes risk fabrication.
 - **Constructive Developments:** not built. Classifying "progress" automatically would be
   framing without evidence; it needs an editor-curated collection.
-- **Perspectives:** off until M4 provides event clusters.
+- **Perspectives:** off until M4 provides event clusters (now on; see M4).
+
+## M4: Evidence-backed intelligence and discovery (2026-10-22)
+
+| Criterion                                          | Evidence                                                                                                                                                                                                                                                                                                 |
+| -------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| No hallucinated labels, relationships or summaries | Events show members' own headlines; FreAlgo writes no titles or summaries. Labels come from the outlet record with provenance. Connections are only "named in the same event". Curated entries need a source (database CHECK, `events.test.ts`). AI summaries flag is locked off (`m4-evidence.test.ts`) |
+| Event cluster links to originals                   | Story Mode lists every report with its original `https://` link, `target=_blank`, `rel=noopener noreferrer` (`evidence.spec.ts`); the API returns every member with its URL and grouping evidence                                                                                                        |
+| Gaps and unknown ratings handled                   | Perspectives lists unrated and disputed labels, missing labelled orientations, other languages and named countries without a local source, all "in FreAlgo's sources, not the world" (`events.test.ts`, `evidence.spec.ts`)                                                                              |
+| 2D / text equivalent exists                        | World Pulse is a server-rendered SVG with legend and a full table; connections and journeys are text lists; Story Mode timeline is an ordered list                                                                                                                                                       |
+| User can disable motion and journeys               | No M4 view animates. Journeys open only on request, move one step per click, have a full list view, and are off by operator flag (`FEATURE_JOURNEYS`) by default (`evidence.spec.ts` checks no autoplay)                                                                                                 |
+| Clustering quality                                 | Labelled set: precision 1.00, recall 1.00 (18/18 pairs). Production copy: 7 events / 16 reports, no wrong member, 1 borderline (`docs/data/event-clustering-evaluation.md`)                                                                                                                              |
+| Additive migrations with rollbacks                 | `20261022195158_v2_events_timelines_journeys`, `*_v2_event_exclusions`; `prisma/rollbacks/*.down.sql`; no existing table altered except new relations                                                                                                                                                    |
+
+**Gates (2026-10-22):**
+
+- format, lint, typecheck: pass;
+- unit: 229 / 229;
+- integration: 105 / 105;
+- build: pass;
+- e2e: 210 passed, 47 skipped by design, 0 failed (5 browser projects). Four older locators were
+  made exact because the fixture event headlines contain country names.
+
+**Feature-gate decisions (M4):**
+
+- **Verified common facts / disputed claims:** shown as "not verified" and "not assessed"
+  (ADR-023).
+- **Journeys, World Pulse, country connections:** built and tested with fixtures, off in
+  production until reviewed content and a review of the pages on real data.
+- **Trade or historical connections:** not built; there is no licensed dataset in the project.
+
+**Remaining risks (M4):**
+
+- Lexical grouping misses differently worded reports and cannot group across languages.
+- Long-running places (for example the West Bank) can produce similar headlines about different
+  events within 72 hours.
+- With all real outlets unrated, Perspectives cannot show orientation differences yet.
+- There is no admin screen for timelines, journeys or exclusions (SQL and script only).

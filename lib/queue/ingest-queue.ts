@@ -7,9 +7,12 @@ export const INGEST_QUEUE = 'frealgo-ingest';
 export const DLQ_QUEUE = 'frealgo-ingest-dlq';
 export const TICK_SCHEDULER_ID = 'ingest-tick';
 export const MAINTENANCE_SCHEDULER_ID = 'maintenance-daily';
+/** Hourly at :20, so reports fetched by the 3-hourly tick are grouped within about 20 minutes. */
+export const EVENTS_SCHEDULER_ID = 'events-cluster';
+export const EVENTS_CRON = '20 * * * *';
 export const CADENCE_MINUTES = 180;
 
-export type IngestJobName = 'schedule-tick' | 'fetch-source' | 'maintenance';
+export type IngestJobName = 'schedule-tick' | 'fetch-source' | 'maintenance' | 'cluster-events';
 
 export interface FetchSourceJobData {
   sourceId: string;

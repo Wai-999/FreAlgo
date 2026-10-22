@@ -48,3 +48,26 @@ export function languageName(tag: string | null | undefined, display = 'en'): st
     return tag;
   }
 }
+
+const MONTHS = [
+  'January',
+  'February',
+  'March',
+  'April',
+  'May',
+  'June',
+  'July',
+  'August',
+  'September',
+  'October',
+  'November',
+  'December',
+];
+
+/** A curated date shown only as precisely as it is known: "2026-10-21", "October 2026" or "2026". */
+export function formatPrecise(iso: string, precision: 'DAY' | 'MONTH' | 'YEAR'): string {
+  const d = new Date(iso);
+  if (precision === 'YEAR') return String(d.getUTCFullYear());
+  if (precision === 'MONTH') return `${MONTHS[d.getUTCMonth()]} ${d.getUTCFullYear()}`;
+  return d.toISOString().slice(0, 10);
+}

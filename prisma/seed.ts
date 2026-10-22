@@ -20,9 +20,14 @@ import { canonicalizeUrl, canonicalUrlHash, sha256Hex } from '../lib/ingest/cano
 import {
   FIXTURE_LABEL_METHODOLOGY,
   FIXTURE_LABEL_SOURCE,
+  FIXTURE_JOURNEY,
   FIXTURE_OUTLETS,
+  FIXTURE_TIMELINE,
   buildFixtureArticles,
+  buildFixtureEventArticles,
+  fixtureEventAnchor,
 } from './data/fixtures';
+import { runEventClustering } from '../lib/events/job';
 import { REAL_SOURCES } from './data/sources';
 import type { PrismaClient } from '../generated/prisma/client';
 
@@ -178,7 +183,7 @@ export async function seedFixtures(prisma: PrismaClient, now = new Date()): Prom
     feedIds.set(o.slug, feed.id);
   }
 
-  const articles = buildFixtureArticles();
+  const articles = [...buildFixtureArticles(), ...buildFixtureEventArticles()];
   for (const a of articles) {
     const outletId = outletIds.get(a.outletSlug)!;
     const canonicalUrl = canonicalizeUrl(a.url);
@@ -202,7 +207,13 @@ export async function seedFixtures(prisma: PrismaClient, now = new Date()): Prom
       // curated country tags so fixture roles follow the current model.
       await prisma.article.update({
         where: { id: existing.id },
-        data: { title: a.title, excerpt: a.excerpt, language: a.language, contentHash },
+        data: {
+          title: a.title,
+          excerpt: a.excerpt,
+          language: a.language,
+          contentHash,
+          ...(a.articleType ? { articleType: a.articleType, articleTypeBasis: 'fixture' } : {}),
+        },
       });
       await prisma.articleCountry.deleteMany({ where: { articleId: existing.id } });
       await prisma.articleCountry.createMany({
@@ -229,6 +240,7 @@ export async function seedFixtures(prisma: PrismaClient, now = new Date()): Prom
         publishedOffsetMinutes: 0,
         contentHash,
         isFixture: true,
+        ...(a.articleType ? { articleType: a.articleType, articleTypeBasis: 'fixture' } : {}),
         countries: { create: countryTags.map((c) => ({ ...c, publishedAt })) },
         sectors: {
           create: a.sectors.map((slug) => ({
@@ -241,7 +253,87 @@ export async function seedFixtures(prisma: PrismaClient, now = new Date()): Prom
       },
     });
   }
+  await seedFixtureEvents(prisma, now);
   return articles.length;
+}
+
+/**
+ * Groups the fixture reports with the same clustering job as real reports (fixtures only), then
+ * attaches the curated fixture timeline and the fixture journey. Idempotent.
+ */
+export async function seedFixtureEvents(prisma: PrismaClient, now = new Date()) {
+  await runEventClustering(prisma, { now, fixturesOnly: true });
+  const outletName = new Map(FIXTURE_OUTLETS.map((o) => [o.slug, o.name]));
+  const reports = buildFixtureEventArticles();
+  const eventOf = async (key: string) => {
+    const anchor = await prisma.article.findFirst({
+      where: { externalId: fixtureEventAnchor(key), isFixture: true },
+      select: { publishedAt: true, eventLink: { select: { eventId: true } } },
+    });
+    return anchor?.eventLink ? { id: anchor.eventLink.eventId, at: anchor.publishedAt } : null;
+  };
+  const day = 86_400_000;
+  for (const key of new Set(FIXTURE_TIMELINE.map((t) => t.event))) {
+    const ev = await eventOf(key);
+    if (!ev) continue;
+    await prisma.timelineEntry.deleteMany({ where: { eventId: ev.id, isFixture: true } });
+    await prisma.timelineEntry.createMany({
+      data: FIXTURE_TIMELINE.filter((t) => t.event === key).map((t) => ({
+        eventId: ev.id,
+        occurredAt: new Date(ev.at.getTime() + t.daysFromSeed * day),
+        datePrecision: t.precision,
+        kind: t.kind,
+        text: t.text,
+        sourceUrl: `https://${t.source}.example/events/${key}-context`,
+        sourceName: outletName.get(t.source)!,
+        curatedBy: 'FreAlgo fixture curator',
+        curatedAt: ev.at,
+        isFixture: true,
+      })),
+    });
+  }
+  const j = FIXTURE_JOURNEY;
+  const journey = await prisma.storyJourney.upsert({
+    where: { slug: j.slug },
+    create: {
+      slug: j.slug,
+      title: j.title,
+      description: j.description,
+      caveats: j.caveats,
+      curatedBy: 'FreAlgo fixture curator',
+      reviewedAt: now,
+      isFixture: true,
+    },
+    update: { title: j.title, description: j.description, caveats: j.caveats },
+  });
+  await prisma.journeyNode.deleteMany({ where: { journeyId: journey.id } });
+  const countryIds = new Map(
+    (
+      await prisma.country.findMany({
+        where: { iso2: { in: j.nodes.map((n) => n.iso2) } },
+        select: { id: true, iso2: true },
+      })
+    ).map((c) => [c.iso2, c.id]),
+  );
+  for (const [i, n] of j.nodes.entries()) {
+    const evidence = reports.find(
+      (r) => r.outletSlug === n.evidence && r.externalId.startsWith(`fixture-event-${n.event}-`),
+    )!;
+    await prisma.journeyNode.create({
+      data: {
+        journeyId: journey.id,
+        position: i + 1,
+        countryId: countryIds.get(n.iso2) ?? null,
+        eventId: (await eventOf(n.event))?.id ?? null,
+        title: n.title,
+        explanation: n.explanation,
+        kind: n.kind,
+        evidenceUrl: evidence.url,
+        evidenceName: outletName.get(n.evidence)!,
+        uncertainty: n.uncertainty,
+      },
+    });
+  }
 }
 
 export async function seedRealSources(prisma: PrismaClient): Promise<number> {

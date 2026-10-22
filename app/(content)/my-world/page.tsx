@@ -52,7 +52,7 @@ export default async function MyWorldPage({
         <MyWorldBootstrap />
         <noscript>
           <p className="mt-4 text-sm text-muted">
-            Without JavaScript, browse <a href="/stories">Stories</a> with filters instead.
+            Without JavaScript, browse <Link href="/stories">Stories</Link> with filters instead.
           </p>
         </noscript>
       </>

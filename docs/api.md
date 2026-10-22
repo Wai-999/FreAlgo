@@ -21,14 +21,19 @@ endpoints send `no-store`.
 
 ## Public reads
 
-| Endpoint                                                     | Purpose                                                                                                                                                                                 |
-| ------------------------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `GET /countries`                                             | Every ISO 3166-1 country, including those with zero sources: `articleCount`, `outletCount`, `activeSourceCount`, `latestPublishedAt`, `lastSuccessfulSyncAt`, plus a `coverage` summary |
-| `GET /countries/:iso2/articles`                              | Stories relevant to a country (same parameters as search, minus `country`). Unknown country → 404                                                                                       |
-| `GET /articles/search`                                       | Search and filters across all countries                                                                                                                                                 |
-| `GET /outlets?country=`                                      | Outlet registry: source-level label with confidence, provenance, status and feeds                                                                                                       |
-| `GET /sectors`                                               | Sector list                                                                                                                                                                             |
-| `GET /health/live` · `GET /health` · `GET /health/freshness` | Liveness, readiness (DB/Redis) and truthful per-source freshness                                                                                                                        |
+| Endpoint                                                     | Purpose                                                                                                                                                                                              |
+| ------------------------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `GET /countries`                                             | Every ISO 3166-1 country, including those with zero sources: `articleCount`, `outletCount`, `activeSourceCount`, `latestPublishedAt`, `lastSuccessfulSyncAt`, plus a `coverage` summary              |
+| `GET /countries/:iso2/articles`                              | Stories relevant to a country (same parameters as search, minus `country`). Unknown country → 404                                                                                                    |
+| `GET /articles/search`                                       | Search and filters across all countries                                                                                                                                                              |
+| `GET /outlets?country=`                                      | Outlet registry: source-level label with confidence, provenance, status and feeds                                                                                                                    |
+| `GET /sectors`                                               | Sector list                                                                                                                                                                                          |
+| `GET /events?cursor=&limit=&country=&minOutlets=`            | Event clusters (FreAlgo 2.0), ordered by latest report, newest first. `minOutlets=2` lists events Perspectives can compare. Invalid cursor → 400 `INVALID_CURSOR`                                    |
+| `GET /events/:id` (id or slug)                               | One event: every report with its original URL, outlet label and grouping evidence (`membership.score`, `sharedTerms`, `matchedArticleId`), curated `timeline` and `upcoming` entries, method version |
+| `GET /events/:id/perspectives`                               | Columns per outlet with distinct wording and piece types, label counts, coverage `gaps` (in FreAlgo's corpus), `claimsInDispute.assessed=false`                                                      |
+| `GET /journeys/:slug`                                        | A curated Story Journey with sourced steps (flag `journeys`, off by default)                                                                                                                         |
+| `GET /methodology`                                           | Machine-readable ordering, tagging, label, Discover and grouping rules with versions, and the live feature-flag states                                                                               |
+| `GET /health/live` · `GET /health` · `GET /health/freshness` | Liveness, readiness (DB/Redis) and truthful per-source freshness                                                                                                                                     |
 
 ### List and search parameters
 

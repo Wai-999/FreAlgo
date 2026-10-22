@@ -28,8 +28,8 @@ export const FLAGS = {
     description: 'Discover: Surprise Me and the daily discovery, using a documented seeded method.',
   },
   perspectives: {
-    // Enabled in M4 together with event clustering (it needs clusters to compare).
-    default: false,
+    // Enabled with event clustering (M4): it compares the outlets inside an event cluster.
+    default: true,
     description: 'Perspectives: side-by-side coverage of one event by different outlets.',
   },
   myWorld: {

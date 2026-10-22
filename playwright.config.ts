@@ -47,6 +47,15 @@ export default defineConfig({
         url: `${baseURL}/api/v1/health/live`,
         reuseExistingServer: !process.env.CI,
         timeout: 120_000,
-        env: { E2E: '1', APP_BASE_URL: baseURL, PORT: String(PORT), HOSTNAME: '127.0.0.1' },
+        env: {
+          E2E: '1',
+          APP_BASE_URL: baseURL,
+          PORT: String(PORT),
+          HOSTNAME: '127.0.0.1',
+          // Off-by-default M4 features are exercised end to end against fixture data.
+          FEATURE_JOURNEYS: 'true',
+          FEATURE_WORLD_PULSE: 'true',
+          FEATURE_COUNTRY_CONNECTIONS: 'true',
+        },
       },
 });

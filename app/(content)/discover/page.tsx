@@ -5,6 +5,7 @@ import { WorkspaceNavProvider } from '@/components/news/nav-anchor';
 import { StoryCard } from '@/components/news/story-card';
 import { getPrisma } from '@/lib/db/client';
 import { listCountrySummaries } from '@/lib/db/countries';
+import { listJourneys } from '@/lib/db/journeys';
 import { SECTORS, SECTOR_SLUGS } from '@/lib/domain/sectors';
 import {
   SEED_RE,
@@ -66,9 +67,10 @@ export default async function DiscoverPage({
   const rawSeed = one(sp.seed);
   const seed = rawSeed && SEED_RE.test(rawSeed) ? rawSeed : null;
   const prisma = getPrisma();
-  const [result, daily] = await Promise.all([
+  const [result, daily, journeys] = await Promise.all([
     seed ? surprise(prisma, seed, constraints, opts) : null,
     dailyDiscovery(prisma, latestCompleteDay(), opts),
+    isEnabled('journeys') ? listJourneys(prisma, opts) : null,
   ]);
   const nextSeed = newSeed();
   const select = 'min-h-11 w-full rounded-md border border-border-strong bg-surface px-3 text-text';
@@ -225,6 +227,58 @@ export default async function DiscoverPage({
           )}
         </div>
       </section>
+
+      {journeys ? (
+        <section aria-labelledby="journeys-h" className="mt-10" data-testid="journeys">
+          <h2 id="journeys-h" className="text-xl font-semibold">
+            Story Journeys
+          </h2>
+          <p className="measure mt-1 text-sm text-muted">
+            Curated sequences of connected places. Each step says how it connects to the last,
+            whether that is a fact or an interpretation, and cites its evidence. Journeys open only
+            when you choose one, and never play by themselves.
+          </p>
+          {journeys.length ? (
+            <ul className="mt-3 space-y-2">
+              {journeys.map((j) => (
+                <li key={j.slug}>
+                  <Link href={`/discover/journeys/${j.slug}`}>{j.title}</Link>{' '}
+                  <span className="text-sm text-muted">
+                    ({j.steps} steps{j.isFixture ? ', fixture' : ''})
+                  </span>
+                  <p className="text-sm text-muted">{j.description}</p>
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <p className="mt-3 text-muted">No journeys have been curated yet.</p>
+          )}
+        </section>
+      ) : null}
+
+      {isEnabled('worldPulse') || isEnabled('countryConnections') ? (
+        <section aria-labelledby="more-h" className="mt-10">
+          <h2 id="more-h" className="text-xl font-semibold">
+            More ways to explore
+          </h2>
+          <ul className="mt-2 space-y-1">
+            {isEnabled('worldPulse') ? (
+              <li>
+                <Link href="/world-pulse">World Pulse</Link>{' '}
+                <span className="text-sm text-muted">
+                  how many reports in FreAlgo are about each country
+                </span>
+              </li>
+            ) : null}
+            {isEnabled('countryConnections') ? (
+              <li>
+                <Link href="/connections">Country connections</Link>{' '}
+                <span className="text-sm text-muted">countries named in the same events</span>
+              </li>
+            ) : null}
+          </ul>
+        </section>
+      ) : null}
     </WorkspaceNavProvider>
   );
 }

@@ -18,7 +18,7 @@ test('slow network: countries and filters work before JavaScript arrives @cross'
   await page.goto('/?intro=0', { waitUntil: 'domcontentloaded' });
   await page.locator('a[data-country="KE"]').click();
   const sheet = page.getByTestId('country-sheet');
-  await expect(sheet.getByRole('heading', { name: 'Kenya' })).toBeVisible();
+  await expect(sheet.getByRole('heading', { name: 'Kenya', exact: true })).toBeVisible();
   // Stories are server-rendered too.
   await expect(sheet.getByTestId('story-card').first()).toBeVisible();
   expect(Date.now() - t0, 'navigated without waiting for scripts').toBeLessThan(8_000);

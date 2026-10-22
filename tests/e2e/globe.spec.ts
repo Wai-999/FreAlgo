@@ -72,7 +72,7 @@ test.describe('3D globe', () => {
     await page.mouse.click(c.x, c.y);
     await expect(page).toHaveURL(/country=KE/);
     await expect(
-      page.getByTestId('country-sheet').getByRole('heading', { name: 'Kenya' }),
+      page.getByTestId('country-sheet').getByRole('heading', { name: 'Kenya', exact: true }),
     ).toBeVisible();
   });
 
@@ -89,7 +89,7 @@ test.describe('3D globe', () => {
     await page.keyboard.press('Enter');
     await expect(page).toHaveURL(/country=KE/);
     await expect(
-      page.getByTestId('country-sheet').getByRole('heading', { name: 'Kenya' }),
+      page.getByTestId('country-sheet').getByRole('heading', { name: 'Kenya', exact: true }),
     ).toBeFocused();
     await page.keyboard.press('Escape');
     await expect(page.getByTestId('globe')).toBeFocused();
@@ -173,7 +173,7 @@ test.describe('without WebGL', () => {
     await page.goto('/?view=list&intro=0');
     await page.locator('a[data-country="MM"]').click();
     await expect(
-      page.getByTestId('country-sheet').getByRole('heading', { name: 'Myanmar' }),
+      page.getByTestId('country-sheet').getByRole('heading', { name: 'Myanmar', exact: true }),
     ).toBeVisible();
   });
 });
@@ -252,6 +252,6 @@ test('offline or flaky network: a globe that cannot be downloaded falls back to 
   await page.goto('/?view=list&intro=0');
   await page.locator('a[data-country="MM"]').click();
   await expect(
-    page.getByTestId('country-sheet').getByRole('heading', { name: 'Myanmar' }),
+    page.getByTestId('country-sheet').getByRole('heading', { name: 'Myanmar', exact: true }),
   ).toBeVisible();
 });

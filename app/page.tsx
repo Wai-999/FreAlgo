@@ -13,6 +13,7 @@ import { toSearchParams } from '@/lib/api/contracts';
 import { listCountrySummaries } from '@/lib/db/countries';
 import { getEnv } from '@/lib/env';
 import { exploreHref, parseExploreQuery, type RawSearchParams } from '@/lib/explore/params';
+import { isEnabled } from '@/lib/flags';
 
 export default async function ExplorePage({
   searchParams,
@@ -130,6 +131,16 @@ export default async function ExplorePage({
             {covered} of {countries.length} countries have registered sources. Boundaries: Natural
             Earth (public domain).
           </p>
+          {isEnabled('worldPulse') && !selected ? (
+            <Link
+              href="/world-pulse"
+              prefetch={false}
+              className="absolute right-4 bottom-4 text-sm"
+              data-testid="pulse-link"
+            >
+              World Pulse: reports per country
+            </Link>
+          ) : null}
         </section>
 
         <SheetPresence>

@@ -39,22 +39,37 @@ the feature gate.
 
 ## M3: Hybrid editorial UX and My World
 
-| Item                                                                                                                    | State                       | Evidence                                                         |
-| ----------------------------------------------------------------------------------------------------------------------- | --------------------------- | ---------------------------------------------------------------- |
-| Primary nav Explore · Stories · Discover · Perspectives · My World; transparency pages one click away; no prefetch (D5) | ✅                          | `components/shell/site-header.tsx`                               |
-| Stories: finite chronological collections, sector collections, filters (type, scope)                                    | ✅                          | `app/(content)/stories/page.tsx`                                 |
-| Reading depths: Quick overview, Deep context, Original reporting                                                        | ✅                          | `components/news/story-card.tsx`, `reading-depth-nav.tsx`        |
-| Why am I seeing this? on every list card                                                                                | ✅                          | `lib/explore/why.ts`                                             |
-| Discover: seeded Surprise Me (page + API), daily discovery + archive                                                    | ✅                          | `lib/discover/select.ts`, `/discover`, `/api/v1/discover/random` |
-| My World: explicit local choices → shareable URL; import/export/reset                                                   | ✅                          | `app/(content)/my-world`, Settings                               |
-| Welcome intro 1.1 s with skip and reduced motion                                                                        | ✅                          | `app/globals.css`                                                |
-| Country picker keyboard race (D2)                                                                                       | ✅ fixed                    | `components/globe/country-picker.tsx`                            |
-| Knowledge checks, Constructive Developments                                                                             | ✖ feature gate              | `docs/release/acceptance.md` (M3)                                |
-| Perspectives page                                                                                                       | ⏳ M4 (flag off until then) |                                                                  |
+| Item                                                                                                                    | State          | Evidence                                                         |
+| ----------------------------------------------------------------------------------------------------------------------- | -------------- | ---------------------------------------------------------------- |
+| Primary nav Explore · Stories · Discover · Perspectives · My World; transparency pages one click away; no prefetch (D5) | ✅             | `components/shell/site-header.tsx`                               |
+| Stories: finite chronological collections, sector collections, filters (type, scope)                                    | ✅             | `app/(content)/stories/page.tsx`                                 |
+| Reading depths: Quick overview, Deep context, Original reporting                                                        | ✅             | `components/news/story-card.tsx`, `reading-depth-nav.tsx`        |
+| Why am I seeing this? on every list card                                                                                | ✅             | `lib/explore/why.ts`                                             |
+| Discover: seeded Surprise Me (page + API), daily discovery + archive                                                    | ✅             | `lib/discover/select.ts`, `/discover`, `/api/v1/discover/random` |
+| My World: explicit local choices → shareable URL; import/export/reset                                                   | ✅             | `app/(content)/my-world`, Settings                               |
+| Welcome intro 1.1 s with skip and reduced motion                                                                        | ✅             | `app/globals.css`                                                |
+| Country picker keyboard race (D2)                                                                                       | ✅ fixed       | `components/globe/country-picker.tsx`                            |
+| Knowledge checks, Constructive Developments                                                                             | ✖ feature gate | `docs/release/acceptance.md` (M3)                                |
+| Perspectives page                                                                                                       | ✅ in M4       | see M4                                                           |
 
 ## M4: Evidence-backed intelligence and discovery
 
-⏳ Not started.
+| Item                                                                                                          | State              | Evidence                                                                                                                   |
+| ------------------------------------------------------------------------------------------------------------- | ------------------ | -------------------------------------------------------------------------------------------------------------------------- |
+| Event clustering (lexical, deterministic, join-only), hourly worker job, script with dry run                  | ✅                 | `lib/events/cluster.ts`, `lib/events/job.ts`, `scripts/cluster-events.ts`, `workers/scheduler.ts`                          |
+| Evaluation on a labelled set and on a copy of production                                                      | ✅                 | [`docs/data/event-clustering-evaluation.md`](../data/event-clustering-evaluation.md)                                       |
+| Story Mode (what happened, where, why it matters, what sources report, uncertain, timeline, next dates)       | ✅                 | `app/(content)/stories/[event]`, `/stories/events`                                                                         |
+| Perspective Explorer (side by side, labels with provenance, shared wording, claims not assessed, corpus gaps) | ✅                 | `app/(content)/perspectives`, `lib/events/perspectives.ts`                                                                 |
+| Curated, sourced timelines (fact / interpretation / analogy, precision, next known dates)                     | ✅ (fixtures only) | `TimelineEntry` + CHECK constraints                                                                                        |
+| Story Journeys (step by step, full list, no autoplay)                                                         | ✅ flag off        | `/discover/journeys/[slug]`, `FEATURE_JOURNEYS`                                                                            |
+| World Pulse (raw counts, one hue, legend, table)                                                              | ✅ flag off        | `/world-pulse`, `FEATURE_WORLD_PULSE`                                                                                      |
+| Country connections (shared event clusters only)                                                              | ✅ flag off        | `/connections`, `FEATURE_COUNTRY_CONNECTIONS`                                                                              |
+| APIs: events, event perspectives, journeys, methodology                                                       | ✅                 | `/api/v1/events`, `/api/v1/events/:id`, `/api/v1/events/:id/perspectives`, `/api/v1/journeys/:slug`, `/api/v1/methodology` |
+| Operator correction of a wrong grouping (audited, permanent)                                                  | ✅                 | `scripts/cluster-events.ts --exclude`, `EventExclusion`                                                                    |
+| Representative story fixtures                                                                                 | ✅                 | `prisma/data/fixtures.ts` (3 fictional events, timeline, journey)                                                          |
+| Migrations (additive) and rollbacks                                                                           | ✅                 | `*_v2_events_timelines_journeys`, `*_v2_event_exclusions`, `prisma/rollbacks/`                                             |
+| Real curated timelines and journeys                                                                           | ⛔ needs an editor | none exist; flags stay off                                                                                                 |
+| Trade or historical country links                                                                             | ✖ feature gate     | no licensed dataset                                                                                                        |
 
 ## M5: Performance, security, deployment and handoff
 

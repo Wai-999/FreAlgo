@@ -129,22 +129,42 @@ must be an always-on process.
 | Label change or appeal                | `PATCH /api/v1/admin/outlets/:id/label` with methodology, source URL and reason. History is appended automatically. Resolve the appeal in the admin console                                                                                                                           |
 | Quarantine review                     | Admin console → Quarantine: dismiss bad items, release or remove quarantined stories                                                                                                                                                                                                  |
 
+## 6a. Events, timelines and journeys (FreAlgo 2.0)
+
+Event clusters are built by the worker job `cluster-events` (hourly at :20 UTC, scheduler id
+`events-cluster`). Method and evaluation: `docs/data/event-clustering-evaluation.md`.
+
+| Task                             | How                                                                                                                                                                                                                                                                                                                                                                                                                    |
+| -------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| See what clustering would do     | `node --import tsx scripts/cluster-events.ts --dry-run` (prints each decision with the shared words and headlines; writes nothing)                                                                                                                                                                                                                                                                                     |
+| Cluster now                      | `node --import tsx scripts/cluster-events.ts` (safe at any time: one run at a time, events only grow)                                                                                                                                                                                                                                                                                                                  |
+| Stop new grouping                | `FEATURE_EVENT_CLUSTERING=false` on the worker and web, then restart. Existing events stay stored but are hidden (pages and `/api/v1/events*` return 404)                                                                                                                                                                                                                                                              |
+| Remove a wrong grouping          | `node --import tsx scripts/cluster-events.ts --exclude <articleId> --reason "<why>" --by "<your name>"`. Deletes the membership, records an `EventExclusion` (the report is never grouped again) and an `AdminAuditLog` entry (`event.exclude`), refreshes the event and re-clusters. An event left with one report is no longer shown. To undo: `DELETE FROM "EventExclusion" WHERE "articleId" = '<id>';` and re-run |
+| Hide Perspectives only           | `FEATURE_PERSPECTIVES=false`                                                                                                                                                                                                                                                                                                                                                                                           |
+| Add a curated timeline entry     | Insert into `"TimelineEntry"` with `eventId`, `occurredAt`, `datePrecision` (DAY, MONTH or YEAR), `kind` (FACT, INTERPRETATION or ANALOGY), `text`, `sourceUrl` (http/https, enforced), `sourceName`, `curatedBy` (a named person), `curatedAt`. Entries dated after now appear as "next known dates". Never add an unsourced entry                                                                                    |
+| Publish a Story Journey          | Insert a `"StoryJourney"` (slug, title, description, caveats, curatedBy, reviewedAt) and its `"JourneyNode"` rows (position, title, explanation, kind, evidenceUrl, evidenceName, optional countryId, eventId, uncertainty). Then set `FEATURE_JOURNEYS=true`. Only fixture journeys exist today, so the flag stays off in production                                                                                  |
+| World Pulse, country connections | `FEATURE_WORLD_PULSE`, `FEATURE_COUNTRY_CONNECTIONS` (off by default; review the pages on production data before switching on)                                                                                                                                                                                                                                                                                         |
+
+There is no admin screen for timelines, journeys or wrong groupings yet; changes are SQL, made
+by an operator, after a backup.
+
 ## 7. Monitoring and alerting
 
 Endpoints: web `/api/v1/health/live`, `/api/v1/health` (DB + Redis), `/api/v1/health/freshness`,
 `/api/v1/metrics` (Bearer `METRICS_TOKEN`); worker `:9464/healthz` and `:9464/metrics`
 (internal only).
 
-| Alert             | Condition                                                                                               | First response                                                             |
-| ----------------- | ------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------- |
-| Web down          | readiness non-200 for 5 min                                                                             | Check DB connectivity and container logs                                   |
-| Scheduler stalled | no `IngestionRun` with `trigger=schedule` in the last 4 h (`lastScheduledRunAt` on `/health/freshness`) | Check worker health and Redis; restart the worker (schedulers re-register) |
-| Fetch success low | `frealgo_fetch_success_ratio_24h < 0.8`                                                                 | Admin → runs; look for a common error code (network, robots, 403)          |
-| Sources stale     | `frealgo_sources_by_freshness{state="stale"} > 0` for 6 h                                               | Inspect those sources; publishers sometimes move feeds                     |
-| DLQ growing       | `frealgo_dlq_jobs` increases                                                                            | Inspect DLQ entries (`frealgo-ingest-dlq`); fix and re-fetch               |
-| Queue backlog     | `frealgo_queue_jobs{state="waiting"} > 200` for 30 min                                                  | Scale workers; check per-host limits                                       |
-| API latency       | p95 of `frealgo_api_request_duration_ms` > 500 ms (cached reads)                                        | Check DB load and slow-query log; EXPLAIN (see `docs/performance.md`)      |
-| WebGL failures    | `frealgo_client_events_7d{event="webgl_unavailable"}` share rising                                      | Usually a browser change; the 2D fallback keeps working                    |
+| Alert              | Condition                                                                                               | First response                                                                       |
+| ------------------ | ------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------ |
+| Web down           | readiness non-200 for 5 min                                                                             | Check DB connectivity and container logs                                             |
+| Scheduler stalled  | no `IngestionRun` with `trigger=schedule` in the last 4 h (`lastScheduledRunAt` on `/health/freshness`) | Check worker health and Redis; restart the worker (schedulers re-register)           |
+| Fetch success low  | `frealgo_fetch_success_ratio_24h < 0.8`                                                                 | Admin → runs; look for a common error code (network, robots, 403)                    |
+| Sources stale      | `frealgo_sources_by_freshness{state="stale"} > 0` for 6 h                                               | Inspect those sources; publishers sometimes move feeds                               |
+| DLQ growing        | `frealgo_dlq_jobs` increases                                                                            | Inspect DLQ entries (`frealgo-ingest-dlq`); fix and re-fetch                         |
+| Queue backlog      | `frealgo_queue_jobs{state="waiting"} > 200` for 30 min                                                  | Scale workers; check per-host limits                                                 |
+| API latency        | p95 of `frealgo_api_request_duration_ms` > 500 ms (cached reads)                                        | Check DB load and slow-query log; EXPLAIN (see `docs/performance.md`)                |
+| Clustering stalled | worker log has no `event clustering complete` for 3 h while ingestion runs                              | Check the worker; run `scripts/cluster-events.ts --dry-run` to see whether it errors |
+| WebGL failures     | `frealgo_client_events_7d{event="webgl_unavailable"}` share rising                                      | Usually a browser change; the 2D fallback keeps working                              |
 
 Logs are structured JSON (pino) on stdout and contain no IPs, cookies or request bodies. Ship
 them to your log store with 30-day retention.

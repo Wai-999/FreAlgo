@@ -125,3 +125,18 @@ When any rule changes, its version is bumped and stored stories are re-tagged on
   where relevant.
 - Perspective comparisons show who reported what, side by side. Gaps mean "not in the ingested
   corpus", not "does not exist".
+
+## 8. Events, Perspectives and curated context (FreAlgo 2.0, M4)
+
+- **Events** group stored reports by shared headline wording (method v1). They add no text: the
+  event is shown under a member's own headline. Method, thresholds, evaluation and limits:
+  [`event-clustering-evaluation.md`](event-clustering-evaluation.md) and `/methodology#events`.
+- **Perspectives** use the outlet labels defined in §3 and §7 unchanged. A label is never inferred
+  from an outlet's coverage of an event, and article-level framing is not classified. Gaps are
+  measured against the outlets with reports in FreAlgo in the last 7 days.
+- **Curated context** (timelines, journeys) needs a named curator, a date precision, a kind
+  (fact, interpretation or analogy) and an http(s) source; the database rejects anything else.
+  Primary sources are preferred; a secondary source must be a reliable publication that is
+  itself cited. Analogies are always labelled as comparisons, never as facts.
+- **Country connections** mean only "named in reports of the same event". No trade, political
+  or historical relationship is shown without a licensed dataset.
