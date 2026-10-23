@@ -100,7 +100,7 @@ Rehearsed on the production backup `frealgo-20261022T023701Z.dump` (checksum ver
 
 - Approve the production release and the push of `v2/hybrid`.
 - Activate Global Voices (terms reviewed, registered paused).
-- Merge `perf/explore-lcp` (Explore LCP improvement).
+- Merge `perf/explore-lcp-v2` (Explore LCP improvement ported to v2; pull request open).
 
 **Content that needs a named editor:**
 
@@ -127,5 +127,6 @@ Rehearsed on the production backup `frealgo-20261022T023701Z.dump` (checksum ver
    create a `v1` branch at `161fff1` (`docs/release/rollback.md`, Level 2).
 3. Done 2026-10-23: Lighthouse on production after the release. Every page meets the budgets
    (LCP 0.94–1.85 s, accessibility 100); `docs/audit/lighthouse-production-v2/summary.md`.
-4. Decide on Global Voices, `perf/explore-lcp` (built on v1; it needs porting to v2) and the
-   off-by-default features.
+4. Decide on Global Voices, `perf/explore-lcp-v2` (ported to v2 on 2026-10-23: local Explore
+   LCP 2.93 → 2.32 s, `docs/audit/lighthouse-explore-lcp-v2/summary.md`) and the off-by-default
+   features.

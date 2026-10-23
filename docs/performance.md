@@ -32,9 +32,21 @@ node scripts/perf/profile-globe.mjs http://127.0.0.1:3000
 
 These rows are v1 builds (2026-10-20). Four runs of the same build gave home 2.25–2.33 s and
 country sheet 2.32–2.34 s; the build before the follow-up, re-measured the same day, gave 2.85 s
-and 2.94 s. TBT varies by about ±40 ms between runs. The follow-up was ported to FreAlgo 2.0 on
-2026-10-23: see "On FreAlgo 2.0" below for that before/after; its last run is in
-`reports/lighthouse/`.
+and 2.94 s. TBT varies by about ±40 ms between runs.
+
+### On FreAlgo 2.0 (2026-10-23)
+
+The follow-up was ported to v2 together with its CI budget. Same machine, three runs per build
+(`docs/audit/lighthouse-explore-lcp-v2/summary.md`; the last run is in `reports/lighthouse/`):
+
+| Page          | Median LCP, `main` before the port | Median LCP, after | Perf    | Transfer     |
+| ------------- | ---------------------------------- | ----------------- | ------- | ------------ |
+| Home          | 2.93 s                             | **2.32 s**        | 93 → 96 | 564 → 483 KB |
+| Country sheet | 2.94 s                             | **2.33 s**        | 92 → 97 | 574 → 494 KB |
+
+The other pages are unchanged (search, Stories, Discover, Story Mode, Perspectives: 2.03–2.18
+s). Accessibility stays 100. Production served Explore at 1.23 s before the port
+(`docs/audit/lighthouse-production-v2/summary.md`); local runs lack Caddy compression and HTTP/2.
 
 ### LCP follow-up: closing the gap
 
