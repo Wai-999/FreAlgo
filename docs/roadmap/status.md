@@ -1,8 +1,8 @@
 # FreAlgo 2.0 status
 
-Branch `v2/hybrid`. **Deployed to production on 2026-10-23** (owner's approval, all launch
-features): <https://frealgo.duckdns.org> runs `v2/hybrid`. `main` is still v1 until PR #9 is
-merged, so a deploy must pass `BRANCH=v2/hybrid`; a plain deploy would put v1 back.
+**Deployed to production on 2026-10-23** (owner's approval, all launch features):
+<https://frealgo.duckdns.org> runs FreAlgo 2.0. `v2/hybrid` was merged into `main` the same day
+(PR #9, `e11202e`), so plain deploys follow v2. v1 is commit `161fff1`.
 Legend: ✅ implemented and tested · 🟡 partial · ⏳ planned · ⛔ blocked (external) · ✖ rejected by
 the feature gate.
 

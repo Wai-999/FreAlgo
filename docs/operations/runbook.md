@@ -41,9 +41,9 @@ sessions, and `ADMIN_API_TOKEN` and `METRICS_TOKEN` independently.
 
 ## 3. Deploy (production recipe)
 
-> **Branch note (since 2026-10-23):** production runs `v2/hybrid` until PR #9 is merged into
-> `main`. Deploy with `BRANCH=v2/hybrid scripts/ops/deploy-remote.sh …`; without it the script
-> deploys `main` (v1), which is the rollback path.
+> **Branch note:** since 2026-10-23 `main` is FreAlgo 2.0 (PR #9). The script deploys `main` by
+> default; `BRANCH=<branch>` deploys another branch, for example `v1` for the rollback in
+> `docs/release/rollback.md`.
 
 **One command (Ubuntu server reachable over SSH, DNS pointing at it):**
 

@@ -8,8 +8,8 @@ Branch `v2/hybrid` (local; not pushed). Production runs v1 (`main`, `161fff1`) a
 The owner approved the release with all launch features on. Production at
 <https://frealgo.duckdns.org> runs `v2/hybrid` at `50e25f8`. Stories, Discover, Perspectives,
 My World, events and timelines are on; Story Journeys, World Pulse and country connections stay
-off until reviewed. `main` (and PR #9) are not merged yet, so deploys pass `BRANCH=v2/hybrid`
-(`docs/release/rollback.md`).
+off until reviewed. `v2/hybrid` was merged into `main` the same day (PR #9, `e11202e`), so plain
+deploys follow v2; going back to v1 is described in `docs/release/rollback.md`.
 
 ## 1. Baseline (M1, 2026-10-21)
 
@@ -123,8 +123,8 @@ Rehearsed on the production backup `frealgo-20261022T023701Z.dump` (checksum ver
 1. Watch the first day: `/status` freshness, the hourly `cluster-events` log lines, and
    `/stories/events`. Remove any wrong grouping with
    `scripts/cluster-events.ts --exclude <id> --reason … --by …`.
-2. Merge PR #9 into `main` when satisfied, so plain deploys follow v2. Until then, always deploy
-   with `BRANCH=v2/hybrid`.
+2. Done 2026-10-23: PR #9 merged into `main` (`e11202e`). To keep a one-command path back to v1,
+   create a `v1` branch at `161fff1` (`docs/release/rollback.md`, Level 2).
 3. Run Lighthouse against production from a machine that can reach it, and record the result
    next to `docs/audit/lighthouse-before/`.
 4. Decide on Global Voices, `perf/explore-lcp` (built on v1; it needs porting to v2) and the

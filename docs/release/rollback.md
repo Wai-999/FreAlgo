@@ -4,12 +4,10 @@ How to undo the v2 release, fastest and least destructive first. Every level bel
 on 2026-10-23 on a restored copy of production (`frealgo-20261022T023701Z.dump`, checksum
 verified), not on production itself.
 
-Production since 2026-10-23: `v2/hybrid` (FreAlgo 2.0) on the Oracle A1 server,
-`https://frealgo.duckdns.org`. `main` is still v1 (`161fff1`) until PR #9 is merged.
-
-**Until then, every deploy must pass `BRANCH=v2/hybrid`.** A plain
-`scripts/ops/deploy-remote.sh 163.192.8.142 frealgo.duckdns.org` deploys `main`, which is the
-Level 2 rollback below.
+Production since 2026-10-23: FreAlgo 2.0 on the Oracle A1 server,
+`https://frealgo.duckdns.org`. `main` is v2 (PR #9 merged as `e11202e`); v1 is commit
+`161fff1`. The deploy script deploys a branch, so going back to v1 needs a branch at that
+commit (Level 2).
 
 ## Before the release (prerequisites)
 
@@ -37,13 +35,15 @@ one feature misbehaves.
 All v2 migrations are additive, so **v1 code runs on the v2 database unchanged**. Rehearsed: the
 v1 build served every v1 page and API (20/20 route checks) on a database migrated to v2.
 
-From your Mac:
+From your Mac, create a `v1` branch at the v1 commit once (skip if it exists), then deploy it:
 
 ```bash
-BRANCH=main scripts/ops/deploy-remote.sh 163.192.8.142 frealgo.duckdns.org
+git push origin 161fff1:refs/heads/v1
+BRANCH=v1 scripts/ops/deploy-remote.sh 163.192.8.142 frealgo.duckdns.org
 ```
 
-This rebuilds and restarts v1 from `main`. The `migrate` step finds nothing to apply, and the
+This rebuilds and restarts v1. To return to v2 later, run the deploy script without `BRANCH`
+(it deploys `main`). The `migrate` step finds nothing to apply, and the
 seed and re-tag are idempotent. v2 tables stay in place, unused, so a later re-release needs no
 migration. Expect a rebuild of several minutes on the A1 server.
 
