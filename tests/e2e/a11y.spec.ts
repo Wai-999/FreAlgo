@@ -1,6 +1,6 @@
 import AxeBuilder from '@axe-core/playwright';
 import { type Page } from '@playwright/test';
-import { expect, test } from './fixtures';
+import { expect, settleForAxe, test } from './fixtures';
 
 /**
  * Release accessibility sweep (Milestone 5): every remaining public page, the welcome intro,
@@ -8,9 +8,7 @@ import { expect, test } from './fixtures';
  * workspace.spec.ts. Runs on desktop and mobile Chromium.
  */
 async function seriousViolations(page: Page): Promise<string[]> {
-  await page.waitForLoadState('load');
-  // Best-effort settle: under a loaded CI host "networkidle" may never be reached for 500 ms.
-  await page.waitForLoadState('networkidle', { timeout: 10_000 }).catch(() => undefined);
+  await settleForAxe(page);
   const results = await new AxeBuilder({ page })
     .withTags(['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa', 'wcag22aa'])
     .analyze();

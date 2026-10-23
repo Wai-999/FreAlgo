@@ -1,6 +1,6 @@
 import AxeBuilder from '@axe-core/playwright';
 import { type APIRequestContext, type Page } from '@playwright/test';
-import { expect, test } from './fixtures';
+import { expect, settleForAxe, test } from './fixtures';
 
 /**
  * FreAlgo 2.0, M4: events, Story Mode, Perspectives, timelines, journeys, World Pulse and country
@@ -17,7 +17,7 @@ async function salweenSlug(request: APIRequestContext): Promise<string> {
 }
 
 async function serious(page: Page) {
-  await page.waitForLoadState('networkidle', { timeout: 10_000 }).catch(() => undefined);
+  await settleForAxe(page);
   const r = await new AxeBuilder({ page })
     .withTags(['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa', 'wcag22aa'])
     .analyze();

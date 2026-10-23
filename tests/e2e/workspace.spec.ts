@@ -1,6 +1,6 @@
 import AxeBuilder from '@axe-core/playwright';
 import { type Page } from '@playwright/test';
-import { expect, test } from './fixtures';
+import { expect, settleForAxe, test } from './fixtures';
 
 const sheet = (page: Page) => page.getByTestId('country-sheet');
 
@@ -202,8 +202,7 @@ test.describe('accessibility (axe, WCAG 2.2 AA rules)', () => {
   ]) {
     test(`no serious or critical violations on ${path}`, async ({ page }) => {
       await page.goto(path);
-      // Best-effort settle: under a loaded CI host "networkidle" may never be reached for 500 ms.
-      await page.waitForLoadState('networkidle', { timeout: 10_000 }).catch(() => undefined);
+      await settleForAxe(page);
       const results = await new AxeBuilder({ page })
         .withTags(['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa', 'wcag22aa'])
         .analyze();
