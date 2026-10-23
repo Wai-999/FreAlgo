@@ -6,7 +6,7 @@
 #   - Only Caddy publishes ports (80/443, automatic HTTPS for $DOMAIN). Postgres/Redis are private.
 #   - The app connects as a least-privilege role (frealgo_app); migrations run as the owner role.
 #   - Redis requires a password; fixtures and dev login are off; log rotation and memory limits.
-# External gates: a domain pointing at the host, and a host with Docker. See docs/operations.md.
+# External gates: a domain pointing at the host, and a host with Docker. See docs/operations/runbook.md.
 
 name: frealgo-prod
 
@@ -31,6 +31,17 @@ x-app-env: &app-env
   LOG_LEVEL: ${LOG_LEVEL:-info}
   CLIENT_TELEMETRY_ENABLED: ${CLIENT_TELEMETRY_ENABLED:-true}
   METRICS_TOKEN: ${METRICS_TOKEN:-}
+  # FreAlgo 2.0 feature flags (lib/flags.ts). Empty = the built-in default; set true/false in
+  # deploy/.env.production and run `up -d` to switch a feature without rebuilding.
+  FEATURE_STORIES: ${FEATURE_STORIES:-}
+  FEATURE_DISCOVER: ${FEATURE_DISCOVER:-}
+  FEATURE_PERSPECTIVES: ${FEATURE_PERSPECTIVES:-}
+  FEATURE_MY_WORLD: ${FEATURE_MY_WORLD:-}
+  FEATURE_EVENT_CLUSTERING: ${FEATURE_EVENT_CLUSTERING:-}
+  FEATURE_TIMELINES: ${FEATURE_TIMELINES:-}
+  FEATURE_JOURNEYS: ${FEATURE_JOURNEYS:-}
+  FEATURE_WORLD_PULSE: ${FEATURE_WORLD_PULSE:-}
+  FEATURE_COUNTRY_CONNECTIONS: ${FEATURE_COUNTRY_CONNECTIONS:-}
 
 services:
   postgres:

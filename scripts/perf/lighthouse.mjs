@@ -7,16 +7,28 @@ import { mkdirSync, readFileSync } from 'node:fs';
 import { chromium } from '@playwright/test';
 
 const base = process.argv[2] ?? 'http://localhost:3000';
+// Optional output directory (default reports/lighthouse), e.g. docs/audit/lighthouse-before.
+const outDir = process.argv[3] ?? 'reports/lighthouse';
+// Optional page set: "v1" (default, the pages that exist in every version) or "v2" (adds the
+// FreAlgo 2.0 sections; Story Mode and Perspectives use the first event with two outlets).
+const set = process.argv[4] ?? 'v1';
 const pages = [
   ['home', '/?intro=0'],
   ['country-sheet', '/?country=MM&sector=agriculture&intro=0'],
   ['search', '/search?q=rice&intro=0'],
 ];
-mkdirSync('reports/lighthouse', { recursive: true });
+if (set === 'v2') {
+  pages.push(['stories', '/stories'], ['discover', '/discover?seed=123456']);
+  const res = await fetch(`${base}/api/v1/events?minOutlets=2&limit=1`);
+  const slug = res.ok ? (await res.json()).items[0]?.slug : null;
+  if (slug)
+    pages.push(['story-mode', `/stories/${slug}`], ['perspectives', `/perspectives/${slug}`]);
+}
+mkdirSync(outDir, { recursive: true });
 const chromePath = chromium.executablePath();
 const rows = [];
 for (const [name, path] of pages) {
-  const out = `reports/lighthouse/${name}`;
+  const out = `${outDir}/${name}`;
   try {
     execFileSync(
       'npx',

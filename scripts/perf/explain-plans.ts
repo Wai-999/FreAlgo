@@ -80,9 +80,12 @@ async function seedSynthetic() {
       FROM "Article" a, cs, generate_series(1, 2) k
       WHERE a."canonicalUrl" LIKE 'https://synthetic.invalid/%' AND (k = 1 OR abs(hashtext(a.id)) % 10 < 4)
     )
-    INSERT INTO "ArticleCountry" ("articleId", "countryId", basis, "publishedAt")
+    INSERT INTO "ArticleCountry" ("articleId", "countryId", basis, role, "publishedAt")
     SELECT DISTINCT ON ("articleId", "countryId") "articleId", "countryId",
-           CASE WHEN k = 1 THEN 'SOURCE_COUNTRY' ELSE 'TEXT_MATCH' END::"CountryTagBasis", "publishedAt"
+           CASE WHEN k = 1 AND abs(hashtext("articleId")) % 2 = 0 THEN 'SOURCE_COUNTRY' ELSE 'TEXT_MATCH' END::"CountryTagBasis",
+           -- v2 roles: about half of the first tags are only the publisher's home (like BBC world news)
+           CASE WHEN k = 1 AND abs(hashtext("articleId")) % 2 = 0 THEN 'PUBLISHER_HOME' ELSE 'SUBJECT' END::"CountryRole",
+           "publishedAt"
     FROM picks ON CONFLICT DO NOTHING`);
   await prisma.$executeRawUnsafe(`
     INSERT INTO "ArticleSector" ("articleId", "sectorId", basis, "publishedAt")
@@ -111,6 +114,10 @@ async function scenarios(): Promise<[string, () => Promise<unknown>][]> {
     listArticles(prisma, q(input), { includeFixtures: false });
   return [
     ['country MM, newest (page 1)', run({ country: 'MM' })],
+    ['country US, about + publisher home (scope=all)', run({ country: 'US', scope: 'all' })],
+    ['country BR, about only (publisher-heavy country)', run({ country: 'BR' })],
+    ['opinion only, newest', run({ type: 'opinion' })],
+    ['alphabetical, page 1', run({ sort: 'alphabetical' })],
     [
       'country US, newest (page 3 via cursor)',
       run({ country: 'US', cursor: page2.page.nextCursor! }),

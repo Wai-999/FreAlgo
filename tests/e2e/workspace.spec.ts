@@ -1,6 +1,6 @@
 import AxeBuilder from '@axe-core/playwright';
 import { type Page } from '@playwright/test';
-import { expect, test } from './fixtures';
+import { expect, settleForAxe, test } from './fixtures';
 
 const sheet = (page: Page) => page.getByTestId('country-sheet');
 
@@ -17,7 +17,7 @@ test.describe('country workspace', () => {
     await expect(page.locator('a[data-country="KE"]')).toBeFocused();
     await page.keyboard.press('Enter');
     await expect(page).toHaveURL(/country=KE/);
-    await expect(sheet(page).getByRole('heading', { name: 'Kenya' })).toBeFocused();
+    await expect(sheet(page).getByRole('heading', { name: 'Kenya', exact: true })).toBeFocused();
     await expect(sheet(page)).toHaveAttribute('data-mode', 'panel');
     await page.keyboard.press('Escape');
     await expect(sheet(page)).toHaveCount(0);
@@ -27,7 +27,7 @@ test.describe('country workspace', () => {
 
   test('deep link opens a country on a sector', async ({ page }) => {
     await page.goto('/?country=MM&sector=agriculture&intro=0');
-    await expect(sheet(page).getByRole('heading', { name: 'Myanmar' })).toBeVisible();
+    await expect(sheet(page).getByRole('heading', { name: 'Myanmar', exact: true })).toBeVisible();
     await expect(
       page.getByTestId('sector-nav').getByRole('link', { name: 'Agriculture' }),
     ).toHaveAttribute('aria-current', 'page');
@@ -47,7 +47,7 @@ test.describe('country workspace', () => {
     await page.locator('a[data-country="KE"]').click();
     await expect(page).toHaveURL(/country=KE/);
     await expect(page).toHaveURL(/sector=politics/);
-    await expect(sheet(page).getByRole('heading', { name: 'Kenya' })).toBeVisible();
+    await expect(sheet(page).getByRole('heading', { name: 'Kenya', exact: true })).toBeVisible();
     const after = await sheet(page).boundingBox();
     expect(Math.round(after!.x)).toBe(Math.round(before!.x));
     expect(Math.round(after!.width)).toBe(Math.round(before!.width));
@@ -134,7 +134,7 @@ test.describe('without JavaScript', () => {
 
   test('country sheet, sector links and pagination work as plain HTML', async ({ page }) => {
     await page.goto('/?country=KE&limit=5');
-    await expect(sheet(page).getByRole('heading', { name: 'Kenya' })).toBeVisible();
+    await expect(sheet(page).getByRole('heading', { name: 'Kenya', exact: true })).toBeVisible();
     await page.getByRole('link', { name: 'Next' }).click();
     await expect(page.getByText(/Page 2 of/)).toBeVisible();
     await page
@@ -159,7 +159,13 @@ test.describe('without JavaScript', () => {
 test.describe('search', () => {
   test('explains relevance and supports user-chosen order', async ({ page }) => {
     await page.goto('/search?q=harvest&intro=0');
-    await expect(page.getByText(/never popularity, engagement or political lean/)).toBeVisible();
+    // The page intro (each card's "Why this story?" repeats the rule inside a closed disclosure).
+    await expect(
+      page
+        .getByRole('main')
+        .locator('p.measure')
+        .filter({ hasText: /never popularity, engagement or political lean/ }),
+    ).toBeVisible();
     await expect(page.getByTestId('ordering-note')).toContainText('Text relevance');
     await page.goto('/search?q=harvest&sort=oldest');
     await expect(page.getByTestId('ordering-note')).toContainText('Oldest first');
@@ -196,8 +202,7 @@ test.describe('accessibility (axe, WCAG 2.2 AA rules)', () => {
   ]) {
     test(`no serious or critical violations on ${path}`, async ({ page }) => {
       await page.goto(path);
-      // Best-effort settle: under a loaded CI host "networkidle" may never be reached for 500 ms.
-      await page.waitForLoadState('networkidle', { timeout: 10_000 }).catch(() => undefined);
+      await settleForAxe(page);
       const results = await new AxeBuilder({ page })
         .withTags(['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa', 'wcag22aa'])
         .analyze();

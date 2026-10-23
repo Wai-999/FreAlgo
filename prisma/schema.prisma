@@ -1,7 +1,7 @@
 // FreAlgo data model (Prisma ORM 7, PostgreSQL 16+).
 // Connection URLs live in prisma.config.ts. Objects Prisma cannot express (pg_trgm extension,
 // CHECK constraints, the search-vector trigger) are added as raw SQL inside migrations; see
-// docs/architecture.md#database and prisma/migrations/*/migration.sql.
+// docs/architecture/overview.md#database and prisma/migrations/*/migration.sql.
 
 generator client {
   provider     = "prisma-client"
@@ -75,6 +75,27 @@ enum CountryTagBasis {
   MANUAL
 }
 
+/// What an article–country link means (FreAlgo 2.0, ADR V2-001). Coverage counts and country pages
+/// use SUBJECT and FEED_SCOPE by default; PUBLISHER_HOME (the outlet's home country) is shown as a
+/// separate, labelled view so world news from a UK outlet is not counted as UK coverage.
+enum CountryRole {
+  /// The story is about the country: text evidence (matched term) or a manual editorial tag.
+  SUBJECT
+  /// The outlet is based in the country; says nothing about the story's subject.
+  PUBLISHER_HOME
+  /// The feed declares the country as its scope (e.g. a national-news feed); assumed, not evidenced.
+  FEED_SCOPE
+}
+
+/// Kind of piece, assigned only on evidence from the publisher (category, URL path, headline
+/// prefix). UNKNOWN is the honest default: most feeds do not say.
+enum ArticleType {
+  NEWS
+  OPINION
+  ANALYSIS
+  UNKNOWN
+}
+
 /// Why an article carries a sector tag. Stored so every tag is auditable.
 enum SectorTagBasis {
   FEED_CATEGORY
@@ -112,6 +133,7 @@ model Country {
   articles          ArticleCountry[]
   createdAt         DateTime         @default(now())
   updatedAt         DateTime         @updatedAt
+  journeyNodes      JourneyNode[]
 
   @@index([region])
 }
@@ -154,20 +176,20 @@ model MediaOutlet {
 }
 
 model FeedSource {
-  id                   String               @id @default(cuid())
+  id                   String                @id @default(cuid())
   outletId             String
-  outlet               MediaOutlet          @relation(fields: [outletId], references: [id], onDelete: Cascade)
+  outlet               MediaOutlet           @relation(fields: [outletId], references: [id], onDelete: Cascade)
   name                 String?
-  url                  String               @unique
-  kind                 FeedKind             @default(RSS)
-  status               FeedStatus           @default(PAUSED)
+  url                  String                @unique
+  kind                 FeedKind              @default(RSS)
+  status               FeedStatus            @default(PAUSED)
   language             String?
   /// ISO2 codes every item from this feed is relevant to (e.g. a "Myanmar" section feed).
-  defaultCountryIso2   String[]             @default([])
-  defaultSectorSlugs   String[]             @default([])
-  fetchIntervalMinutes Int                  @default(180)
+  defaultCountryIso2   String[]              @default([])
+  defaultSectorSlugs   String[]              @default([])
+  fetchIntervalMinutes Int                   @default(180)
   /// Whether publisher terms allow showing the feed-provided summary as an excerpt.
-  excerptAllowed       Boolean              @default(true)
+  excerptAllowed       Boolean               @default(true)
   /// Adapter settings for LICENSED_API sources (field mapping, name of the env var holding the
   /// key). Never contains the key itself.
   providerConfig       Json?
@@ -181,14 +203,14 @@ model FeedSource {
   lastNewItemAt        DateTime?
   lastHttpStatus       Int?
   lastError            String?
-  failureCount         Int                  @default(0)
+  failureCount         Int                   @default(0)
   nextEligibleFetchAt  DateTime?
-  isFixture            Boolean              @default(false)
+  isFixture            Boolean               @default(false)
   articles             Article[]
   runs                 IngestionRun[]
   quarantine           IngestionQuarantine[]
-  createdAt            DateTime             @default(now())
-  updatedAt            DateTime             @updatedAt
+  createdAt            DateTime              @default(now())
+  updatedAt            DateTime              @updatedAt
 
   @@index([status, nextEligibleFetchAt])
   @@index([outletId])
@@ -205,16 +227,16 @@ model Sector {
 }
 
 model Article {
-  id                     String           @id @default(cuid())
+  id                     String                   @id @default(cuid())
   outletId               String
-  outlet                 MediaOutlet      @relation(fields: [outletId], references: [id])
+  outlet                 MediaOutlet              @relation(fields: [outletId], references: [id])
   feedSourceId           String?
-  feedSource             FeedSource?      @relation(fields: [feedSourceId], references: [id], onDelete: SetNull)
+  feedSource             FeedSource?              @relation(fields: [feedSourceId], references: [id], onDelete: SetNull)
   externalId             String?
   canonicalUrl           String
-  canonicalUrlHash       String           @unique @db.VarChar(64)
+  canonicalUrlHash       String                   @unique @db.VarChar(64)
   title                  String
-  excerpt                String?          @db.Text
+  excerpt                String?                  @db.Text
   language               String?
   author                 String?
   imageUrl               String?
@@ -225,21 +247,32 @@ model Article {
   /// Offset (minutes east of UTC) declared by the publisher, when present.
   publishedOffsetMinutes Int?
   /// True when the feed had no usable date and firstSeenAt was used instead.
-  publishedAtEstimated   Boolean          @default(false)
-  firstSeenAt            DateTime         @default(now())
-  updatedAt              DateTime         @updatedAt
+  publishedAtEstimated   Boolean                  @default(false)
+  firstSeenAt            DateTime                 @default(now())
+  updatedAt              DateTime                 @updatedAt
   /// sha256 of the normalized title+excerpt, used to detect publisher edits.
-  contentHash            String?          @db.VarChar(64)
-  status                 ArticleStatus    @default(PUBLISHED)
+  contentHash            String?                  @db.VarChar(64)
+  status                 ArticleStatus            @default(PUBLISHED)
   statusReason           String?
   /// Optional article-level label. Null means "not classified"; never inferred from the outlet.
   articleLabel           Orientation?
   articleLabelNote       String?
-  isFixture              Boolean          @default(false)
+  isFixture              Boolean                  @default(false)
+  /// Opinion/analysis/news when the publisher signals it; see articleTypeBasis for the evidence.
+  articleType            ArticleType              @default(UNKNOWN)
+  articleTypeBasis       String?
+  /// The publisher's own <category> values (bounded), kept so tags can be audited and recomputed.
+  feedCategories         String[]                 @default([])
+  /// Tagging rules version that produced the rule-derived tags; older rows are re-tagged on deploy.
+  taggedRulesVersion     Int?
+  /// lower(left(title, 200)) for the alphabetical sort; maintained by trigger "Article_title_sort_trg".
+  titleSort              String?
   /// Maintained by trigger "Article_search_vector_trg" (raw SQL migration).
   searchVector           Unsupported("tsvector")?
   countries              ArticleCountry[]
   sectors                ArticleSector[]
+  eventLink              EventArticle?
+  eventExclusion         EventExclusion?
 
   @@unique([outletId, externalId])
   // Keyset pagination orders by (publishedAt, id) in the same direction; matching index
@@ -248,6 +281,8 @@ model Article {
   @@index([outletId, publishedAt(sort: Desc), id(sort: Desc)])
   @@index([status, publishedAt(sort: Desc), id(sort: Desc)])
   @@index([searchVector], type: Gin, map: "Article_searchVector_idx")
+  @@index([titleSort, id])
+  @@index([articleType, publishedAt(sort: Desc), id(sort: Desc)])
   @@index([title(ops: raw("gin_trgm_ops"))], type: Gin, map: "Article_title_trgm_idx")
 }
 
@@ -256,6 +291,7 @@ model ArticleCountry {
   articleId   String
   countryId   String
   basis       CountryTagBasis
+  role        CountryRole     @default(SUBJECT)
   matchedTerm String?
   publishedAt DateTime
   article     Article         @relation(fields: [articleId], references: [id], onDelete: Cascade)
@@ -263,6 +299,7 @@ model ArticleCountry {
 
   @@id([articleId, countryId])
   @@index([countryId, publishedAt(sort: Desc), articleId(sort: Desc)])
+  @@index([countryId, role, publishedAt(sort: Desc), articleId(sort: Desc)])
 }
 
 /// publishedAt is denormalized from Article so sector filters can use an ordered index scan.
@@ -395,4 +432,124 @@ model ClientEventCounter {
   count Int      @default(0)
 
   @@id([day, event])
+}
+
+/// Kind of a curated, sourced statement (timelines and journeys). Speculative analogies are
+/// labelled as such and never shown as facts.
+enum TimelineKind {
+  FACT
+  INTERPRETATION
+  ANALOGY
+}
+
+/// A group of reports that the deterministic clustering method (lib/events/cluster.ts) judged to
+/// be about the same event. FreAlgo writes no text here: the title is the earliest member's
+/// headline, verbatim, and every member keeps its own headline, outlet and time.
+model NewsEvent {
+  id             String          @id @default(cuid())
+  slug           String          @unique
+  /// One member's headline, verbatim (the most representative; see lib/events/cluster.ts).
+  title          String
+  titleArticleId String?
+  /// Base language (en, pt…); reports in different languages are never grouped.
+  language       String
+  startAt        DateTime
+  lastAt         DateTime
+  /// lib/events/cluster.ts CLUSTER_METHOD_VERSION that created the event.
+  methodVersion  Int
+  /// Words used by at least half of the reports (shown as "shared wording", not as facts).
+  sharedTerms    String[]        @default([])
+  articleCount   Int             @default(0)
+  outletCount    Int             @default(0)
+  isFixture      Boolean         @default(false)
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
+  articles       EventArticle[]
+  timeline       TimelineEntry[]
+  journeyNodes   JourneyNode[]
+
+  @@index([isFixture, lastAt(sort: Desc), id(sort: Desc)])
+  @@index([isFixture, outletCount, lastAt(sort: Desc)])
+}
+
+/// Membership of one report in one event, with the evidence that put it there.
+model EventArticle {
+  articleId        String    @id
+  eventId          String
+  /// Similarity to the closest report already in the event when it joined (0–1).
+  score            Float
+  /// Distinctive words it shared with that report.
+  sharedTerms      String[]  @default([])
+  matchedArticleId String?
+  methodVersion    Int
+  joinedAt         DateTime  @default(now())
+  article          Article   @relation(fields: [articleId], references: [id], onDelete: Cascade)
+  event            NewsEvent @relation(fields: [eventId], references: [id], onDelete: Cascade)
+
+  @@index([eventId, articleId])
+}
+
+/// Curated, dated and sourced entry on an event's timeline. Never machine-written. Entries dated
+/// in the future are shown as "next known dates".
+model TimelineEntry {
+  id            String       @id @default(cuid())
+  eventId       String
+  occurredAt    DateTime
+  /// DAY, MONTH or YEAR: how precisely the date is known.
+  datePrecision String       @default("DAY")
+  kind          TimelineKind
+  text          String
+  sourceUrl     String
+  sourceName    String
+  curatedBy     String
+  curatedAt     DateTime
+  isFixture     Boolean      @default(false)
+  event         NewsEvent    @relation(fields: [eventId], references: [id], onDelete: Cascade)
+
+  @@index([eventId, occurredAt])
+}
+
+/// Curated guided sequence of geographically connected, evidenced story steps (flag: journeys).
+model StoryJourney {
+  id          String        @id @default(cuid())
+  slug        String        @unique
+  title       String
+  description String
+  curatedBy   String
+  reviewedAt  DateTime
+  /// Known limits of the journey, shown before the first step.
+  caveats     String
+  isFixture   Boolean       @default(false)
+  nodes       JourneyNode[]
+}
+
+/// One step: a place, what connects it to the previous step, and the evidence for that link.
+model JourneyNode {
+  id           String       @id @default(cuid())
+  journeyId    String
+  position     Int
+  countryId    String?
+  eventId      String?
+  title        String
+  explanation  String
+  kind         TimelineKind
+  occurredAt   DateTime?
+  evidenceUrl  String
+  evidenceName String
+  uncertainty  String?
+  journey      StoryJourney @relation(fields: [journeyId], references: [id], onDelete: Cascade)
+  country      Country?     @relation(fields: [countryId], references: [id], onDelete: SetNull)
+  event        NewsEvent?   @relation(fields: [eventId], references: [id], onDelete: SetNull)
+
+  @@unique([journeyId, position])
+}
+
+/// Reports an operator removed from event clustering (a wrong grouping). The job never groups
+/// an excluded report again. Every exclusion is also written to AdminAuditLog.
+model EventExclusion {
+  articleId String   @id
+  reason    String
+  createdBy String
+  createdAt DateTime @default(now())
+  article   Article  @relation(fields: [articleId], references: [id], onDelete: Cascade)
 }

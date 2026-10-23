@@ -34,6 +34,8 @@ export interface CountryCoverage {
   paywalledOutlets: string[];
   fixtureOnly: boolean;
   hasRealSources: boolean;
+  /** Story counts by meaning (ADR V2-001): about the country vs. only published from it. */
+  stories: { about: number; publisherHomeOnly: number };
 }
 
 const primary = (tag: string) => tag.split('-')[0]!.toLowerCase();
@@ -93,6 +95,13 @@ export async function getCountryCoverage(
       else sources.fixture++;
     }
   }
+  const [storyCounts] = await prisma.$queryRaw<{ about: number; home: number }[]>`
+    SELECT count(*) FILTER (WHERE ac.role <> 'PUBLISHER_HOME')::int AS about,
+           count(*) FILTER (WHERE ac.role = 'PUBLISHER_HOME')::int AS home
+    FROM "ArticleCountry" ac
+    JOIN "Article" a ON a.id = ac."articleId"
+    JOIN "Country" c ON c.id = ac."countryId"
+    WHERE c.iso2 = ${iso2} AND a.status = 'PUBLISHED' AND (${opts.includeFixtures} OR NOT a."isFixture")`;
   const available = [...languages].sort();
   const official = country.officialLanguages.map(primary);
   return {
@@ -112,5 +121,6 @@ export async function getCountryCoverage(
       .map((o) => o.name),
     fixtureOnly: outlets.length > 0 && outlets.every((o) => o.isFixture),
     hasRealSources: outlets.some((o) => !o.isFixture),
+    stories: { about: storyCounts?.about ?? 0, publisherHomeOnly: storyCounts?.home ?? 0 },
   };
 }

@@ -1,0 +1,319 @@
+{
+  "measuredAt": "2026-10-21T13:57:26Z",
+  "method": "Read-only SQL against the production database (frealgo.duckdns.org) via SSH; counts are point-in-time.",
+  "totals": {
+    "articles": 91,
+    "articlesPublished": 91,
+    "fixtureArticles": 0,
+    "oldestPublishedAt": "2026-10-14T18:00:54",
+    "newestPublishedAt": "2026-10-21T11:46:59",
+    "estimatedDates": 0,
+    "distinctContentHashes": 91,
+    "duplicateContentRows": 0
+  },
+  "registry": {
+    "outlets": 26,
+    "feeds": 27,
+    "active": 4,
+    "paused": 23,
+    "error": 0,
+    "outletCountries": 21
+  },
+  "activeSources": [
+    {
+      "slug": "agencia-brasil",
+      "url": "https://agenciabrasil.ebc.com.br/rss/ultimasnoticias/feed.xml",
+      "status": "ACTIVE",
+      "publisherCountry": "BR",
+      "language": "pt",
+      "lastAttemptAt": "2026-10-21T12:00:00.084",
+      "lastSuccessfulSyncAt": "2026-10-21T12:00:00.805",
+      "failureCount": 0,
+      "lastError": null,
+      "articles": 20,
+      "newestArticle": "2026-10-21T11:22:00",
+      "newestArticleAgeHours": 2.6,
+      "runs24h": 3,
+      "failedRuns24h": 0
+    },
+    {
+      "slug": "bbc-news",
+      "url": "https://feeds.bbci.co.uk/news/world/rss.xml",
+      "status": "ACTIVE",
+      "publisherCountry": "GB",
+      "language": "en",
+      "lastAttemptAt": "2026-10-21T12:00:00.081",
+      "lastSuccessfulSyncAt": "2026-10-21T12:00:00.694",
+      "failureCount": 0,
+      "lastError": null,
+      "articles": 35,
+      "newestArticle": "2026-10-21T11:39:25",
+      "newestArticleAgeHours": 2.3,
+      "runs24h": 3,
+      "failedRuns24h": 0
+    },
+    {
+      "slug": "bbc-news",
+      "url": "https://feeds.bbci.co.uk/news/world/asia/rss.xml",
+      "status": "ACTIVE",
+      "publisherCountry": "GB",
+      "language": "en",
+      "lastAttemptAt": "2026-10-21T12:00:00.084",
+      "lastSuccessfulSyncAt": "2026-10-21T12:00:00.467",
+      "failureCount": 0,
+      "lastError": null,
+      "articles": 19,
+      "newestArticle": "2026-10-21T08:19:32",
+      "newestArticleAgeHours": 5.6,
+      "runs24h": 3,
+      "failedRuns24h": 0
+    },
+    {
+      "slug": "npr",
+      "url": "https://feeds.npr.org/1001/rss.xml",
+      "status": "ACTIVE",
+      "publisherCountry": "US",
+      "language": "en",
+      "lastAttemptAt": "2026-10-21T12:00:00.084",
+      "lastSuccessfulSyncAt": "2026-10-21T12:00:00.656",
+      "failureCount": 0,
+      "lastError": null,
+      "articles": 17,
+      "newestArticle": "2026-10-21T11:46:59",
+      "newestArticleAgeHours": 2.2,
+      "runs24h": 3,
+      "failedRuns24h": 0
+    }
+  ],
+  "countryAssignment": [
+    {
+      "basis": "SOURCE_COUNTRY",
+      "tags": 91,
+      "countries": 3
+    },
+    {
+      "basis": "TEXT_MATCH",
+      "tags": 62,
+      "countries": 27
+    }
+  ],
+  "countriesWithStories": {
+    "anyBasis": 28,
+    "subjectOnly": 27,
+    "subjectLast24h": 22,
+    "subjectLast7d": 27
+  },
+  "topCountries": [
+    {
+      "iso2": "GB",
+      "name": "United Kingdom",
+      "allTags": 55,
+      "publisherOnlyTags": 54,
+      "subjectTags": 1
+    },
+    {
+      "iso2": "BR",
+      "name": "Brazil",
+      "allTags": 20,
+      "publisherOnlyTags": 20,
+      "subjectTags": 0
+    },
+    {
+      "iso2": "US",
+      "name": "United States",
+      "allTags": 19,
+      "publisherOnlyTags": 17,
+      "subjectTags": 2
+    },
+    {
+      "iso2": "FR",
+      "name": "France",
+      "allTags": 6,
+      "publisherOnlyTags": 0,
+      "subjectTags": 6
+    },
+    {
+      "iso2": "AU",
+      "name": "Australia",
+      "allTags": 6,
+      "publisherOnlyTags": 0,
+      "subjectTags": 6
+    },
+    {
+      "iso2": "RU",
+      "name": "Russia",
+      "allTags": 5,
+      "publisherOnlyTags": 0,
+      "subjectTags": 5
+    },
+    {
+      "iso2": "UA",
+      "name": "Ukraine",
+      "allTags": 5,
+      "publisherOnlyTags": 0,
+      "subjectTags": 5
+    },
+    {
+      "iso2": "IN",
+      "name": "India",
+      "allTags": 5,
+      "publisherOnlyTags": 0,
+      "subjectTags": 5
+    },
+    {
+      "iso2": "KE",
+      "name": "Kenya",
+      "allTags": 3,
+      "publisherOnlyTags": 0,
+      "subjectTags": 3
+    },
+    {
+      "iso2": "CA",
+      "name": "Canada",
+      "allTags": 3,
+      "publisherOnlyTags": 0,
+      "subjectTags": 3
+    },
+    {
+      "iso2": "SA",
+      "name": "Saudi Arabia",
+      "allTags": 3,
+      "publisherOnlyTags": 0,
+      "subjectTags": 3
+    },
+    {
+      "iso2": "PK",
+      "name": "Pakistan",
+      "allTags": 2,
+      "publisherOnlyTags": 0,
+      "subjectTags": 2
+    },
+    {
+      "iso2": "ID",
+      "name": "Indonesia",
+      "allTags": 2,
+      "publisherOnlyTags": 0,
+      "subjectTags": 2
+    },
+    {
+      "iso2": "YE",
+      "name": "Yemen",
+      "allTags": 2,
+      "publisherOnlyTags": 0,
+      "subjectTags": 2
+    },
+    {
+      "iso2": "MM",
+      "name": "Myanmar",
+      "allTags": 2,
+      "publisherOnlyTags": 0,
+      "subjectTags": 2
+    },
+    {
+      "iso2": "UG",
+      "name": "Uganda",
+      "allTags": 2,
+      "publisherOnlyTags": 0,
+      "subjectTags": 2
+    },
+    {
+      "iso2": "CN",
+      "name": "People's Republic of China",
+      "allTags": 2,
+      "publisherOnlyTags": 0,
+      "subjectTags": 2
+    },
+    {
+      "iso2": "IL",
+      "name": "Israel",
+      "allTags": 1,
+      "publisherOnlyTags": 0,
+      "subjectTags": 1
+    },
+    {
+      "iso2": "AR",
+      "name": "Argentina",
+      "allTags": 1,
+      "publisherOnlyTags": 0,
+      "subjectTags": 1
+    },
+    {
+      "iso2": "NP",
+      "name": "Nepal",
+      "allTags": 1,
+      "publisherOnlyTags": 0,
+      "subjectTags": 1
+    },
+    {
+      "iso2": "GM",
+      "name": "Republic of The Gambia",
+      "allTags": 1,
+      "publisherOnlyTags": 0,
+      "subjectTags": 1
+    },
+    {
+      "iso2": "PS",
+      "name": "Palestine",
+      "allTags": 1,
+      "publisherOnlyTags": 0,
+      "subjectTags": 1
+    },
+    {
+      "iso2": "KP",
+      "name": "North Korea",
+      "allTags": 1,
+      "publisherOnlyTags": 0,
+      "subjectTags": 1
+    },
+    {
+      "iso2": "ZA",
+      "name": "South Africa",
+      "allTags": 1,
+      "publisherOnlyTags": 0,
+      "subjectTags": 1
+    },
+    {
+      "iso2": "NO",
+      "name": "Norway",
+      "allTags": 1,
+      "publisherOnlyTags": 0,
+      "subjectTags": 1
+    }
+  ],
+  "languages": {
+    "pt": 20,
+    "en": 71
+  },
+  "sectors": {
+    "education": 3,
+    "politics": 16,
+    "history-context": 5,
+    "business-economics": 10,
+    "technology": 3,
+    "culture": 4
+  },
+  "articlesWithoutSector": 52,
+  "articlesWithoutSubjectCountry": 42,
+  "ingestion24h": {
+    "NOT_MODIFIED": 1,
+    "SUCCESS": 11
+  },
+  "lastScheduledRunAt": "2026-10-21T12:00:00.084",
+  "crossBorderExample": {
+    "title": "US citizen Stephen Hubbard freed by Russia as Trump envoy meets Putin",
+    "publisher": "BBC News",
+    "publisherCountry": "GB",
+    "tags": [
+      {
+        "iso2": "GB",
+        "basis": "SOURCE_COUNTRY",
+        "term": null
+      },
+      {
+        "iso2": "RU",
+        "basis": "TEXT_MATCH",
+        "term": "Russia (rules v1)"
+      }
+    ]
+  }
+}

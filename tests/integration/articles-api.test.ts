@@ -1,5 +1,6 @@
 import { NextRequest } from 'next/server';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
+import { getCountryCoverage } from '@/lib/db/coverage';
 import { articleQuerySchema } from '@/lib/api/contracts';
 import { canonicalUrlHash } from '@/lib/ingest/canonical-url';
 import { listArticles, type ArticleListItem } from '@/lib/search/articles';
@@ -200,9 +201,12 @@ async function seedDataset() {
         status: s.status ?? 'PUBLISHED',
         isFixture: s.fixture ?? false,
         countries: {
+          // The first country is the local outlet's national feed scope (counts as "about"),
+          // later ones are text mentions (ADR V2-001 roles).
           create: s.countries.map((c, i) => ({
             countryId: countryIds.get(c)!,
-            basis: i === 0 ? 'SOURCE_COUNTRY' : 'TEXT_MATCH',
+            basis: i === 0 ? ('FEED_DEFAULT' as const) : ('TEXT_MATCH' as const),
+            role: i === 0 ? ('FEED_SCOPE' as const) : ('SUBJECT' as const),
             publishedAt: s.at,
           })),
         },
@@ -450,5 +454,117 @@ describe('HTTP contracts', () => {
     expect(body.countries).toHaveLength(250);
     expect(body.coverage.countriesWithSources).toBeGreaterThan(0);
     expect(body.countries.find((c: { iso2: string }) => c.iso2 === 'AQ').articleCount).toBe(0);
+  });
+});
+
+describe('FreAlgo 2.0: country scope, article type and alphabetical order', () => {
+  const extra: string[] = [];
+  beforeAll(async () => {
+    const [ledger, mm, pe] = await Promise.all([
+      prisma.mediaOutlet.findUniqueOrThrow({ where: { slug: 'test-ledger' } }),
+      prisma.country.findUniqueOrThrow({ where: { iso2: 'MM' } }),
+      prisma.country.findUniqueOrThrow({ where: { iso2: 'PE' } }),
+    ]);
+    // A Myanmar-based outlet reporting on Peru: about Peru, published from Myanmar.
+    const world = await prisma.article.create({
+      data: {
+        outletId: ledger.id,
+        canonicalUrl: 'https://news.example/x-peru',
+        canonicalUrlHash: canonicalUrlHash('https://news.example/x-peru'),
+        title: 'Peru approves new mining law',
+        language: 'en',
+        publishedAt: hours(4),
+        articleType: 'NEWS',
+        countries: {
+          create: [
+            {
+              countryId: pe.id,
+              basis: 'TEXT_MATCH',
+              role: 'SUBJECT',
+              matchedTerm: 'Peru',
+              publishedAt: hours(4),
+            },
+            {
+              countryId: mm.id,
+              basis: 'SOURCE_COUNTRY',
+              role: 'PUBLISHER_HOME',
+              publishedAt: hours(4),
+            },
+          ],
+        },
+      },
+    });
+    const opinion = await prisma.article.create({
+      data: {
+        outletId: ledger.id,
+        canonicalUrl: 'https://news.example/x-opinion',
+        canonicalUrlHash: canonicalUrlHash('https://news.example/x-opinion'),
+        title: 'Opinion: why irrigation needs patience',
+        language: 'en',
+        publishedAt: hours(5),
+        articleType: 'OPINION',
+        articleTypeBasis: 'headline prefix "Opinion:"',
+        countries: {
+          create: [
+            { countryId: mm.id, basis: 'FEED_DEFAULT', role: 'FEED_SCOPE', publishedAt: hours(5) },
+          ],
+        },
+      },
+    });
+    extra.push(world.id, opinion.id);
+  });
+  afterAll(async () => {
+    await prisma.article.deleteMany({ where: { id: { in: extra } } });
+  });
+
+  it('counts a story under its subject, not its publisher, unless scope=all', async () => {
+    const [world] = extra;
+    expect((await run({ country: 'PE' })).items.map((i) => i.id)).toEqual([world]);
+    expect((await run({ country: 'MM', limit: 30 })).items.map((i) => i.id)).not.toContain(world);
+    for (const sort of ['newest', 'oldest', 'outlet']) {
+      const all = await run({ country: 'MM', scope: 'all', sort, limit: 30 });
+      expect(all.items.map((i) => i.id)).toContain(world);
+    }
+    const item = (await run({ country: 'PE' })).items[0]!;
+    expect(item.countries.map((c) => [c.iso2, c.role])).toEqual([
+      ['PE', 'SUBJECT'],
+      ['MM', 'PUBLISHER_HOME'],
+    ]);
+  });
+
+  it('reports both counts in the country coverage', async () => {
+    const coverage = await getCountryCoverage(prisma, 'MM', { includeFixtures: false });
+    expect(coverage?.stories.publisherHomeOnly).toBe(1);
+    expect(coverage?.stories.about).toBeGreaterThan(5);
+  });
+
+  it('filters by publisher-signalled article type', async () => {
+    const opinion = await run({ type: 'opinion' });
+    expect(opinion.items.map((i) => i.id)).toEqual([extra[1]]);
+    expect(opinion.items[0]).toMatchObject({
+      articleType: 'OPINION',
+      articleTypeBasis: 'headline prefix "Opinion:"',
+    });
+    const unknown = await run({ type: 'unknown', limit: 30 });
+    expect(unknown.items.every((i) => i.articleType === 'UNKNOWN')).toBe(true);
+  });
+
+  it('sorts alphabetically by headline with stable keyset pages both ways', async () => {
+    const pages: string[] = [];
+    let res = await run({ sort: 'alphabetical', limit: 3 });
+    pages.push(...res.items.map((i) => i.title.toLowerCase()));
+    const forwardCursors: string[] = [];
+    while (res.page.nextCursor) {
+      forwardCursors.push(res.page.nextCursor);
+      res = await run({ sort: 'alphabetical', limit: 3, cursor: res.page.nextCursor });
+      pages.push(...res.items.map((i) => i.title.toLowerCase()));
+    }
+    expect(pages).toEqual([...pages].sort((a, b) => (a < b ? -1 : a > b ? 1 : 0)));
+    expect(new Set(pages).size).toBe(pages.length);
+    expect(pages.length).toBe((await run({ sort: 'alphabetical', limit: 30 })).items.length);
+    // Walking back with prev cursors reaches page 1 again.
+    while (res.page.prevCursor)
+      res = await run({ sort: 'alphabetical', limit: 3, cursor: res.page.prevCursor });
+    expect(res.page.number).toBe(1);
   });
 });

@@ -3,6 +3,7 @@ import Link from 'next/link';
 import { FilterForm } from '@/components/news/filter-form';
 import { WorkspaceNavProvider } from '@/components/news/nav-anchor';
 import { Pagination } from '@/components/news/pagination';
+import { ReadingDepthNav } from '@/components/news/reading-depth-nav';
 import { StoryCard } from '@/components/news/story-card';
 import { toSearchParams } from '@/lib/api/contracts';
 import { getPrisma } from '@/lib/db/client';
@@ -75,8 +76,11 @@ export default async function SearchPage({
         from: query.from?.toISOString().slice(0, 10),
         to: query.to?.toISOString().slice(0, 10),
         sort: query.sort,
+        type: query.type,
+        scope: query.scope,
       }}
-      hidden={{}}
+      showScope
+      hidden={{ depth: query.depth }}
       outlets={outlets}
       languages={SEARCH_LANGUAGES.map((code) => ({ code, name: languageName(code) }))}
       resetHref="/search"
@@ -118,7 +122,13 @@ export default async function SearchPage({
               {ignored.length ? `Ignored invalid parameters: ${ignored.join(', ')}.` : ''}
             </p>
           ) : null}
-          <p className="text-sm text-muted" data-testid="ordering-note" aria-live="polite">
+          <ReadingDepthNav
+            current={query.depth ?? 'deep'}
+            hrefFor={(d) =>
+              `/search?${toSearchParams(query, { depth: d === 'deep' ? null : d, cursor: query.cursor ?? null }).toString()}`
+            }
+          />
+          <p className="mt-3 text-sm text-muted" data-testid="ordering-note" aria-live="polite">
             {result.page.total}
             {result.page.totalIsCapped ? '+' : ''} {result.page.total === 1 ? 'story' : 'stories'}
             {summary.count ? ` for ${summary.text}` : ''} · {SORT_LABEL[result.page.sort]}
@@ -132,7 +142,13 @@ export default async function SearchPage({
           ) : (
             <div data-testid="story-list">
               {result.items.map((a) => (
-                <StoryCard key={a.id} article={a} headingLevel={3} />
+                <StoryCard
+                  key={a.id}
+                  article={a}
+                  headingLevel={3}
+                  depth={query.depth ?? 'deep'}
+                  why={{ query, sort: result.page.sort }}
+                />
               ))}
             </div>
           )}

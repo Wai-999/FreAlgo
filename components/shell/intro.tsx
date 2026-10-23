@@ -1,7 +1,7 @@
 import { IntroSkipButton } from './intro-skip-button';
 
 /**
- * Optional dark intro (<= 1.5s). Visibility is controlled purely by CSS + the head boot script
+ * Optional dark intro (1.1 s; spec 0.6–1.2 s). Visibility is controlled purely by CSS + the head boot script
  * (see app/globals.css `.intro`), so it never blocks content, never repeats within a session,
  * and is skipped entirely for reduced motion or when disabled in preferences.
  */

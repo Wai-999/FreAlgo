@@ -122,7 +122,7 @@ The e2e suite covers:
 ## 7. Known limitations (honest list)
 
 1. **Real feeds are paused by default.** They need an operator's terms review (deliberate, see
-   `docs/source-policy.md`). Coverage is uneven: 26 real outlets are registered, and most
+   `docs/data/source-methodology.md`). Coverage is uneven: 26 real outlets are registered, and most
    countries have none. The UI states this per country.
 2. **Outlet labels for real sources are "Unrated".** No licensed third-party rating dataset was
    used, and labels are never inferred automatically. Fixture outlets demonstrate the full label
@@ -145,7 +145,7 @@ The e2e suite covers:
 | Gate                                    | Needed for                                                             | What to do                                                                                                                                  |
 | --------------------------------------- | ---------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------- |
 | Git remote + hosted CI                  | Running `.github/workflows/ci.yml`, branch protection, dependency bots | Create the repository, push `build/frealgo-v1`, open a PR                                                                                   |
-| Hosting + domain + DNS                  | Production deployment                                                  | Follow `docs/deployment-checklist.md` §A                                                                                                    |
+| Hosting + domain + DNS                  | Production deployment                                                  | Follow `docs/operations/deployment-checklist.md` §A                                                                                         |
 | Secrets                                 | Production                                                             | Generate with `openssl rand -base64 48`, store in a secret manager                                                                          |
 | OIDC identity provider                  | Server-side preference sync, operator sign-in                          | Register a client; set `OIDC_*` and `ADMIN_USER_IDS`                                                                                        |
 | **Publisher terms review**              | Showing real news                                                      | Per feed: review terms and robots, then `npm run sources:activate` with notes. 27 feeds were dry-run verified as parseable (nothing stored) |

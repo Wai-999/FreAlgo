@@ -1,0 +1,103 @@
+{
+  "base": "https://frealgo.duckdns.org",
+  "label": "before",
+  "measuredAt": "2026-10-21T14:00:29.983Z",
+  "routes": {
+    "/": 200,
+    "/?intro=0": 200,
+    "/?country=US&intro=0": 200,
+    "/?view=list&intro=0": 200,
+    "/search?q=rice": 200,
+    "/sources": 200,
+    "/sources/bbc-news": 200,
+    "/status": 200,
+    "/methodology": 200,
+    "/about": 200,
+    "/settings": 200,
+    "/account": 200,
+    "/privacy": 200,
+    "/stories": 404,
+    "/discover": 404,
+    "/perspectives": 404,
+    "/my-world": 404,
+    "/api/v1/health": 200,
+    "/api/v1/countries": 200,
+    "/api/v1/health/freshness": 200,
+    "/api/v1/sectors": 200,
+    "/api/v1/outlets": 200
+  },
+  "overflow": {
+    "360": {
+      "/?intro=0": 0,
+      "/?country=US&intro=0": 0,
+      "/search?q=rice": 0,
+      "/sources": 0,
+      "/status": 0,
+      "/settings": 0
+    },
+    "390": {
+      "/?intro=0": 0,
+      "/?country=US&intro=0": 0,
+      "/search?q=rice": 0,
+      "/sources": 0,
+      "/status": 0,
+      "/settings": 0
+    },
+    "430": {
+      "/?intro=0": 0,
+      "/?country=US&intro=0": 0,
+      "/search?q=rice": 0,
+      "/sources": 0,
+      "/status": 0,
+      "/settings": 0
+    },
+    "768": {
+      "/?intro=0": 0,
+      "/?country=US&intro=0": 0,
+      "/search?q=rice": 0,
+      "/sources": 0,
+      "/status": 0,
+      "/settings": 0
+    },
+    "1280": {
+      "/?intro=0": 0,
+      "/?country=US&intro=0": 0,
+      "/search?q=rice": 0,
+      "/sources": 0,
+      "/status": 0,
+      "/settings": 0
+    },
+    "1440": {
+      "/?intro=0": 0,
+      "/?country=US&intro=0": 0,
+      "/search?q=rice": 0,
+      "/sources": 0,
+      "/status": 0,
+      "/settings": 0
+    },
+    "1280@200%": {
+      "/?intro=0": 0,
+      "/?country=US&intro=0": 0,
+      "/search?q=rice": 0,
+      "/sources": 0,
+      "/status": 0,
+      "/settings": 0
+    }
+  },
+  "checks": {
+    "keyboardCountrySelection": {
+      "searchReachableByTab": true,
+      "arrowDownFocusesMatch": true,
+      "sheetOpened": true
+    },
+    "reducedMotionSkipsIntro": true,
+    "webglDisabled": {
+      "stageMode": "fallback",
+      "countryLinks": 250
+    },
+    "slowNetworkPhone": {
+      "firstStoryVisibleMs": 1310,
+      "note": "Emulated: 400 ms RTT, 1.6 Mbps, 4x CPU"
+    }
+  }
+}

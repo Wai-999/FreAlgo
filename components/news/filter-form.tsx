@@ -16,6 +16,8 @@ export interface FilterFormValues {
   from?: string;
   to?: string;
   sort?: string;
+  type?: string[];
+  scope?: string;
 }
 
 /**
@@ -34,6 +36,7 @@ export function FilterForm({
   countryOptions,
   regionOptions,
   resetHref,
+  showScope = false,
 }: {
   action: string;
   values: FilterFormValues;
@@ -46,6 +49,8 @@ export function FilterForm({
   countryOptions?: { iso2: string; name: string }[];
   regionOptions?: string[];
   resetHref: string;
+  /** Offer "include stories from publishers based there" (only meaningful with a country). */
+  showScope?: boolean;
 }) {
   const id = useId();
   const onSubmit = useGetFormSubmit(action);
@@ -198,6 +203,46 @@ export function FilterForm({
       ) : null}
 
       <fieldset className={fieldset}>
+        <legend className={legend}>Type (as labelled by the publisher)</legend>
+        {(
+          [
+            ['news', 'News'],
+            ['opinion', 'Opinion'],
+            ['analysis', 'Analysis'],
+            ['unknown', 'Not labelled by the publisher'],
+          ] as const
+        ).map(([value, label]) => (
+          <label key={value} className={check}>
+            <input
+              type="checkbox"
+              name="type"
+              value={value}
+              defaultChecked={has(values.type, value)}
+              className="size-5"
+            />
+            {label}
+          </label>
+        ))}
+        <p className="px-1 text-xs text-muted">Most feeds do not label their stories.</p>
+      </fieldset>
+
+      {showScope ? (
+        <fieldset className={fieldset}>
+          <legend className={legend}>Country scope</legend>
+          <label className={check}>
+            <input
+              type="checkbox"
+              name="scope"
+              value="all"
+              defaultChecked={values.scope === 'all'}
+              className="size-5"
+            />
+            Also include stories from publishers based in the country that are about other places
+          </label>
+        </fieldset>
+      ) : null}
+
+      <fieldset className={fieldset}>
         <legend className={legend}>Publication period</legend>
         <label className="block text-sm" htmlFor={`${id}-period`}>
           <span className="sr-only">Period</span>
@@ -245,6 +290,7 @@ export function FilterForm({
             : []),
           ['newest', 'Newest first'],
           ['oldest', 'Oldest first'],
+          ['alphabetical', 'Headline (A–Z)'],
           ['outlet', 'Outlet name (A–Z)'],
           ...(showQuery ? [['relevance', 'Text relevance (search only)']] : []),
         ].map(([value, label]) => (

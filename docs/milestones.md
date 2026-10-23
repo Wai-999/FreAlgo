@@ -74,8 +74,8 @@ Status legend: ✅ done with evidence · ⏳ in progress · ⛔ blocked by an ex
 - ✅ Observability: per-request latency logs, `Server-Timing`, token-protected web metrics, worker
   metrics and health, alert table in the runbook
 - ✅ Production Compose recipe: Caddy TLS, private network, least-privilege DB role, Redis auth,
-  memory limits, log rotation, `shm_size` ([operations.md](operations.md),
-  [deployment-checklist.md](deployment-checklist.md))
+  memory limits, log rotation, `shm_size` ([operations.md](operations/runbook.md),
+  [deployment-checklist.md](operations/deployment-checklist.md))
 - ✅ Backups with checksums; **restore drill passed** (row counts and migration state identical)
 - ✅ **Scheduled worker observed** on real feeds (throwaway DB): cron tick → 4 feeds → 193 real
   articles, 0 failures, no duplicate enqueue within the window

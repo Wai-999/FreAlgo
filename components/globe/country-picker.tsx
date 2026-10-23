@@ -1,6 +1,6 @@
 'use client';
 
-import { useDeferredValue, useId, useMemo, useRef, useState } from 'react';
+import { useDeferredValue, useEffect, useId, useMemo, useRef, useState } from 'react';
 import { SearchIcon } from '@/components/ui/icons';
 import { FOCUS_SHEET_KEY } from '@/components/news/country-sheet';
 import { useWorkspaceNav } from '@/components/news/nav-anchor';
@@ -42,6 +42,9 @@ export function CountryPicker({
   const [onlyCovered, setOnlyCovered] = useState(false);
   const deferred = useDeferredValue(query);
   const listRef = useRef<HTMLDivElement>(null);
+  // ArrowDown can arrive before the deferred list has re-rendered (paste, autofill, scripts).
+  // Remember the request and focus the first match once the list has caught up (defect D2).
+  const pendingFocusFirst = useRef(false);
   const inputId = useId();
   const statusId = useId();
 
@@ -82,6 +85,13 @@ export function CountryPicker({
     return `/?${params.toString()}`;
   }
 
+  useEffect(() => {
+    if (pendingFocusFirst.current && deferred === query) {
+      pendingFocusFirst.current = false;
+      focusItem(1);
+    }
+  });
+
   function focusItem(delta: number, from?: HTMLElement) {
     const items = Array.from(
       listRef.current?.querySelectorAll<HTMLAnchorElement>('a[data-picker-item]') ?? [],
@@ -113,7 +123,8 @@ export function CountryPicker({
             onKeyDown={(e) => {
               if (e.key === 'ArrowDown') {
                 e.preventDefault();
-                focusItem(1);
+                if (deferred !== query) pendingFocusFirst.current = true;
+                else focusItem(1);
               }
             }}
             className="min-h-11 w-full rounded-md border border-border-strong bg-surface py-2 pr-3 pl-10 text-base text-text placeholder:text-muted/80"

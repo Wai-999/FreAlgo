@@ -18,6 +18,18 @@ const targets = [
   ['freshness', '/api/v1/health/freshness'],
   ['explore page (HTML)', '/?country=KE&intro=0'],
 ];
+// FreAlgo 2.0 reads (event clusters), when the server has any.
+const ev = await fetch(`${base}/api/v1/events?minOutlets=2&limit=1`).then((r) =>
+  r.ok ? r.json() : null,
+);
+const slug = ev?.items?.[0]?.slug;
+targets.push(['events list', '/api/v1/events'], ['methodology', '/api/v1/methodology']);
+if (slug)
+  targets.push(
+    ['event detail', `/api/v1/events/${slug}`],
+    ['event perspectives', `/api/v1/events/${slug}/perspectives`],
+    ['story mode page (HTML)', `/stories/${slug}`],
+  );
 const rows = [];
 for (const [name, path] of targets) {
   const out = execFileSync(

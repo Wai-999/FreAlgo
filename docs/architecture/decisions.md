@@ -208,3 +208,78 @@ served `immutable` for a week. Any change to the generated output bumps the vers
 change would leave cached browsers on the old file. v2 declares `color-scheme: dark`, because
 browsers paint an opaque white backdrop behind an iframe whose color scheme differs from the
 page's.
+
+## ADR-022 Event clustering is lexical, deterministic and join-only (FreAlgo 2.0, M4)
+
+**Decision.** Reports are grouped by weighted headline-word overlap with three guards: at least
+two shared distinctive words, a shared name (a country both texts name, or a word capitalised
+inside a headline), and no conflicting countries. Events only grow; one run at a time; every
+membership stores its evidence (score, shared words, matched report). The event is shown under
+a member's own headline. Method and numbers: `docs/data/event-clustering-evaluation.md`.
+
+**Why.** The product constitution forbids untraceable AI output and invented relationships.
+Embeddings or a language model would group more reports, including across languages, but a
+reader could not see why two reports were grouped, and the result would change with the model.
+A lexical method is cheap to run on the free server, explainable per report, and testable
+against a labelled set. Precision is preferred to recall: on production headlines it grouped 16
+reports into 7 events with no wrong member and missed related reports worded differently.
+
+**Update (2026-10-23, method v2).** The first dry run on production found 4 wrong groupings of
+24, each resting on two generic words just above the threshold. Weak matches (similarity < 0.40)
+now need three shared words; on the same data: 16 decisions, none wrong. The feature was kept
+off in production until v2 was deployed.
+
+**Consequences.** No cross-language events; scripts without spaces are not clustered. Operators
+can remove a wrong grouping for good (`scripts/cluster-events.ts --exclude`, audited). A future
+method gets a new `CLUSTER_METHOD_VERSION`; stored events keep the version that formed them.
+
+## ADR-023 Perspectives compare stored evidence only
+
+**Decision.** The Perspective Explorer shows each outlet's own headlines, its source-level label
+with provenance and the publisher-declared kind of piece. "Shared wording" is labelled as not
+verified, "claims in dispute" says "not assessed", and coverage gaps are computed against the
+outlets with reports in FreAlgo in the last 7 days.
+
+**Why.** The spec asks for verified common facts and disputed claims. FreAlgo cannot verify
+facts or extract claims without either an editor or a model, and the constitution rules out
+presenting model output as verified. Saying what is not assessed is honest; filling the section
+would not be.
+
+**Consequences.** All production outlets are currently unrated, so orientation gaps read "cannot
+be shown". The page becomes richer as labels are reviewed, without code changes.
+
+## ADR-024 Curated context needs a named person and a web source, enforced by the database
+
+**Decision.** Timeline entries and journey steps are curated rows with a curator, a date
+precision, a kind (fact, interpretation, analogy) and a source URL. CHECK constraints reject
+non-http(s) sources and empty source names. Entries dated in the future are "next known dates".
+Journeys, World Pulse and country connections ship behind flags that stay off in production
+until reviewed content exists.
+
+**Why.** Historical context and connections are where invented links would do the most harm.
+Putting the rule in the schema means no code path, script or future admin screen can store an
+unsourced entry.
+
+## ADR-025 World Pulse shows raw counts on one hue
+
+**Decision.** World Pulse shades countries by the raw number of reports about them in 24 hours
+or 7 days, in fixed bands on a single hue, with zero shown as a separate hatched state, a
+timestamp, the denominator and a full alphabetical table.
+
+**Why.** Colour scales imply importance; the spec forbids that. Raw counts with the denominator
+stated describe FreAlgo's coverage honestly. Normalising by population or outlets would look
+more precise but would hide how uneven the source list is.
+
+## ADR-026 Roll back by redeploying v1 on the v2 schema (M5)
+
+**Decision.** The default rollback for FreAlgo 2.0 is to redeploy `main` and leave the database
+as it is. Schema rollback (`prisma/rollbacks/v2-all.down.sql`) is a separate, later step, used
+only if v2 objects themselves cause trouble. Every deploy takes a pre-deploy backup first.
+
+**Why.** All v2 migrations are additive, and v1 was verified to serve every page and API on the
+v2 schema. Keeping the schema avoids dropping v2 data during an incident and makes a re-release
+a pure code change. Dropping columns under pressure is where rollbacks lose data.
+
+**Consequences.** v2 tables stay in the database after a rollback, unused and harmless. A later
+v2 re-release needs no migration. The full schema rollback was rehearsed (0.27 s, forward again
+identical) so it is available when needed.

@@ -1,7 +1,7 @@
 import type { PrismaClient } from '@/generated/prisma/client';
 
 /**
- * Daily retention job (docs/operations.md#retention):
+ * Daily retention job (docs/operations/runbook.md#retention):
  *  - IngestionRun / IngestionQuarantine older than RETENTION_DAYS
  *  - AdminAuditLog older than 4 × RETENTION_DAYS (security trail is kept longer)
  *  - ClientEventCounter rows older than 400 days

@@ -160,7 +160,11 @@ describe('BullMQ ingestion queue', () => {
       await registerSchedulers(b.queue, '0 */3 * * *');
       await registerSchedulers(a.queue, '0 */3 * * *');
       const schedulers = await a.queue.getJobSchedulers();
-      expect(schedulers.map((s) => s.key).sort()).toEqual(['ingest-tick', 'maintenance-daily']);
+      expect(schedulers.map((s) => s.key).sort()).toEqual([
+        'events-cluster',
+        'ingest-tick',
+        'maintenance-daily',
+      ]);
       const tick = schedulers.find((s) => s.key === 'ingest-tick')!;
       expect(tick.pattern).toBe('0 */3 * * *');
       expect(tick.tz).toBe('UTC');

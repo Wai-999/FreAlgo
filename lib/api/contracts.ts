@@ -12,10 +12,21 @@ import { SECTOR_SLUGS } from '@/lib/domain/sectors';
 export const PAGE_SIZE_DEFAULT = 24;
 export const PAGE_SIZE_MAX = 30;
 
-export const SORTS = ['newest', 'oldest', 'outlet', 'relevance'] as const;
+export const SORTS = ['newest', 'oldest', 'alphabetical', 'outlet', 'relevance'] as const;
 export type Sort = (typeof SORTS)[number];
 
 export const PERIODS = ['any', '24h', '3d', '7d', '30d', '365d'] as const;
+
+/**
+ * Country scope (FreAlgo 2.0): `about` (default) = stories about the country (text evidence or the
+ * feed's declared scope); `all` also includes stories from publishers based there.
+ */
+export const SCOPES = ['about', 'all'] as const;
+export type Scope = (typeof SCOPES)[number];
+
+/** Article type filter; `unknown` = the publisher gave no signal. */
+export const ARTICLE_TYPES = ['news', 'opinion', 'analysis', 'unknown'] as const;
+export type ArticleTypeSlug = (typeof ARTICLE_TYPES)[number];
 export type Period = (typeof PERIODS)[number];
 
 const toArray = (v: unknown) => (v === undefined ? undefined : Array.isArray(v) ? v : [v]);
@@ -51,6 +62,10 @@ export const articleQuerySchema = z
     orientation: multi(orientation, ORIENTATIONS.length),
     language: multi(lang, 10),
     period: z.enum(PERIODS).optional(),
+    scope: z.enum(SCOPES).optional(),
+    type: multi(z.enum(ARTICLE_TYPES), ARTICLE_TYPES.length),
+    /** Presentation only (reading depth); ignored by the APIs. */
+    depth: z.enum(['quick', 'deep', 'original']).optional(),
     from: date.optional(),
     to: date.optional(),
     sort: z.enum(SORTS).optional(),
@@ -126,6 +141,9 @@ export function toSearchParams(
   );
   add('language', q.language);
   add('period', q.period);
+  add('scope', q.scope);
+  add('type', q.type);
+  add('depth', q.depth);
   add('from', q.from);
   add('to', q.to);
   add('sort', q.sort);

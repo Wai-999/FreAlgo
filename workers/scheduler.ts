@@ -1,5 +1,7 @@
 import type { PrismaClient } from '@/generated/prisma/client';
 import {
+  EVENTS_CRON,
+  EVENTS_SCHEDULER_ID,
   FETCH_JOB_OPTIONS,
   MAINTENANCE_SCHEDULER_ID,
   TICK_SCHEDULER_ID,
@@ -79,5 +81,10 @@ export async function registerSchedulers(queue: SchedulerQueue, cron: string): P
     MAINTENANCE_SCHEDULER_ID,
     { pattern: '17 4 * * *', tz: 'UTC' },
     { name: 'maintenance' },
+  );
+  await queue.upsertJobScheduler(
+    EVENTS_SCHEDULER_ID,
+    { pattern: EVENTS_CRON, tz: 'UTC' },
+    { name: 'cluster-events' },
   );
 }

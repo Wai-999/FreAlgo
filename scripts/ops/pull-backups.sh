@@ -17,4 +17,8 @@ rsync -a --ignore-existing -e "ssh -i $KEY -o StrictHostKeyChecking=accept-new" 
 cd "$DEST"
 ls frealgo-*.dump >/dev/null 2>&1 || { echo "no backups on the server yet"; exit 0; }
 shasum -a 256 -c frealgo-*.dump.sha256
+# Backups taken automatically before each deploy (scripts/ops/server-setup.sh).
+if ls pre-deploy/frealgo-*.dump >/dev/null 2>&1; then
+  (cd pre-deploy && shasum -a 256 -c frealgo-*.dump.sha256)
+fi
 echo "$(ls frealgo-*.dump | wc -l | tr -d ' ') backups in $DEST (newest: $(ls -1t frealgo-*.dump | head -1))"

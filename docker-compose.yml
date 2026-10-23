@@ -1,7 +1,7 @@
 # One-command local stack: `docker compose up --build`
 # Services: postgres, redis, migrate (one-shot: migrations + seed), web, worker.
 # Ports bind to 127.0.0.1 only. Credentials here are local-development defaults; production
-# deployments must supply their own via environment/secret management (see docs/operations.md).
+# deployments must supply their own via environment/secret management (see docs/operations/runbook.md).
 
 name: frealgo
 

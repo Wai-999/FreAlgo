@@ -1,3 +1,4 @@
+import { SORT_EXPLANATION } from '@/lib/explore/params';
 import type { NextRequest } from 'next/server';
 import { articleQuerySchema } from '@/lib/api/contracts';
 import { ApiError, parseSearchParams } from '@/lib/api/handler';
@@ -19,14 +20,7 @@ export async function articlesResponse(req: NextRequest, overrides: { country?: 
       ...result,
       ordering: {
         sort: result.page.sort,
-        explanation:
-          result.page.sort === 'relevance'
-            ? 'Ordered by how closely the headline and excerpt match your words (text relevance only, never popularity, engagement or political lean); ties broken by newest first.'
-            : result.page.sort === 'outlet'
-              ? 'Ordered alphabetically by outlet name, then newest first.'
-              : result.page.sort === 'oldest'
-                ? 'Ordered by publication time, oldest first.'
-                : 'Ordered by publication time, newest first.',
+        explanation: SORT_EXPLANATION[result.page.sort],
       },
     };
   } catch (err) {

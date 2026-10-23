@@ -4,6 +4,7 @@ import { Badge } from '@/components/ui/badge';
 import { getPrisma } from '@/lib/db/client';
 import { FRESHNESS_LABEL, getFreshnessReport, type FreshnessState } from '@/lib/db/freshness';
 import { getEnv } from '@/lib/env';
+import { getSourceQuality, type SourceQuality } from '@/lib/db/quality';
 import { formatAge, formatUtc } from '@/lib/format';
 
 export const metadata: Metadata = { title: 'Feed freshness' };
@@ -17,8 +18,75 @@ const TONE: Record<FreshnessState, 'success' | 'danger' | 'warning' | 'neutral'>
   fixture: 'neutral',
 };
 
+const pct = (x: number) => `${Math.round(x * 100)} %`;
+const orDash = (x: number | null, unit: string) => (x === null ? '—' : `${x} ${unit}`);
+
+/** Measured source-quality figures, each with its window (spec §12 dashboard). */
+function qualityRows(q: SourceQuality): [string, string, string][] {
+  const langs = Object.entries(q.articles7d.languages)
+    .sort((a, b) => b[1] - a[1])
+    .map(([l, n]) => `${l} ${n}`)
+    .join(', ');
+  return [
+    [
+      'Enabled sources',
+      `${q.sources.enabled}`,
+      `${q.sources.reachable} reachable at last attempt; ${q.sources.failing} failing; ${q.sources.paused} paused`,
+    ],
+    [
+      'Countries with stories about them',
+      `${q.coverage.countriesAbout24h} (24 h) · ${q.coverage.countriesAbout7d} (7 days)`,
+      `Publishers’ home countries are not counted. Enabled sources are based in ${q.coverage.countriesWithEnabledSource} countries.`,
+    ],
+    [
+      'Stories, last 7 days',
+      `${q.articles7d.total}`,
+      langs ? `By language: ${langs}` : 'No stories in this window',
+    ],
+    [
+      'Duplicate ratio',
+      pct(q.articles7d.duplicateRatio),
+      'Stories whose headline and excerpt also appear on another stored story',
+    ],
+    [
+      'Not linked to any country',
+      pct(q.articles7d.withoutAboutCountry),
+      'No country named in the headline or excerpt and no feed scope',
+    ],
+    [
+      'No sector',
+      pct(q.articles7d.withoutSector),
+      'No sector rule, category or feed default applied',
+    ],
+    [
+      'Type not signalled',
+      pct(q.articles7d.typeUnknown),
+      'Publisher gave no opinion/analysis signal (normal for most news)',
+    ],
+    [
+      'Newest story per source',
+      `median ${orDash(q.freshness.newestArticleAgeHoursP50, 'h')} · p90 ${orDash(q.freshness.newestArticleAgeHoursP90, 'h')}`,
+      'Age of each enabled source’s newest story',
+    ],
+    [
+      'Time to visible',
+      `median ${orDash(q.freshness.timeToVisibleMinutesP50, 'min')} · p90 ${orDash(q.freshness.timeToVisibleMinutesP90, 'min')}`,
+      'From publication to first seen by FreAlgo (feeds are fetched every 3 hours)',
+    ],
+    [
+      'Fetch runs, last 24 h',
+      `${q.ingestion24h.runs}`,
+      `${q.ingestion24h.failed} failed; ${q.ingestion24h.retried} were retries`,
+    ],
+  ];
+}
+
 export default async function StatusPage() {
-  const report = await getFreshnessReport(getPrisma(), { includeFixtures: getEnv().SHOW_FIXTURES });
+  const opts = { includeFixtures: getEnv().SHOW_FIXTURES };
+  const [report, quality] = await Promise.all([
+    getFreshnessReport(getPrisma(), opts),
+    getSourceQuality(getPrisma(), opts),
+  ]);
   return (
     <div>
       <h1 className="text-3xl font-semibold tracking-tight">Feed freshness</h1>
@@ -43,7 +111,52 @@ export default async function StatusPage() {
           </li>
         ))}
       </ul>
-      <div className="mt-6 overflow-x-auto rounded-lg border border-border">
+      <h2 id="quality" className="mt-10 text-xl font-semibold">
+        Source quality
+      </h2>
+      <p className="measure mt-2 text-sm text-muted">
+        Measured from stored stories at {formatUtc(quality.generatedAt)}. These describe what
+        FreAlgo has ingested, not the world: a country with no stories here may still have plenty of
+        news. Also available as JSON at <code>/api/v1/sources/health</code>.
+      </p>
+      <div
+        className="mt-3 overflow-x-auto rounded-lg border border-border"
+        role="region"
+        aria-label="Source quality"
+        tabIndex={0}
+      >
+        <table className="w-full min-w-[560px] text-left text-sm" data-testid="source-quality">
+          <caption className="sr-only">Source quality measures</caption>
+          <thead className="bg-surface text-muted">
+            <tr>
+              <th scope="col" className="px-3 py-2 font-medium">
+                Measure
+              </th>
+              <th scope="col" className="px-3 py-2 font-medium">
+                Value
+              </th>
+              <th scope="col" className="px-3 py-2 font-medium">
+                What it means
+              </th>
+            </tr>
+          </thead>
+          <tbody>
+            {qualityRows(quality).map(([measure, value, note]) => (
+              <tr key={measure} className="border-t border-border">
+                <th scope="row" className="px-3 py-2 font-medium text-text">
+                  {measure}
+                </th>
+                <td className="px-3 py-2 whitespace-nowrap">{value}</td>
+                <td className="px-3 py-2 text-muted">{note}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+      <h2 id="sources" className="mt-10 text-xl font-semibold">
+        Sources
+      </h2>
+      <div className="mt-3 overflow-x-auto rounded-lg border border-border">
         <table className="w-full min-w-[720px] text-left text-sm">
           <caption className="sr-only">Per-source freshness</caption>
           <thead className="bg-surface text-muted">

@@ -1,7 +1,7 @@
 import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 
-const svg = readFileSync('public/geo/world-map.v2.svg', 'utf8');
+const svg = readFileSync('public/geo/world-map.v3.svg', 'utf8');
 
 describe('static flat-map asset', () => {
   const links = [...svg.matchAll(/<a ([^>]*)>/g)].map((m) => m[1]!);

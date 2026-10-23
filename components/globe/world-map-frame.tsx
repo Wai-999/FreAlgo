@@ -5,7 +5,7 @@ import { useCallback, useEffect, useMemo, useRef } from 'react';
 import { FOCUS_SHEET_KEY } from '@/components/news/country-sheet';
 import { useWorkspaceNav } from '@/components/news/nav-anchor';
 
-export const WORLD_MAP_URL = '/geo/world-map.v2.svg';
+export const WORLD_MAP_URL = '/geo/world-map.v3.svg';
 
 /**
  * Flat 2D map (no-JS / no-WebGL fallback and globe skeleton), embedded from a static, immutable
