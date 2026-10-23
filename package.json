@@ -44,7 +44,7 @@
     "@prisma/adapter-pg": "7.10.1",
     "@prisma/client": "7.10.1",
     "@react-three/fiber": "9.8.2",
-    "bullmq": "5.81.5",
+    "bullmq": "6.3.16",
     "d3-geo": "3.1.1",
     "fast-xml-parser": "5.11.2",
     "ioredis": "5.11.1",
