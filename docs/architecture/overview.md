@@ -120,7 +120,7 @@ pages. Orientation is shown with a marker on a five-tick line plus text, never w
 
 ```text
 page.tsx (server) ──▶ GlobeStage (client) ──┬─▶ children: server-rendered SVG map (SSR, no-JS, fallback)
-                                            └─▶ next/dynamic(GlobeCanvas, { ssr: false })   ← loaded only when:
+                                            └─▶ React.lazy(GlobeView → GlobeCanvas)   ← loaded only when:
                                                   stage visible (IntersectionObserver) ∧ preference on
                                                   ∧ WebGL ok (failIfMajorPerformanceCaveat probe) or user opt-in
 ```

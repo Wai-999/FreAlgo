@@ -1,8 +1,6 @@
-'use client';
-
 import { useId } from 'react';
 import { ORIENTATIONS, ORIENTATION_INFO, orientationToSlug } from '@/lib/domain/orientation';
-import { NavAnchor, useGetFormSubmit } from './nav-anchor';
+import { GetForm, NavAnchor } from './nav-anchor';
 
 export interface FilterFormValues {
   q?: string;
@@ -23,6 +21,7 @@ export interface FilterFormValues {
 /**
  * Transparent, explicit filters as a GET form (works without JavaScript). Choices are
  * reversible; "Reset" clears everything. Nothing is applied that the user did not choose.
+ * Server-rendered; only the form element (client navigation on submit) ships JavaScript.
  */
 export function FilterForm({
   action,
@@ -53,20 +52,13 @@ export function FilterForm({
   showScope?: boolean;
 }) {
   const id = useId();
-  const onSubmit = useGetFormSubmit(action);
   const has = (list: string[] | undefined, v: string) => !!list?.includes(v);
   const fieldset = 'space-y-1 rounded-md border border-border p-3';
   const legend = 'px-1 text-sm font-medium text-text';
   const check = 'flex min-h-11 items-center gap-3 text-sm text-text';
 
   return (
-    <form
-      action={action}
-      method="get"
-      onSubmit={onSubmit}
-      className="space-y-4"
-      data-testid="filter-form"
-    >
+    <GetForm action={action} className="space-y-4" data-testid="filter-form">
       {Object.entries(hidden).map(([k, v]) =>
         v ? <input key={k} type="hidden" name={k} value={v} /> : null,
       )}
@@ -321,6 +313,6 @@ export function FilterForm({
           Reset filters
         </NavAnchor>
       </div>
-    </form>
+    </GetForm>
   );
 }

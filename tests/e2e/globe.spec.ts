@@ -254,4 +254,7 @@ test('offline or flaky network: a globe that cannot be downloaded falls back to 
   await expect(
     page.getByTestId('country-sheet').getByRole('heading', { name: 'Myanmar', exact: true }),
   ).toBeVisible();
+  // The now-visible stage may be fetching the globe chunk in the background; stop intercepting
+  // so teardown does not race the route handler.
+  await page.unrouteAll({ behavior: 'ignoreErrors' });
 });

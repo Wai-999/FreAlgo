@@ -77,11 +77,11 @@ only JavaScript can reveal.
 
 ## ADR-007 One 3D engine: React Three Fiber + Three.js
 
-**Decision.** R3F (not Globe.gl) behind `next/dynamic({ ssr: false })`. The globe texture is drawn
-from the same Natural Earth vectors, so no texture download is needed. Picking intersects the ray
-with the sphere analytically, converts to lon/lat and runs a point-in-polygon lookup, which is
-deterministic and unit-testable. The server-rendered SVG map is both the SSR skeleton and the
-WebGL fallback.
+**Decision.** R3F (not Globe.gl), loaded on the client only (`React.lazy`, see ADR-027). The
+globe texture is drawn from the same Natural Earth vectors, so no texture download is needed.
+Picking intersects the ray with the sphere analytically, converts to lon/lat and runs a
+point-in-polygon lookup, which is deterministic and unit-testable. The server-rendered SVG map is
+both the SSR skeleton and the WebGL fallback.
 
 ## ADR-008 Real sources start paused; fixtures are explicit
 
@@ -203,11 +203,13 @@ traffic requires it.
 
 ## ADR-021 Versioned immutable static assets
 
-**Decision.** Static map assets carry a version in the file name (`world-map.v2.svg`) and are
+**Decision.** Static map assets carry a version in the file name (`world-map.v4.svg`) and are
 served `immutable` for a week. Any change to the generated output bumps the version: an in-place
 change would leave cached browsers on the old file. v2 declares `color-scheme: dark`, because
 browsers paint an opaque white backdrop behind an iframe whose color scheme differs from the
-page's.
+page's. v3 takes the FreAlgo 2.0 accent for hovered and selected countries. v4 (LCP follow-up)
+encodes paths as relative commands on an integer 1920×1000 grid (`lib/geo/svg-path.ts`), 43 → 18
+KB gzipped.
 
 ## ADR-022 Event clustering is lexical, deterministic and join-only (FreAlgo 2.0, M4)
 
@@ -283,3 +285,28 @@ a pure code change. Dropping columns under pressure is where rollbacks lose data
 **Consequences.** v2 tables stay in the database after a rollback, unused and harmless. A later
 v2 re-release needs no migration. The full schema rollback was rehearsed (0.27 s, forward again
 identical) so it is available when needed.
+
+## ADR-027 First-load budget for the Explore page
+
+**Context.** Lighthouse's simulated mobile LCP counts every byte that downloads, and every script
+that starts running, before the first paint. With framework chunks at ~131 KB gzipped, the app's
+own first-load code decides whether `/` meets the 2.5 s target (`docs/performance.md`).
+
+**Decision.** The Explore page ships ~18 KB of app JavaScript on first load:
+
+- No animation library. The country sheet animates with CSS, so the global reduced-motion rules
+  cover it, and its mobile drag handle uses pointer events.
+- Everything used only by the 3D globe (three.js, d3-geo, controls, quality tiers) lives in the
+  lazy globe chunk, loaded with `React.lazy`. `next/dynamic` is not used for client-only widgets
+  because its SSR and preload runtime would join the first load.
+- Components that need JavaScript only on a wrapper are server-rendered around a small client
+  element (`GetForm` for the filter form).
+- Data that several client components need is passed as one shared object, which the RSC payload
+  serializes once.
+- A list that must work without JavaScript but is filtered on the client (the country list) stays
+  a client component when its props are smaller than its markup. RSC serializes server-component
+  output into the payload as well as the HTML, so server-rendering 250 entries would cost more
+  bytes than the JavaScript it saves.
+
+`npm run perf:budget` enforces the resulting sizes in CI (`docs/performance.md`, "Margin and
+budget").

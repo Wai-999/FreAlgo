@@ -14,7 +14,7 @@ check countries     /api/v1/countries                '"iso2":"MM"'
 check articles      '/api/v1/countries/KE/articles?limit=1' '"page"'
 check search        '/api/v1/articles/search?q=a&limit=1'   '"ordering"'
 check home          /                                'Explore news by country'
-check map-asset     /geo/world-map.v3.svg            'data-iso2'
+check map-asset     /geo/world-map.v4.svg            'data-iso2'
 check sources       /sources                         'Source registry'
 hdr="$(curl -fsSI --max-time 15 "$BASE/" | tr -d '\r')"
 echo "$hdr" | grep -qi "content-security-policy: .*frame-ancestors 'none'" && echo "ok   csp" || { echo "FAIL csp header"; fail=1; }

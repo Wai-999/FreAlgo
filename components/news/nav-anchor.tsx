@@ -9,6 +9,7 @@ import {
   useTransition,
   type AnchorHTMLAttributes,
   type FormEvent,
+  type FormHTMLAttributes,
   type ReactNode,
 } from 'react';
 
@@ -70,6 +71,25 @@ export function NavAnchor({
     >
       {children}
     </a>
+  );
+}
+
+/**
+ * A GET form (works without JavaScript) that submits as a client navigation. Only the <form>
+ * element is a client component, so its fields can stay server-rendered.
+ */
+export function GetForm({
+  action,
+  children,
+  ...rest
+}: Omit<FormHTMLAttributes<HTMLFormElement>, 'action' | 'method' | 'onSubmit'> & {
+  action: string;
+}) {
+  const onSubmit = useGetFormSubmit(action);
+  return (
+    <form action={action} method="get" onSubmit={onSubmit} {...rest}>
+      {children}
+    </form>
   );
 }
 

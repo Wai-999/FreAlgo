@@ -33,21 +33,17 @@ export default async function ExplorePage({
   const viewHref = (v: 'map' | 'list') =>
     exploreHref({ ...query, cursor: undefined }, { view: v === 'list' ? 'list' : null });
 
-  const pickerCountries = countries.map((c) => ({
+  // One array for the country list and the globe: the RSC payload serializes a shared object once.
+  const mapCountries = countries.map((c) => ({
     iso2: c.iso2,
     iso3: c.iso3,
+    isoNumeric: c.isoNumeric,
     name: c.name,
     region: c.region,
     articleCount: c.articleCount,
     outletCount: c.outletCount,
   }));
   const countriesWithNews = countries.filter((c) => c.articleCount > 0).map((c) => c.iso2);
-  const globeCountries = countries.map((c) => ({
-    iso2: c.iso2,
-    isoNumeric: c.isoNumeric,
-    name: c.name,
-    articleCount: c.articleCount,
-  }));
   const covered = countries.filter((c) => c.outletCount > 0).length;
   const switchClass = (active: boolean) =>
     `flex min-h-11 flex-1 items-center justify-center gap-2 rounded-md border text-sm no-underline ${
@@ -97,7 +93,7 @@ export default async function ExplorePage({
           className={`${view === 'list' ? 'block' : 'hidden'} h-[calc(100dvh-var(--header-h)-61px)] border-border bg-bg lg:sticky lg:top-[var(--header-h)] lg:block lg:h-[calc(100dvh-var(--header-h))] lg:border-r`}
         >
           <CountryPicker
-            countries={pickerCountries}
+            countries={mapCountries}
             selectedIso2={selected?.iso2 ?? null}
             hrefBase={hrefBase}
           />
@@ -111,7 +107,7 @@ export default async function ExplorePage({
           className={`relative min-h-[60dvh] overflow-hidden outline-none lg:h-[calc(100dvh-var(--header-h))] ${view === 'list' ? 'hidden lg:block' : ''}`}
         >
           <GlobeStage
-            countries={globeCountries}
+            countries={mapCountries}
             selectedIso2={selected?.iso2 ?? null}
             hrefBase={hrefBase}
             insetRight={!!selected}

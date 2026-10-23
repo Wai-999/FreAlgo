@@ -22,26 +22,118 @@ node scripts/perf/profile-globe.mjs http://127.0.0.1:3000
 
 ## Lighthouse (mobile, simulated slow 4G + 4× CPU)
 
-| Page                                                             | Perf        | A11y | Best practices | SEO | LCP          | TBT          | CLS   |
-| ---------------------------------------------------------------- | ----------- | ---- | -------------- | --- | ------------ | ------------ | ----- |
-| Home, before optimisation                                        | 71          | 100  | 96             | 100 | 3.24 s       | 944 ms       | 0     |
-| Home, after optimisation                                         | **92**      | 100  | 100            | 100 | 2.85 s       | 214 ms       | 0     |
-| Country sheet `/?country=MM&sector=agriculture` (before → after) | 91 → **95** | 100  | 96 → 100       | 100 | 3.26 → 2.8 s | 134 → 110 ms | 0.025 |
-| Search `/search?q=rice`                                          | **99**      | 100  | 100            | 100 | 2.17 s       | 18 ms        | 0.007 |
+| Page                                                                                          | Perf             | A11y | Best practices | SEO | LCP                     | TBT                | CLS   |
+| --------------------------------------------------------------------------------------------- | ---------------- | ---- | -------------- | --- | ----------------------- | ------------------ | ----- |
+| Home, before optimisation                                                                     | 71               | 100  | 96             | 100 | 3.24 s                  | 944 ms             | 0     |
+| Home, after Milestone 5 optimisation                                                          | 92               | 100  | 100            | 100 | 2.85 s                  | 214 ms             | 0     |
+| Home, after the LCP follow-up                                                                 | **97**           | 100  | 100            | 100 | **2.26 s**              | 148 ms             | 0     |
+| Country sheet `/?country=MM&sector=agriculture` (before → after M5 → after the LCP follow-up) | 91 → 95 → **96** | 100  | 96 → 100 → 100 | 100 | 3.26 → 2.8 → **2.34 s** | 134 → 110 → 145 ms | 0.025 |
+| Search `/search?q=rice`                                                                       | **99**           | 100  | 100            | 100 | 2.18 s                  | 24 ms              | 0.007 |
 
-**Gap against the SLO.** Simulated mobile LCP is 2.8–2.85 s on the two map pages, against a
-< 2.5 s target. The LCP element is a small server-rendered text caption that actually paints in
-~80 ms unthrottled (Lighthouse observed trace: TTFB 11 ms + render delay 67 ms). Lighthouse's
-simulation attributes the remaining time to main-thread JavaScript under 4× CPU throttling. The
-next steps are to ship less client JavaScript on `/`: server-render the country list and hydrate
-only its search box, and replace the sheet's Motion transitions with CSS. They are listed in the
-release report.
+These rows are v1 builds (2026-10-20). Four runs of the same build gave home 2.25–2.33 s and
+country sheet 2.32–2.34 s; the build before the follow-up, re-measured the same day, gave 2.85 s
+and 2.94 s. TBT varies by about ±40 ms between runs.
 
-### What changed between "before" and "after"
+### On FreAlgo 2.0 (2026-10-23)
+
+The follow-up was ported to v2 together with its CI budget. Same machine, three runs per build
+(`docs/audit/lighthouse-explore-lcp-v2/summary.md`; the last run is in `reports/lighthouse/`):
+
+| Page          | Median LCP, `main` before the port | Median LCP, after | Perf    | Transfer     |
+| ------------- | ---------------------------------- | ----------------- | ------- | ------------ |
+| Home          | 2.93 s                             | **2.32 s**        | 93 → 96 | 564 → 483 KB |
+| Country sheet | 2.94 s                             | **2.33 s**        | 92 → 97 | 574 → 494 KB |
+
+The other pages are unchanged (search, Stories, Discover, Story Mode, Perspectives: 2.03–2.18
+s). Accessibility stays 100. Production served Explore at 1.23 s before the port
+(`docs/audit/lighthouse-production-v2/summary.md`); local runs lack Caddy compression and HTTP/2.
+
+### LCP follow-up: closing the gap
+
+**Why the simulated LCP was 2.8 s.** The LCP element is a small server-rendered caption (home)
+or story text (country sheet) that is painted in the first frame. Lighthouse's simulation
+(Lantern) estimates LCP from every request that finished, and every script that started running,
+before the _observed_ LCP. On a local server the async Next.js chunks arrive within ~20 ms and run
+before that first frame is presented (~57 ms), so all of them count, and so does the map iframe.
+The estimate is then the time to download every first-load byte over 1.6 Mbit/s, in 150 ms round
+trips on parallel connections, plus the React chunk's evaluation at 4× CPU. Hydration work is not
+part of it. The lever is therefore **bytes downloaded before the first paint**, not hydration.
+
+**What changed** (gzipped sizes):
+
+1. **Motion removed (−45 KB).** Under Turbopack its "lazy" animation and drag features were in the
+   initial chunk anyway. The country sheet now uses CSS animations (`.country-sheet` in
+   `app/globals.css`) and a pointer-events drag handle; the exit animation runs before the sheet
+   unmounts. The global reduced-motion rules apply, so the in-app motion setting is now honoured
+   as well as the OS one.
+2. **d3-geo and topojson-client out of the first load (−6 KB).** `GlobeStage` imported two small
+   helpers from `lib/geo/globe-math`; device-quality helpers now live in
+   `lib/geo/globe-quality.ts`.
+3. **Globe controls in the lazy globe chunk.** Keyboard control, hover label, announcements and
+   the quality tier moved into `components/globe/globe-view.tsx`, loaded with three.js.
+   `React.lazy` replaces `next/dynamic`, whose SSR and preload runtime was in the first load.
+4. **Filter fields server-rendered.** Only the `<form>` element (client navigation on submit) is
+   a client component (`GetForm`); the fields still work without JavaScript.
+5. **One country array for the list and the globe.** The RSC payload serializes a shared object
+   once (home HTML 19.4 → 17.7 KB).
+6. **Flat map v4 (43 → 18 KB).** Paths use relative commands on an integer 1920×1000 grid
+   (`lib/geo/svg-path.ts`). That is half a unit of the old 960×500 one-decimal grid, below a pixel
+   at the largest display size (1200 px); screenshots at that size are indistinguishable. The
+   encoding itself is lossless and unit-tested. World Pulse draws the same paths on the server
+   (`lib/geo/map-paths.ts`), so its viewBox follows the new grid.
+
+On v1, first-load scripts went from 10 requests and 208 KB to 8 requests and 149 KB. The app's own
+share went from ~77 KB to ~18 KB; the rest is Next.js and React.
+
+**Considered and not done.**
+
+- _Server-rendering the country list with a small search island._ RSC serializes server-component
+  output into the page payload as well as the HTML. The 250 rendered entries would add ~7 KB to
+  every Explore response, where the client list's props cost 3.7 KB, so the HTML would grow by
+  ~3.7 KB to save ~1 KB of JavaScript. Hydration, the part this would have saved, is not in the
+  LCP estimate.
+- _`loading="lazy"` on the map iframe._ Chromium still fetched it before the first frame.
+- _Mounting the map only after hydration_ (with a `<noscript>` copy). It would leave the critical
+  window, but on slow connections the map would no longer work before scripts arrive.
+
+**Margin and budget.** The estimate moves in 150 ms round-trip steps. Replaying saved Lighthouse
+artifacts with edited transfer sizes showed that, with today's framework chunks, the Explore page
+chunk must stay under ~10 KB on the wire and the map under ~20 KB for the current result. A new
+first-load dependency of a few KB can bring back the 2.5 s boundary.
+
+`npm run perf:budget` (`scripts/perf/first-load-budget.mjs`) checks this after the build, both in
+`npm run ci` and in the CI end-to-end job. It starts the standalone server and reads which
+scripts, stylesheets and iframes the HTML of `/` and `/?country=MM&sector=agriculture` loads
+(`nomodule` polyfills excluded). It gzips each one at zlib's default level, which is byte for byte
+what the server sends, prints a table, and fails when a budget is exceeded:
+
+| Budget (gzipped body, 1 KB = 1000 bytes)                            | Limit  | FreAlgo 2.0 (2026-10-23) | Before the port |
+| ------------------------------------------------------------------- | ------ | ------------------------ | --------------- |
+| Page entry chunk(s)                                                 | 9.5 KB | 8.86 KB                  | 69.2 KB         |
+| App JS: all first-load JS except the framework chunks               | 20 KB  | 16.75 KB                 | 77.1 KB         |
+| Total first-load JS                                                 | 155 KB | 148.7 KB                 | 209.0 KB        |
+| CSS                                                                 | 9 KB   | 8.48 KB                  | 8.34 KB         |
+| Map iframe (`/geo/world-map.v4.svg`, which a unit test also guards) | 20 KB  | 17.5 KB                  | 43.3 KB (v3)    |
+
+The chunks are classified from the build, not by file hash. Framework chunks are the ones Next.js
+lists as `rootMainFiles` in `.next/build-manifest.json`: React, React DOM, the App Router and the
+Turbopack runtime (131.9 KB). Page entry chunks are the ones the page's client reference manifest
+lists for `app/page` but not for `app/layout`. The layout chunk also carries a few Next.js client
+components (the layout router), so it counts as app code. The page limit of 9.5 KB of body leaves
+room for response headers within ~10 KB on the wire. The HTML documents are listed for reference
+without a budget (home 18.4 KB, country sheet 29.8 KB). As a check, importing a single d3-geo
+function into `GlobeStage` adds 1.2 KB and fails the page budget (10.05 KB); on v1, importing the
+`globe-math` helpers failed three budgets (page 23.7 KB, app 31.5 KB, total 163.4 KB).
+
+When the check fails, move the new code out of the first load (`React.lazy`, or a server
+component). If the code must be in the first load, re-run `scripts/perf/lighthouse.mjs`, and raise
+a budget only if the simulated LCP stays under 2.5 s.
+
+### What changed in Milestone 5 ("before" → "after")
 
 1. **Flat map moved out of the HTML.** The server-rendered SVG map was inlined twice: once as
    markup and once inside the React Server Components payload. It is now a static, immutable
-   `/geo/world-map.v1.svg` (now `v2`) in an iframe. Its links use `target="_top"`, so it still works
+   `/geo/world-map.v1.svg` (now `v4`) in an iframe. Its links use `target="_top"`, so it still works
    without JavaScript. HTML went from 478 KB to 167 KB (112 KB → 20 KB gzipped).
 2. **~430 fewer link components to hydrate.** The 177 map links became static SVG links, and
    the 250 country-list links became plain `<a>` elements with one delegated click handler.
@@ -50,8 +142,8 @@ release report.
    wait for the map iframe). three.js parsing (the 248 KB gzipped lazy chunk) therefore no longer
    competes with first paint or the first interaction.
 4. **Smaller main bundle.** Local preference validation is hand-written, so Zod no longer ships
-   to browsers; the server still uses Zod. Motion's animation and drag features are code-split
-   and load after hydration.
+   to browsers; the server still uses Zod. Motion's animation and drag features were code-split
+   to load after hydration (later removed entirely, see the LCP follow-up above).
 
 ## Globe frame-time profile (SwiftShader, continuous drag rotation)
 
