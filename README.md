@@ -54,6 +54,7 @@ npm run worker:dev              # ingestion worker (separate terminal)
 | `npm run sources:dry-run -- --slug <outlet>`                         | Fetch and parse a real feed without storing anything                |
 | `npm run sources:activate -- --slug <outlet> --reviewer … --notes …` | Record a terms review and activate a feed                           |
 | `npm run perf:lighthouse` / `perf:globe`                             | Lighthouse and globe frame-time profiles (server running)           |
+| `npm run perf:budget`                                                | First-load size budget for `/` after a build (part of `ci`)         |
 | `npm run perf:explain` / `perf:load`                                 | Query plans at 200k synthetic articles (test DB) / API load test    |
 | `scripts/ops/backup.sh`, `restore-drill.sh`                          | Checksummed backups; backup → restore → compare drill               |
 | `scripts/ops/smoke.sh <url>`                                         | Post-deploy smoke test                                              |

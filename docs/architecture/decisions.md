@@ -307,3 +307,6 @@ own first-load code decides whether `/` meets the 2.5 s target (`docs/performanc
   a client component when its props are smaller than its markup. RSC serializes server-component
   output into the payload as well as the HTML, so server-rendering 250 entries would cost more
   bytes than the JavaScript it saves.
+
+`npm run perf:budget` enforces the resulting sizes in CI (`docs/performance.md`, "Margin and
+budget").

@@ -103,6 +103,8 @@ jobs:
       - run: npx prisma migrate deploy
       - run: npm run db:seed
       - run: npm run build
+      - name: First-load budget for / (docs/performance.md)
+        run: npm run perf:budget
       - run: npm run worker:build
       - run: npx playwright install --with-deps chromium webkit firefox
       - run: npm run test:e2e

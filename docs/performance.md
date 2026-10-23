@@ -86,9 +86,36 @@ share went from ~77 KB to ~18 KB; the rest is Next.js and React.
 
 **Margin and budget.** The estimate moves in 150 ms round-trip steps. Replaying saved Lighthouse
 artifacts with edited transfer sizes showed that, with today's framework chunks, the Explore page
-chunk must stay under ~10 KB and the map under ~20 KB for the current result. A unit test guards
-the map size. A new first-load dependency of a few KB can bring back the 2.5 s boundary, so re-run
-`scripts/perf/lighthouse.mjs` after adding client code to `/`.
+chunk must stay under ~10 KB on the wire and the map under ~20 KB for the current result. A new
+first-load dependency of a few KB can bring back the 2.5 s boundary.
+
+`npm run perf:budget` (`scripts/perf/first-load-budget.mjs`) checks this after the build, both in
+`npm run ci` and in the CI end-to-end job. It starts the standalone server and reads which
+scripts, stylesheets and iframes the HTML of `/` and `/?country=MM&sector=agriculture` loads
+(`nomodule` polyfills excluded). It gzips each one at zlib's default level, which is byte for byte
+what the server sends, prints a table, and fails when a budget is exceeded:
+
+| Budget (gzipped body, 1 KB = 1000 bytes)                            | Limit  | FreAlgo 2.0 (2026-10-23) | Before the port |
+| ------------------------------------------------------------------- | ------ | ------------------------ | --------------- |
+| Page entry chunk(s)                                                 | 9.5 KB | 8.86 KB                  | 69.2 KB         |
+| App JS: all first-load JS except the framework chunks               | 20 KB  | 16.75 KB                 | 77.1 KB         |
+| Total first-load JS                                                 | 155 KB | 148.7 KB                 | 209.0 KB        |
+| CSS                                                                 | 9 KB   | 8.48 KB                  | 8.34 KB         |
+| Map iframe (`/geo/world-map.v4.svg`, which a unit test also guards) | 20 KB  | 17.5 KB                  | 43.3 KB (v3)    |
+
+The chunks are classified from the build, not by file hash. Framework chunks are the ones Next.js
+lists as `rootMainFiles` in `.next/build-manifest.json`: React, React DOM, the App Router and the
+Turbopack runtime (131.9 KB). Page entry chunks are the ones the page's client reference manifest
+lists for `app/page` but not for `app/layout`. The layout chunk also carries a few Next.js client
+components (the layout router), so it counts as app code. The page limit of 9.5 KB of body leaves
+room for response headers within ~10 KB on the wire. The HTML documents are listed for reference
+without a budget (home 18.4 KB, country sheet 29.8 KB). As a check, importing a single d3-geo
+function into `GlobeStage` adds 1.2 KB and fails the page budget (10.05 KB); on v1, importing the
+`globe-math` helpers failed three budgets (page 23.7 KB, app 31.5 KB, total 163.4 KB).
+
+When the check fails, move the new code out of the first load (`React.lazy`, or a server
+component). If the code must be in the first load, re-run `scripts/perf/lighthouse.mjs`, and raise
+a budget only if the simulated LCP stays under 2.5 s.
 
 ### What changed in Milestone 5 ("before" → "after")
 
