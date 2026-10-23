@@ -1,5 +1,10 @@
 # Staged rollout plan (FreAlgo 2.0)
 
+> **What happened (2026-10-23).** The owner chose a single-step release with all launch features
+> on. Stage 3's dry run was still done before any event was published. It caught wrong groupings,
+> so events and Perspectives were switched off, the method was fixed (v2), and they were switched
+> back on about 15 minutes later. Details: `docs/release/final-report.md` §5.
+
 FreAlgo runs on one server, so "staged" means switching v2 on in steps with the feature flags,
 checking each step on real traffic and data before the next. Every step can be undone with
 `docs/release/rollback.md`. **Nothing here has been run on production; it needs the owner's

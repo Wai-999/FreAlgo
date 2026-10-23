@@ -4,8 +4,12 @@ How to undo the v2 release, fastest and least destructive first. Every level bel
 on 2026-10-23 on a restored copy of production (`frealgo-20261022T023701Z.dump`, checksum
 verified), not on production itself.
 
-Production today: `main` (v1, `161fff1`) on the Oracle A1 server, `https://frealgo.duckdns.org`.
-v2 is the `v2/hybrid` branch.
+Production since 2026-10-23: `v2/hybrid` (FreAlgo 2.0) on the Oracle A1 server,
+`https://frealgo.duckdns.org`. `main` is still v1 (`161fff1`) until PR #9 is merged.
+
+**Until then, every deploy must pass `BRANCH=v2/hybrid`.** A plain
+`scripts/ops/deploy-remote.sh 163.192.8.142 frealgo.duckdns.org` deploys `main`, which is the
+Level 2 rollback below.
 
 ## Before the release (prerequisites)
 

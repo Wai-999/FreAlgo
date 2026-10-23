@@ -3,12 +3,13 @@
 Branch `v2/hybrid` (local; not pushed). Production runs v1 (`main`, `161fff1`) at
 <https://frealgo.duckdns.org>.
 
-## Release status: NOT DEPLOYED
+## Release status: DEPLOYED (2026-10-23)
 
-FreAlgo 2.0 is implemented, tested and rehearsed on a copy of production, but **it is not
-deployed**. The specification and the owner's instructions require approval for a production
-release, and for pushing the branch. The steps are in `docs/release/rollout-plan.md`; the undo
-steps are in `docs/release/rollback.md`.
+The owner approved the release with all launch features on. Production at
+<https://frealgo.duckdns.org> runs `v2/hybrid` at `50e25f8`. Stories, Discover, Perspectives,
+My World, events and timelines are on; Story Journeys, World Pulse and country connections stay
+off until reviewed. `main` (and PR #9) are not merged yet, so deploys pass `BRANCH=v2/hybrid`
+(`docs/release/rollback.md`).
 
 ## 1. Baseline (M1, 2026-10-21)
 
@@ -61,28 +62,37 @@ Rehearsed on the production backup `frealgo-20261022T023701Z.dump` (checksum ver
 
 ## 4. Test results (2026-10-23)
 
-| Gate                                        | Result                                                                                                      |
-| ------------------------------------------- | ----------------------------------------------------------------------------------------------------------- |
-| Format, lint, typecheck                     | pass                                                                                                        |
-| Unit                                        | 231 / 231                                                                                                   |
-| Integration (Postgres, Redis, BullMQ)       | 108 / 108, including crash recovery, restart and a 40-source burst                                          |
-| Build                                       | pass; Docker `migrate`, `web` and `worker` images build                                                     |
-| End to end (Playwright, 5 browser projects) | 210 passed, 47 skipped by design, 0 failed                                                                  |
-| Accessibility                               | axe: 0 serious or critical issues on all v2 pages; Lighthouse accessibility 100                             |
-| Performance (same machine, v1 vs v2)        | v1 pages unchanged; new pages Perf 99, LCP 2.17–2.18 s, TBT ≤ 27 ms, CLS 0; Three.js loads only on Explore  |
-| API latency (10 connections, local)         | p99 ≤ 18 ms for every read API including events and Perspectives; Story Mode HTML p99 65 ms                 |
-| Security                                    | `npm audit --omit=dev`: 0; dev-only `braces` advisory accepted; v2 inputs fuzzed; headers unchanged from v1 |
-| Clustering quality                          | Labelled set: 18/18 pairs, 0 false. Production copy: 7 events, 16 reports, none wrong, 1 borderline         |
+| Gate                                        | Result                                                                                                                                        |
+| ------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------- |
+| Format, lint, typecheck                     | pass                                                                                                                                          |
+| Unit                                        | 231 / 231                                                                                                                                     |
+| Integration (Postgres, Redis, BullMQ)       | 108 / 108, including crash recovery, restart and a 40-source burst                                                                            |
+| Build                                       | pass; Docker `migrate`, `web` and `worker` images build                                                                                       |
+| End to end (Playwright, 5 browser projects) | 210 passed, 47 skipped by design, 0 failed                                                                                                    |
+| Accessibility                               | axe: 0 serious or critical issues on all v2 pages; Lighthouse accessibility 100                                                               |
+| Performance (same machine, v1 vs v2)        | v1 pages unchanged; new pages Perf 99, LCP 2.17–2.18 s, TBT ≤ 27 ms, CLS 0; Three.js loads only on Explore                                    |
+| API latency (10 connections, local)         | p99 ≤ 18 ms for every read API including events and Perspectives; Story Mode HTML p99 65 ms                                                   |
+| Security                                    | `npm audit --omit=dev`: 0; dev-only `braces` advisory accepted; v2 inputs fuzzed; headers unchanged from v1                                   |
+| Clustering quality                          | Method v2. Labelled set: 15/19 pairs, 0 false. Production at release: 18 decisions, 1 wrong (recurring lottery topic, excluded), 1 borderline |
 
-## 5. Live verification
+## 5. Live verification (2026-10-23 UTC)
 
-- **Production (v1) is healthy:** all containers are up and healthy, HTTPS returns 200, and
-  crawlers are being served over HTTP/2 (checked over SSH, read-only, 2026-10-23 00:31 UTC).
-  Pages send a two-year HSTS header.
-- **v2 has not been verified live, because it is not deployed.** The closest evidence is the
-  production-like container rehearsal above.
-- This development environment's network resets TLS connections to the production host, so the
-  post-release Lighthouse run must be done from another machine or through SSH.
+1. **01:52, deploy of `2470c5f`.** Pre-deploy backup written; four migrations applied; 252
+   stories re-tagged ("about" links 135 → 182); the four active feeds re-fetched; smoke test
+   passed from outside.
+2. **01:56, review before publishing events.** A dry run of event grouping on live data (writes
+   nothing) showed 4 wrong groupings of 24 (`docs/data/event-clustering-evaluation.md`,
+   Evaluation 3). Events and Perspectives were switched off (Level 1 rollback) before the hourly
+   job could store any.
+3. **02:04, deploy of `50e25f8` (grouping method v2).** Pre-deploy backup written; smoke test
+   passed. A dry run gave 18 decisions; one grouped two different Mega-Sena draws (a recurring
+   topic).
+4. **02:08, events back on.** 13 events created. The second Mega-Sena report was removed with
+   the audited exclusion tool, leaving 12 visible events, 4 of them covered by two outlets.
+5. **Outside checks.** All five sections in the navigation. `/stories`, `/stories/events`,
+   Story Mode, `/perspectives`, a Perspectives page, `/discover`, `/my-world` and
+   `/api/v1/methodology` return 200 (method v2). `/world-pulse` and `/connections` return 404
+   (flags off). HTTPS pages still send the two-year HSTS header.
 
 ## 6. Remaining blockers and risks
 
@@ -110,11 +120,12 @@ Rehearsed on the production backup `frealgo-20261022T023701Z.dump` (checksum ver
 
 ## 7. Next safe actions
 
-1. Review this report, `docs/release/acceptance.md` and the screenshots in
-   `docs/screenshots/v2/`.
-2. Approve the push; CI runs on GitHub.
-3. Follow the rollout plan:
-   - Stage 1: v2 code with the new sections off, for one ingest cycle.
-   - Stage 2: reading features.
-   - Stage 3: events and Perspectives, after a dry run of the grouping on production data.
-4. After a week: decide on Global Voices, `perf/explore-lcp`, and the off-by-default features.
+1. Watch the first day: `/status` freshness, the hourly `cluster-events` log lines, and
+   `/stories/events`. Remove any wrong grouping with
+   `scripts/cluster-events.ts --exclude <id> --reason … --by …`.
+2. Merge PR #9 into `main` when satisfied, so plain deploys follow v2. Until then, always deploy
+   with `BRANCH=v2/hybrid`.
+3. Run Lighthouse against production from a machine that can reach it, and record the result
+   next to `docs/audit/lighthouse-before/`.
+4. Decide on Global Voices, `perf/explore-lcp` (built on v1; it needs porting to v2) and the
+   off-by-default features.

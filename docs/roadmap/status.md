@@ -1,6 +1,8 @@
 # FreAlgo 2.0 status
 
-Branch `v2/hybrid` (local commits). `main` = production (v1) until the owner approves the rollout.
+Branch `v2/hybrid`. **Deployed to production on 2026-10-23** (owner's approval, all launch
+features): <https://frealgo.duckdns.org> runs `v2/hybrid`. `main` is still v1 until PR #9 is
+merged, so a deploy must pass `BRANCH=v2/hybrid`; a plain deploy would put v1 back.
 Legend: ✅ implemented and tested · 🟡 partial · ⏳ planned · ⛔ blocked (external) · ✖ rejected by
 the feature gate.
 
@@ -73,17 +75,17 @@ the feature gate.
 
 ## M5: Performance, security, deployment and handoff
 
-| Item                                                               | State                                        | Evidence                                                                                                    |
-| ------------------------------------------------------------------ | -------------------------------------------- | ----------------------------------------------------------------------------------------------------------- |
-| Performance measured (same machine, v1 vs v2) and route JavaScript | ✅                                           | `docs/audit/lighthouse-after/summary.md`, `scripts/perf/route-js.mjs`                                       |
-| API load test including event endpoints                            | ✅                                           | `scripts/perf/load-test.mjs`, acceptance M5                                                                 |
-| Globe tuning                                                       | ⛔ owner decision                            | `perf/explore-lcp` branch, not merged                                                                       |
-| Accessibility checks on all v2 pages                               | ✅                                           | `docs/release/accessibility-report.md` §3a                                                                  |
-| Worker crash, restart and load tests                               | ✅                                           | `tests/integration/recovery.test.ts`                                                                        |
-| Security re-check                                                  | ✅                                           | `docs/security-review.md` #6–10                                                                             |
-| Backup and restore rehearsal; production-like container rehearsal  | ✅                                           | acceptance M5, `docs/release/final-report.md` §3                                                            |
-| Rollback plan, rehearsed                                           | ✅                                           | `docs/release/rollback.md`, `prisma/rollbacks/v2-all.down.sql`                                              |
-| Staged rollout plan                                                | ✅                                           | `docs/release/rollout-plan.md`                                                                              |
-| Pre-deploy backups; flags in production Compose                    | ✅                                           | `scripts/ops/server-setup.sh`, `deploy/docker-compose.prod.yml`                                             |
-| Runbook, README, decisions, final report                           | ✅                                           | `docs/operations/runbook.md`, `README.md`, `docs/architecture/decisions.md`, `docs/release/final-report.md` |
-| Production release                                                 | ⛔ **NOT DEPLOYED**, awaiting owner approval | `docs/release/rollout-plan.md`                                                                              |
+| Item                                                               | State                                                  | Evidence                                                                                                    |
+| ------------------------------------------------------------------ | ------------------------------------------------------ | ----------------------------------------------------------------------------------------------------------- |
+| Performance measured (same machine, v1 vs v2) and route JavaScript | ✅                                                     | `docs/audit/lighthouse-after/summary.md`, `scripts/perf/route-js.mjs`                                       |
+| API load test including event endpoints                            | ✅                                                     | `scripts/perf/load-test.mjs`, acceptance M5                                                                 |
+| Globe tuning                                                       | ⛔ owner decision                                      | `perf/explore-lcp` branch, not merged                                                                       |
+| Accessibility checks on all v2 pages                               | ✅                                                     | `docs/release/accessibility-report.md` §3a                                                                  |
+| Worker crash, restart and load tests                               | ✅                                                     | `tests/integration/recovery.test.ts`                                                                        |
+| Security re-check                                                  | ✅                                                     | `docs/security-review.md` #6–10                                                                             |
+| Backup and restore rehearsal; production-like container rehearsal  | ✅                                                     | acceptance M5, `docs/release/final-report.md` §3                                                            |
+| Rollback plan, rehearsed                                           | ✅                                                     | `docs/release/rollback.md`, `prisma/rollbacks/v2-all.down.sql`                                              |
+| Staged rollout plan                                                | ✅                                                     | `docs/release/rollout-plan.md`                                                                              |
+| Pre-deploy backups; flags in production Compose                    | ✅                                                     | `scripts/ops/server-setup.sh`, `deploy/docker-compose.prod.yml`                                             |
+| Runbook, README, decisions, final report                           | ✅                                                     | `docs/operations/runbook.md`, `README.md`, `docs/architecture/decisions.md`, `docs/release/final-report.md` |
+| Production release                                                 | ✅ **DEPLOYED** 2026-10-23, `50e25f8` from `v2/hybrid` | `docs/release/final-report.md` §5                                                                           |
