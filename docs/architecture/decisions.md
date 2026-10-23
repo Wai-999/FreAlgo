@@ -264,3 +264,17 @@ timestamp, the denominator and a full alphabetical table.
 **Why.** Colour scales imply importance; the spec forbids that. Raw counts with the denominator
 stated describe FreAlgo's coverage honestly. Normalising by population or outlets would look
 more precise but would hide how uneven the source list is.
+
+## ADR-026 Roll back by redeploying v1 on the v2 schema (M5)
+
+**Decision.** The default rollback for FreAlgo 2.0 is to redeploy `main` and leave the database
+as it is. Schema rollback (`prisma/rollbacks/v2-all.down.sql`) is a separate, later step, used
+only if v2 objects themselves cause trouble. Every deploy takes a pre-deploy backup first.
+
+**Why.** All v2 migrations are additive, and v1 was verified to serve every page and API on the
+v2 schema. Keeping the schema avoids dropping v2 data during an incident and makes a re-release
+a pure code change. Dropping columns under pressure is where rollbacks lose data.
+
+**Consequences.** v2 tables stay in the database after a rollback, unused and harmless. A later
+v2 re-release needs no migration. The full schema rollback was rehearsed (0.27 s, forward again
+identical) so it is available when needed.

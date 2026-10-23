@@ -19,20 +19,21 @@ stored stories and the freshness page shows the gap.
 All configuration comes from environment variables, validated at startup by `lib/env.ts`. A bad
 configuration fails fast with a list of problems.
 
-| Variable                              | Required in prod      | Notes                                                                        |
-| ------------------------------------- | --------------------- | ---------------------------------------------------------------------------- |
-| `APP_BASE_URL`                        | yes                   | `https://…` origin; enables HSTS and upgrade-insecure-requests               |
-| `DATABASE_URL`                        | yes                   | App role (least privilege) in prod                                           |
-| `REDIS_URL`                           | yes                   | Include the password in prod                                                 |
-| `SESSION_SECRET`                      | yes                   | ≥ 32 chars; the built-in local fallback is rejected on non-localhost origins |
-| `ADMIN_API_TOKEN`                     | optional              | ≥ 32 chars; enables bearer-token admin API                                   |
-| `ADMIN_USER_IDS`                      | optional              | Comma-separated session user ids allowed into `/admin`                       |
-| `AUTH_DEV_LOGIN`                      | must be false         | Refused automatically on non-localhost origins                               |
-| `OIDC_ISSUER/CLIENT_ID/CLIENT_SECRET` | optional              | External identity provider (external gate)                                   |
-| `SEED_FIXTURES`, `SHOW_FIXTURES`      | false                 | Fixture data is for development and demos only                               |
-| `INGEST_CRON`                         | default `0 */3 * * *` | Scheduled attempts, UTC                                                      |
-| `METRICS_TOKEN`                       | recommended           | Enables `/api/v1/metrics` (web)                                              |
-| `RATE_LIMIT_SCALE`                    | **never in prod**     | Multiplies rate limits; for controlled load tests only                       |
+| Variable                              | Required in prod      | Notes                                                                                                                                    |
+| ------------------------------------- | --------------------- | ---------------------------------------------------------------------------------------------------------------------------------------- |
+| `APP_BASE_URL`                        | yes                   | `https://…` origin; enables HSTS and upgrade-insecure-requests                                                                           |
+| `DATABASE_URL`                        | yes                   | App role (least privilege) in prod                                                                                                       |
+| `REDIS_URL`                           | yes                   | Include the password in prod                                                                                                             |
+| `SESSION_SECRET`                      | yes                   | ≥ 32 chars; the built-in local fallback is rejected on non-localhost origins                                                             |
+| `ADMIN_API_TOKEN`                     | optional              | ≥ 32 chars; enables bearer-token admin API                                                                                               |
+| `ADMIN_USER_IDS`                      | optional              | Comma-separated session user ids allowed into `/admin`                                                                                   |
+| `AUTH_DEV_LOGIN`                      | must be false         | Refused automatically on non-localhost origins                                                                                           |
+| `OIDC_ISSUER/CLIENT_ID/CLIENT_SECRET` | optional              | External identity provider (external gate)                                                                                               |
+| `SEED_FIXTURES`, `SHOW_FIXTURES`      | false                 | Fixture data is for development and demos only                                                                                           |
+| `INGEST_CRON`                         | default `0 */3 * * *` | Scheduled attempts, UTC                                                                                                                  |
+| `METRICS_TOKEN`                       | recommended           | Enables `/api/v1/metrics` (web)                                                                                                          |
+| `RATE_LIMIT_SCALE`                    | **never in prod**     | Multiplies rate limits; for controlled load tests only                                                                                   |
+| `FEATURE_*` (FreAlgo 2.0)             | optional              | `true`/`false` per feature; empty = default. List and defaults: `lib/flags.ts`, `/methodology#features`, `deploy/env.production.example` |
 
 Generate secrets with `openssl rand -base64 48`. Store them in your secret manager or in a
 host-only `deploy/.env.production` (git-ignored). Rotate `SESSION_SECRET` to invalidate all
@@ -47,7 +48,8 @@ scripts/ops/deploy-remote.sh <server-ip> <domain>      # e.g. 203.0.113.10 freal
 ```
 
 It runs `scripts/ops/server-setup.sh` on the server. That script is idempotent, so re-run it for
-every release. It installs Docker, opens ports 80/443 in the host firewall, pulls `main` from
+every release. On an update it first backs up the running database to
+`/var/backups/frealgo/pre-deploy/` (newest 5), before any migration runs. It installs Docker, opens ports 80/443 in the host firewall, pulls `main` from
 GitHub, generates secrets once into `deploy/.env.production` (mode 600, never printed), builds and
 starts the stack, applies the owner-approved activations from `deploy/source-activations.json`,
 triggers a first fetch, and finally runs the smoke test against `https://<domain>`. Verified end
@@ -87,6 +89,10 @@ must be an always-on process.
   5. Deploy the previous image.
   6. Smoke test.
 - If anything is uncertain, restore the pre-deploy backup instead.
+- **FreAlgo 2.0:** the four v2 migrations are additive, and v1 code runs on the v2 schema, so
+  the usual rollback is to redeploy `main` without touching the database. `prisma/rollbacks/v2-all.down.sql`
+  returns the schema to its exact v1 shape in one transaction. Levels, commands and rehearsal
+  results: `docs/release/rollback.md`. Staged release: `docs/release/rollout-plan.md`.
 
 ## 5. Backups and restore
 
@@ -110,6 +116,9 @@ must be an always-on process.
   `I_UNDERSTAND_THIS_OVERWRITES_PRODUCTION=yes` is set. On the server, prefix commands with
   `sudo env COMPOSE="docker compose -f deploy/docker-compose.prod.yml --env-file deploy/.env.production"`
   from `/opt/frealgo`.
+- **Pre-deploy backups.** Every update via `server-setup.sh` writes one to
+  `/var/backups/frealgo/pre-deploy/` first (newest 5 kept). `pull-backups.sh` copies and verifies
+  them too.
 - **Drill.** `scripts/ops/restore-drill.sh` backs up, restores into a scratch DB, compares row
   counts and migration state table by table, then drops the scratch DB. Run it monthly and after
   schema changes. It last passed on production on 2026-10-21 (69 articles, identical counts).

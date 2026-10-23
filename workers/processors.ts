@@ -49,7 +49,10 @@ export function createProcessor(deps: ProcessorDeps) {
       }
       case 'cluster-events': {
         // Switchable without a deploy: FEATURE_EVENT_CLUSTERING=false stops new grouping.
-        if (!isEnabled('eventClustering')) return { skipped: 'flag-off' };
+        if (!isEnabled('eventClustering')) {
+          deps.logger.info({ skipped: 'flag-off' }, 'event clustering skipped');
+          return { skipped: 'flag-off' };
+        }
         const res = await runEventClustering(deps.prisma, { now: now() });
         deps.logger.info(res, 'event clustering complete');
         return res;

@@ -35,6 +35,18 @@ not a conformance certification. Screen-reader and physical-device testing remai
   line and is not repeated as a tag that could mislead.
 - **Opinion and analysis badges:** carry a screen-reader suffix, "(labelled by the publisher)".
 
+## 3a. M4 and M5 additions
+
+| Check                                        | Result                                                                                                                                                                                   |
+| -------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| axe (WCAG 2.0–2.2 A/AA), serious or critical | 0 on `/stories/events`, Story Mode, `/perspectives`, a Perspectives event, `/world-pulse`, `/connections`, a journey (list and step view) (`tests/e2e/evidence.spec.ts`)                 |
+| Reflow at 320 CSS px                         | No horizontal scroll on the same pages                                                                                                                                                   |
+| Lighthouse accessibility                     | 100 on Stories, Discover, Story Mode and Perspectives (`docs/audit/lighthouse-after/summary.md`)                                                                                         |
+| Structure                                    | Story Mode answers each question in its own `h2` section with an on-page index; Perspectives columns are `section`s labelled by the outlet name                                          |
+| Non-visual equivalents                       | World Pulse map has `role="img"`, a title and description, a text legend and a full alphabetical table; country connections and journeys are text lists; the timeline is an ordered list |
+| Motion                                       | No M4 view animates. Journeys move one step per click (no timer, nothing to pause) and have a full-list view                                                                             |
+| Colour                                       | World Pulse uses one hue with a separate hatched "no reports" state, so the legend does not depend on colour alone; badges always carry text                                             |
+
 ## 4. Not verified (needs people or devices)
 
 - Screen-reader walkthroughs (VoiceOver iOS/macOS, NVDA, TalkBack).

@@ -20,6 +20,13 @@ export interface RuntimeOptions {
   providers?: Partial<Record<'RSS' | 'ATOM' | 'LICENSED_API', FeedProvider>>;
   /** Override for tests (milliseconds per retry). */
   backoffMs?: (attemptsMade: number) => number;
+  /**
+   * How long a job's lock lasts without renewal, and how often stalled jobs are looked for. A job
+   * whose worker died (crash, OOM, deploy) is moved back to the queue once its lock expires and
+   * is run again by any live worker. Defaults suit production; tests shorten them.
+   */
+  lockDurationMs?: number;
+  stalledIntervalMs?: number;
 }
 
 /** Wires queue + worker + dead-letter handling. Shared by the worker process and tests. */
@@ -42,7 +49,8 @@ export function startIngestRuntime(opts: RuntimeOptions) {
     connection: opts.connection,
     prefix,
     concurrency: opts.concurrency,
-    lockDuration: 120_000,
+    lockDuration: opts.lockDurationMs ?? 120_000,
+    ...(opts.stalledIntervalMs ? { stalledInterval: opts.stalledIntervalMs } : {}),
     settings: { backoffStrategy: (attemptsMade: number) => backoff(attemptsMade) },
   });
 
@@ -82,8 +90,9 @@ export function startIngestRuntime(opts: RuntimeOptions) {
     queue,
     dlq,
     worker,
-    async close() {
-      await worker.close();
+    /** force = stop without waiting for running jobs (simulates a crash in tests). */
+    async close(force = false) {
+      await worker.close(force);
       await Promise.all([queue.close(), dlq.close()]);
     },
   };

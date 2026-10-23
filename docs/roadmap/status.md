@@ -73,4 +73,17 @@ the feature gate.
 
 ## M5: Performance, security, deployment and handoff
 
-⏳ Not started. Production rollout requires the owner's approval.
+| Item                                                               | State                                        | Evidence                                                                                                    |
+| ------------------------------------------------------------------ | -------------------------------------------- | ----------------------------------------------------------------------------------------------------------- |
+| Performance measured (same machine, v1 vs v2) and route JavaScript | ✅                                           | `docs/audit/lighthouse-after/summary.md`, `scripts/perf/route-js.mjs`                                       |
+| API load test including event endpoints                            | ✅                                           | `scripts/perf/load-test.mjs`, acceptance M5                                                                 |
+| Globe tuning                                                       | ⛔ owner decision                            | `perf/explore-lcp` branch, not merged                                                                       |
+| Accessibility checks on all v2 pages                               | ✅                                           | `docs/release/accessibility-report.md` §3a                                                                  |
+| Worker crash, restart and load tests                               | ✅                                           | `tests/integration/recovery.test.ts`                                                                        |
+| Security re-check                                                  | ✅                                           | `docs/security-review.md` #6–10                                                                             |
+| Backup and restore rehearsal; production-like container rehearsal  | ✅                                           | acceptance M5, `docs/release/final-report.md` §3                                                            |
+| Rollback plan, rehearsed                                           | ✅                                           | `docs/release/rollback.md`, `prisma/rollbacks/v2-all.down.sql`                                              |
+| Staged rollout plan                                                | ✅                                           | `docs/release/rollout-plan.md`                                                                              |
+| Pre-deploy backups; flags in production Compose                    | ✅                                           | `scripts/ops/server-setup.sh`, `deploy/docker-compose.prod.yml`                                             |
+| Runbook, README, decisions, final report                           | ✅                                           | `docs/operations/runbook.md`, `README.md`, `docs/architecture/decisions.md`, `docs/release/final-report.md` |
+| Production release                                                 | ⛔ **NOT DEPLOYED**, awaiting owner approval | `docs/release/rollout-plan.md`                                                                              |

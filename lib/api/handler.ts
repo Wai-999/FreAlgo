@@ -174,7 +174,14 @@ export async function parseJsonBody<T>(
   const type = req.headers.get('content-type') ?? '';
   if (!type.includes('application/json'))
     throw new ApiError(415, 'UNSUPPORTED_MEDIA_TYPE', 'Expected application/json');
-  const text = await req.text();
+  let text: string;
+  try {
+    text = await req.text();
+  } catch {
+    // The client went away mid-request (for example a beacon sent while a page closes). That is
+    // not a server error, so it is answered and logged like any other bad request.
+    throw new ApiError(400, 'BODY_UNREADABLE', 'The request body could not be read');
+  }
   if (text.length > maxBytes)
     throw new ApiError(413, 'PAYLOAD_TOO_LARGE', 'Request body too large');
   let data: unknown;

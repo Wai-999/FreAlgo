@@ -113,3 +113,45 @@ timestamps are UTC.
   events within 72 hours.
 - With all real outlets unrated, Perspectives cannot show orientation differences yet.
 - There is no admin screen for timelines, journeys or exclusions (SQL and script only).
+
+## M5: Performance, security, deployment and handoff (2026-10-23)
+
+| Criterion                                               | Evidence                                                                                                                                                                                                                                                                                                                                |
+| ------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Performance budgets documented with actual measurements | Same-machine v1 vs v2 Lighthouse: v1 pages unchanged; Stories, Discover, Story Mode, Perspectives: Perf 99, LCP 2.17–2.18 s, TBT ≤ 27 ms, CLS 0 (`docs/audit/lighthouse-after/summary.md`). Three.js only on Explore (`scripts/perf/route-js.mjs`). API p99 ≤ 18 ms for all reads (`scripts/perf/load-test.mjs`, local, 10 connections) |
+| Accessibility budgets                                   | axe: 0 serious or critical on every v2 page; Lighthouse accessibility 100 (`docs/release/accessibility-report.md` §3a)                                                                                                                                                                                                                  |
+| No critical security findings                           | `npm audit --omit=dev`: 0. Dev-only `braces` advisory accepted. v2 inputs fuzzed (404/400 envelopes, nothing reflected); headers unchanged; new tables carry the app role's grants (`docs/security-review.md` #6–10)                                                                                                                    |
+| Worker survives restart                                 | `tests/integration/recovery.test.ts`: a job orphaned by a crashed worker is re-run by the restarted worker and ingested once; jobs queued while no worker runs complete; the v2 worker image restarts healthy with three schedulers                                                                                                     |
+| Ingestion load                                          | 40 sources burst: 200 articles in 0.8 s, never more than 4 fetches at once, re-run adds nothing (`recovery.test.ts`)                                                                                                                                                                                                                    |
+| Failed deploy can roll back                             | Rehearsed on the production copy: v1 runs on the v2 schema (20/20); full schema rollback in 0.27 s, then v1 19/20 (the 20th needs fixtures); forward again identical (`docs/release/rollback.md`)                                                                                                                                       |
+| Backups and restore rehearsal                           | Production backup checksum verified, restored, migrated, re-tagged and grouped in about 3 s; production-like container run with the real role script and v2 images; deploys now take a pre-deploy backup                                                                                                                                |
+| Production release only after approval                  | **NOT DEPLOYED.** Staged plan in `docs/release/rollout-plan.md`                                                                                                                                                                                                                                                                         |
+
+**Gates (2026-10-23):**
+
+- format, lint, typecheck: pass;
+- unit: 231 / 231;
+- integration: 108 / 108;
+- build: pass; Docker `migrate`, `web` and `worker` images build;
+- e2e: 210 passed, 47 skipped by design, 0 failed (5 browser projects).
+
+**Fixes made in M5:**
+
+- `FEATURE_*` flags now reach the production containers; before, an operator could not switch
+  a feature off without editing Compose.
+- Updates via `server-setup.sh` back up the database before migrating.
+- A request body abandoned by the client is a 400, not a logged server error.
+- The worker logs when the grouping job is skipped by its flag.
+- `pull-backups.sh` also verifies pre-deploy backups.
+
+**Corrected during M5:** an apparent "missing HSTS" finding came from this environment's network
+resetting TLS to the production host. Checked on the server: pages send a two-year HSTS header.
+No change was made.
+
+**Remaining risks (M5):**
+
+- The post-release Lighthouse run on production cannot be done from this environment (TLS to
+  the host is reset); run it from another machine after the release.
+- The local Explore LCP (2.94 s, the same in v1) is above 2.5 s without Caddy compression; on
+  production it is 1.5 s. `perf/explore-lcp` would lower it further.
+- No screen-reader or physical-device testing, and no independent penetration test.

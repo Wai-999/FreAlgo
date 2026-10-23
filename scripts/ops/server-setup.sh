@@ -74,6 +74,15 @@ if ! grep -qx "DOMAIN=$DOMAIN" "$ENV_FILE"; then
 fi
 
 COMPOSE=($SUDO docker compose -f deploy/docker-compose.prod.yml --env-file "$ENV_FILE")
+
+# Before an update migrates anything, back up the running database (kept apart from the daily
+# backups, newest 5). A fresh install has nothing to back up.
+if "${COMPOSE[@]}" ps --status running --services 2>/dev/null </dev/null | grep -qx postgres; then
+  log "pre-deploy database backup"
+  $SUDO mkdir -p /var/backups/frealgo/pre-deploy
+  $SUDO env COMPOSE="${COMPOSE[*]}" KEEP=5 sh scripts/ops/backup.sh /var/backups/frealgo/pre-deploy </dev/null
+fi
+
 log "build and start (first build takes several minutes)"
 "${COMPOSE[@]}" up -d --build --remove-orphans </dev/null
 

@@ -33,6 +33,9 @@ Use this for the first production deploy and for every release. Background for e
 
 ## B. Every release
 
+For the FreAlgo 2.0 release, follow the stages in `docs/release/rollout-plan.md` (flags, dry
+run of event grouping) and keep `docs/release/rollback.md` at hand.
+
 Before deploying:
 
 - [ ] CI is green on the release commit: format, lint, typecheck, unit, integration, build, e2e,

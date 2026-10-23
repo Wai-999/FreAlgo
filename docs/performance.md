@@ -174,3 +174,12 @@ Reproduce:
 DATABASE_URL=$DATABASE_URL_TEST RATE_LIMIT_SCALE=1000 npm run start:standalone   # after seeding synthetic data with --keep
 node scripts/perf/load-test.mjs http://127.0.0.1:3000 15 20
 ```
+
+## FreAlgo 2.0 (M5, 2026-10-23)
+
+Same-machine comparison of v1 and v2 builds: `docs/audit/lighthouse-after/summary.md`. v2 does
+not change the cost of the v1 pages; the new pages are text-first (Perf 99, LCP 2.2 s locally,
+no Three.js). API reads including the event endpoints have p99 ≤ 18 ms at 10 connections on the
+fixture database. Event queries compute counts live from published members (so a removed report
+disappears at once); with thousands of events the list query should be re-checked with
+`EXPLAIN` and, if needed, served from the stored counts.
