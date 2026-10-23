@@ -109,7 +109,7 @@ test.describe('APIs', () => {
     const ev = await (await request.get(`/api/v1/events/${slug}`)).json();
     expect(ev.members).toHaveLength(5);
     expect(ev.members[0].membership.sharedTerms.length).toBeGreaterThanOrEqual(2);
-    expect(ev.method.version).toBe(1);
+    expect(ev.method.version).toBe(2);
     const p = await (await request.get(`/api/v1/events/${slug}/perspectives`)).json();
     expect(p.columns).toHaveLength(5);
     expect(p.claimsInDispute.assessed).toBe(false);

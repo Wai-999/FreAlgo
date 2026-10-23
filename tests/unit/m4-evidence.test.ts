@@ -107,11 +107,13 @@ describe('M4 flags and methodology', () => {
 
   it('publishes every rule with its version and the live flag state', () => {
     const m = methodology({ FEATURE_JOURNEYS: 'true' });
-    expect(m.events.version).toBe(1);
+    expect(m.events.version).toBe(2);
     expect(m.events.thresholds).toEqual({
       join: 0.3,
       joinMean: 0.25,
       minSharedDistinctiveWords: 2,
+      strongMatch: 0.4,
+      weakMatchMinSharedWords: 3,
     });
     expect(m.aiSummaries.enabled).toBe(false);
     expect(m.features.find((f) => f.name === 'journeys')?.enabled).toBe(true);

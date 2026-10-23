@@ -10,6 +10,8 @@ import {
   JOIN,
   JOIN_MEAN,
   MIN_SHARED,
+  STRONG,
+  WEAK_MIN_SHARED,
   WINDOW_HOURS,
 } from '@/lib/events/cluster';
 import { PULSE_BUCKETS } from '@/lib/db/pulse';
@@ -205,6 +207,12 @@ export default async function MethodologyPage() {
           shorter headline’s, they share at least {MIN_SHARED} uncommon words, they share a name (a
           country both texts name, or a capitalised word such as a person or place), and they do not
           name different countries.
+        </li>
+        <li>
+          A weak match needs more evidence: when the shared words make up less than {STRONG * 100}%
+          of the shorter headline, the two reports must share at least {WEAK_MIN_SHARED} uncommon
+          words. This was added after a review on live data showed that two generic words and a
+          country (“man”, “Australian”) could join different stories.
         </li>
         <li>
           Reports are taken oldest first. A report joins an event whose latest report is at most{' '}

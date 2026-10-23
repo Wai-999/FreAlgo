@@ -1,6 +1,8 @@
 # Event clustering: provenance and evaluation (FreAlgo 2.0, M4)
 
-Method version 1 (`lib/events/cluster.ts`, `CLUSTER_METHOD_VERSION = 1`). Evaluated 2026-10-22.
+Method version 2 (`lib/events/cluster.ts`, `CLUSTER_METHOD_VERSION = 2`). Version 1 was
+evaluated on 2026-10-22; version 2 adds the weak-match rule after a review on live data at the
+release on 2026-10-23 (Evaluation 3).
 
 ## What an event is, and what it is not
 
@@ -20,15 +22,16 @@ There is no model, embedding, summary or engagement signal anywhere in the metho
 
 ## Method v1
 
-| Step       | Rule                                                                                                                                                                                                                                                                                                                                 |
-| ---------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| Terms      | Headline words, lower-cased, without stopwords (en, pt, es, fr), numbers and words under 3 letters, plus `@XX` for each country the text names. Feed scope and publisher home are **not** used: they say nothing about the event.                                                                                                    |
-| Weights    | Smoothed IDF over the same-language, same-kind (real or fixture) reports of the last 7 days.                                                                                                                                                                                                                                         |
-| Similarity | Weighted overlap: weight of shared terms ÷ total weight of the shorter headline (0–1).                                                                                                                                                                                                                                               |
-| Pair rule  | similarity ≥ 0.30, at least 2 shared **distinctive** words (in ≤ 10 % of the corpus, or ≤ 3 reports), a **shared name** (a country both texts name, or a word capitalised inside a headline), and the two texts do not name different countries.                                                                                     |
-| Join rule  | Oldest first. A report joins an event (same language, latest report ≤ 72 h away) when its best qualifying member passes the pair rule and its mean similarity to all members is ≥ 0.25. Otherwise it may pair with another unclustered report. Reports left alone are retried after new events form, so one run equals several runs. |
-| Stability  | Events only grow: never split, merged or re-ordered by size. A report is in at most one event (`EventArticle.articleId` is the primary key). One run at a time (Postgres advisory lock).                                                                                                                                             |
-| Schedule   | Worker job `cluster-events`, hourly at :20 UTC (`EVENTS_CRON`); `FEATURE_EVENT_CLUSTERING=false` stops new grouping without a deploy. Manual: `node --import tsx scripts/cluster-events.ts [--dry-run]`.                                                                                                                             |
+| Step                 | Rule                                                                                                                                                                                                                                                                                                                                 |
+| -------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Terms                | Headline words, lower-cased, without stopwords (en, pt, es, fr), numbers and words under 3 letters, plus `@XX` for each country the text names. Feed scope and publisher home are **not** used: they say nothing about the event.                                                                                                    |
+| Weights              | Smoothed IDF over the same-language, same-kind (real or fixture) reports of the last 7 days.                                                                                                                                                                                                                                         |
+| Similarity           | Weighted overlap: weight of shared terms ÷ total weight of the shorter headline (0–1).                                                                                                                                                                                                                                               |
+| Pair rule            | similarity ≥ 0.30, at least 2 shared **distinctive** words (in ≤ 10 % of the corpus, or ≤ 3 reports), a **shared name** (a country both texts name, or a word capitalised inside a headline), and the two texts do not name different countries.                                                                                     |
+| Weak-match rule (v2) | Below a similarity of 0.40, a pair needs **3** shared distinctive words instead of 2.                                                                                                                                                                                                                                                |
+| Join rule            | Oldest first. A report joins an event (same language, latest report ≤ 72 h away) when its best qualifying member passes the pair rule and its mean similarity to all members is ≥ 0.25. Otherwise it may pair with another unclustered report. Reports left alone are retried after new events form, so one run equals several runs. |
+| Stability            | Events only grow: never split, merged or re-ordered by size. A report is in at most one event (`EventArticle.articleId` is the primary key). One run at a time (Postgres advisory lock).                                                                                                                                             |
+| Schedule             | Worker job `cluster-events`, hourly at :20 UTC (`EVENTS_CRON`); `FEATURE_EVENT_CLUSTERING=false` stops new grouping without a deploy. Manual: `node --import tsx scripts/cluster-events.ts [--dry-run]`.                                                                                                                             |
 
 ## Evaluation 1: labelled fictional headlines
 
@@ -37,14 +40,15 @@ There is no model, embedding, summary or engagement signal anywhere in the metho
 meet", a second Nepal story, a second Philippines story), and 1 cross-language report. Rarity is
 computed together with 240 neutral background headlines, which models a week's corpus.
 
-| Metric (pairwise, cross-language item excluded) | Result   |
-| ----------------------------------------------- | -------- |
-| True pairs found                                | 18 of 18 |
-| False pairs                                     | 0        |
-| Precision                                       | 1.00     |
-| Recall                                          | 1.00     |
+| Metric (pairwise, cross-language item excluded) | v1 (23 items) | v2 (30 items, with w1–w7) |
+| ----------------------------------------------- | ------------- | ------------------------- |
+| True pairs found                                | 18 of 18      | 15 of 19                  |
+| False pairs                                     | 0             | 0                         |
+| Precision                                       | 1.00          | 1.00                      |
+| Recall                                          | 1.00          | 0.79                      |
 
-Enforced by `tests/unit/event-clustering.test.ts` (precision must be 1, recall ≥ 0.8). The test
+Enforced by `tests/unit/event-clustering.test.ts` (precision must be 1, recall ≥ 0.75; the
+three live failure patterns must stay apart). The test
 also checks that the cross-language report is never grouped, that the US and Kenya central bank
 stories and the two "leaders meet" stories stay apart, that runs are deterministic, and that
 every join reports at least 2 shared words.
@@ -88,6 +92,33 @@ word, ~60 pairs):
 So on real headlines the method is conservative: what it groups is right, and it misses related
 reports that use different words. That is the intended trade-off: a wrong grouping misleads
 readers, a missed one only shows fewer related reports.
+
+## Evaluation 3: live data at the release (method v1 rejected, v2 adopted)
+
+On 2026-10-23, after FreAlgo 2.0 was deployed, a dry run on production (249 reports; it writes
+nothing) was reviewed before any event was stored. Method v1 proposed 24 groupings, and **4 were
+wrong**:
+
+| Wrong grouping in v1                                                 | Shared evidence                      | Similarity |
+| -------------------------------------------------------------------- | ------------------------------------ | ---------- |
+| A shark attack and an unrelated killing                              | "south", "africa" (the country name) | 0.40       |
+| Two different Defesa Civil stories (funding vs an emergency decree)  | "defesa", "civil"                    | 0.32       |
+| A car rescue joined to the Australian MP attack                      | "australian", "man"                  | 0.33       |
+| A Lula campaign rally grouped with a separate electoral-court filing | "campanha", "flávio"                 | 0.31       |
+
+Each rested on two generic words, often a country or an institution, at a similarity just above
+0.30. Events and Perspectives were switched off on production within minutes (no event had been
+stored), and version 2 added the weak-match rule.
+
+Version 2 on the same reports gives **11 events and 16 decisions, none wrong**. One is
+borderline: two category announcements of the same Petrobras award. It leaves three related
+groupings undone: French riots (0.38, two words), Haiti gangs (0.36) and one Australian MP
+report (0.33).
+
+The labelled set now includes fictional versions of these patterns (items w1–w7). Under v1 they
+produce exactly the live errors (w1–w3, w2–w3, w4–w5, w6–w7); under v2 none. Labelled-set
+results for v2: **15 of 19 true pairs, 0 false (precision 1.00, recall 0.79)**. The four
+misses are one quake report that shares only "earthquake" and the country with the others.
 
 ## Data-quality tests
 

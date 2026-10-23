@@ -224,6 +224,11 @@ A lexical method is cheap to run on the free server, explainable per report, and
 against a labelled set. Precision is preferred to recall: on production headlines it grouped 16
 reports into 7 events with no wrong member and missed related reports worded differently.
 
+**Update (2026-10-23, method v2).** The first dry run on production found 4 wrong groupings of
+24, each resting on two generic words just above the threshold. Weak matches (similarity < 0.40)
+now need three shared words; on the same data: 16 decisions, none wrong. The feature was kept
+off in production until v2 was deployed.
+
 **Consequences.** No cross-language events; scripts without spaces are not clustered. Operators
 can remove a wrong grouping for good (`scripts/cluster-events.ts --exclude`, audited). A future
 method gets a new `CLUSTER_METHOD_VERSION`; stored events keep the version that formed them.

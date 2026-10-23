@@ -130,7 +130,9 @@ describe('event clustering (method v1)', () => {
     const recall = tp / (tp + fn);
     expect(fp).toBe(0);
     expect(precision).toBe(1);
-    expect(recall).toBeGreaterThanOrEqual(0.8);
+    // Precision first (method v2): one quake report that shares only "earthquake" and the
+    // country with the others stays alone (4 of 19 true pairs).
+    expect(recall).toBeGreaterThanOrEqual(0.75);
   });
 
   it('never groups across languages (documented limitation)', () => {
@@ -143,6 +145,17 @@ describe('event clustering (method v1)', () => {
     const { clusterOf } = run();
     expect(clusterOf.get('x5')).toBeUndefined(); // US central bank vs Kenya central bank
     expect(clusterOf.get('x6')).toBeUndefined(); // UK leaders meet vs Indonesia–Malaysia leaders
+  });
+
+  it('keeps apart the patterns that grouped different stories on live data in v1', () => {
+    const { clusterOf } = run();
+    expect(clusterOf.get('w1')).toBeDefined();
+    expect(clusterOf.get('w1')).toBe(clusterOf.get('w2')); // same attack: still grouped
+    expect(clusterOf.get('w3')).toBeUndefined(); // "man" + Australia only
+    expect(clusterOf.get('w4')).toBeUndefined(); // same country, different events
+    expect(clusterOf.get('w5')).toBeUndefined();
+    expect(clusterOf.get('w6')).toBeUndefined(); // same institution, different stories
+    expect(clusterOf.get('w7')).toBeUndefined();
   });
 
   it('is deterministic and reports the shared distinctive terms for every join', () => {

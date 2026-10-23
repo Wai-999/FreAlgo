@@ -1,5 +1,5 @@
 {
-  "_note": "FICTIONAL test headlines for evaluating event clustering (FreAlgo 2.0, M4). Not real news. 'event' is the ground-truth label; null = should stay alone.",
+  "_note": "FICTIONAL test headlines for evaluating event clustering (FreAlgo 2.0, M4). Not real news. 'event' is the ground-truth label; null = should stay alone. Items w1–w7 (added 2026-10-23) are fictional versions of the patterns that grouped different stories on live data in method v1: two generic words plus a shared country or institution.",
   "items": [
     {
       "id": "a1",
@@ -208,6 +208,69 @@
       "countries": ["NP"],
       "title": "Fuerte terremoto sacude el oeste de Nepal",
       "crossLanguage": true
+    },
+    {
+      "id": "w1",
+      "event": "senator",
+      "outlet": "o1",
+      "h": 40,
+      "lang": "en",
+      "countries": ["AU"],
+      "title": "Man charged over knife attack on Australian senator in Perth"
+    },
+    {
+      "id": "w2",
+      "event": "senator",
+      "outlet": "o2",
+      "h": 43,
+      "lang": "en",
+      "countries": ["AU"],
+      "title": "Australian senator attack: man charged in Perth court"
+    },
+    {
+      "id": "w3",
+      "event": null,
+      "outlet": "o3",
+      "h": 44,
+      "lang": "en",
+      "countries": ["AU"],
+      "title": "Man rescued from flooded car by Australian TV crew"
+    },
+    {
+      "id": "w4",
+      "event": null,
+      "outlet": "o1",
+      "h": 50,
+      "lang": "en",
+      "countries": ["ZA"],
+      "title": "Swimmer hurt in shark encounter off South Africa coast"
+    },
+    {
+      "id": "w5",
+      "event": null,
+      "outlet": "o2",
+      "h": 52,
+      "lang": "en",
+      "countries": ["ZA"],
+      "title": "Crowd attacks shop owner in South Africa township"
+    },
+    {
+      "id": "w6",
+      "event": null,
+      "outlet": "o4",
+      "h": 30,
+      "lang": "pt",
+      "countries": [],
+      "title": "Defesa Civil recebe verba extra para obras em encostas"
+    },
+    {
+      "id": "w7",
+      "event": null,
+      "outlet": "o4",
+      "h": 34,
+      "lang": "pt",
+      "countries": [],
+      "title": "Defesa Civil alerta para chuvas fortes no litoral"
     }
   ]
 }

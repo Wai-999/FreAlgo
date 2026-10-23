@@ -2,7 +2,7 @@
  * Event clustering (FreAlgo 2.0, M4): groups reports about the same event. Deterministic,
  * lexical and explainable; no model, embedding or engagement signal.
  *
- * Method v1:
+ * Method v2 (v1 plus the weak-match rule, after a review on live data on 2026-10-23):
  * - Each report becomes a set of terms: headline words (lower-cased, stopwords and numbers
  *   removed, at least 3 letters) plus the countries its text names ("@RU"). A feed's default
  *   country and the publisher's home country are not used: they say nothing about the event.
@@ -15,9 +15,12 @@
  * - Grouped reports must share a name: a country both headlines name, or a word capitalised
  *   inside a headline (Nepal, Ebola, DOJ). Two reports that share only common words ("voters
  *   choose") are kept apart even when those words are rare this week.
+ * - Weak matches need more evidence: below a similarity of STRONG, two reports must share
+ *   WEAK_MIN_SHARED distinctive words instead of MIN_SHARED. Two generic words plus a country
+ *   ("man" + "Australian", "Defesa Civil") grouped different stories in v1.
  * - Reports are processed oldest first. A report joins an existing event (same language, last
  *   report within 72 hours) when its closest member qualifies (similarity ≥ JOIN, at least
- *   MIN_SHARED distinctive words in common, a shared name) and its mean similarity to all members
+ *   MIN_SHARED (or WEAK_MIN_SHARED) distinctive words in common, a shared name) and its mean similarity to all members
  *   is ≥ JOIN_MEAN (guards against chaining unrelated stories). Otherwise it pairs with an
  *   unclustered report under the same rule, or stays alone. Reports left alone are retried once
  *   new events exist, so one run equals several runs. Events only grow; never split or merged.
@@ -26,11 +29,14 @@
  * Limits (shown to readers): reports in different languages are never grouped; scripts without
  * spaces (CJK, Thai, Burmese) are not clustered; shared wording is not proof of the same event.
  */
-export const CLUSTER_METHOD_VERSION = 1;
+export const CLUSTER_METHOD_VERSION = 2;
 export const WINDOW_HOURS = 72;
 export const JOIN = 0.3;
 export const JOIN_MEAN = 0.25;
 export const MIN_SHARED = 2;
+/** Below this similarity a match is weak and needs WEAK_MIN_SHARED distinctive words. */
+export const STRONG = 0.4;
+export const WEAK_MIN_SHARED = 3;
 
 const STOP: Record<string, string[]> = {
   en: [
@@ -367,7 +373,7 @@ export function clusterDecisions(
       const sharedDistinct = s.shared.filter((t) => !t.startsWith('@') && distinctive(t));
       if (
         s.score >= JOIN &&
-        sharedDistinct.length >= MIN_SHARED &&
+        sharedDistinct.length >= (s.score >= STRONG ? MIN_SHARED : WEAK_MIN_SHARED) &&
         shareName(a, m) &&
         (!best || s.score > best.score)
       )

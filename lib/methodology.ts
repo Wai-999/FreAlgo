@@ -4,6 +4,8 @@ import {
   JOIN,
   JOIN_MEAN,
   MIN_SHARED,
+  STRONG,
+  WEAK_MIN_SHARED,
   WINDOW_HOURS,
 } from '@/lib/events/cluster';
 import { CORPUS_DAYS } from '@/lib/events/job';
@@ -53,7 +55,13 @@ export function methodology(env: Record<string, string | undefined> = process.en
       version: CLUSTER_METHOD_VERSION,
       windowHours: WINDOW_HOURS,
       corpusDays: CORPUS_DAYS,
-      thresholds: { join: JOIN, joinMean: JOIN_MEAN, minSharedDistinctiveWords: MIN_SHARED },
+      thresholds: {
+        join: JOIN,
+        joinMean: JOIN_MEAN,
+        minSharedDistinctiveWords: MIN_SHARED,
+        strongMatch: STRONG,
+        weakMatchMinSharedWords: WEAK_MIN_SHARED,
+      },
       description:
         'Reports in the same language are grouped when their headlines share distinctive words (weighted by rarity over the last 7 days), share a name, and do not name different countries. Deterministic; no model or embedding. Grouping can be wrong, and every report shows the words it shared.',
       url: '/methodology#events',
