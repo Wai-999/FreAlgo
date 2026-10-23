@@ -150,8 +150,8 @@ No change was made.
 
 **Remaining risks (M5):**
 
-- The post-release Lighthouse run on production cannot be done from this environment (TLS to
-  the host is reset); run it from another machine after the release.
+- Resolved after the release: Lighthouse on production meets every budget (LCP 0.94–1.85 s,
+  accessibility 100; `docs/audit/lighthouse-production-v2/summary.md`).
 - The local Explore LCP (2.94 s, the same in v1) is above 2.5 s without Caddy compression; on
   production it is 1.5 s. `perf/explore-lcp` would lower it further.
 - No screen-reader or physical-device testing, and no independent penetration test.

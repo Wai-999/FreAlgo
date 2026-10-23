@@ -125,7 +125,7 @@ Rehearsed on the production backup `frealgo-20261022T023701Z.dump` (checksum ver
    `scripts/cluster-events.ts --exclude <id> --reason … --by …`.
 2. Done 2026-10-23: PR #9 merged into `main` (`e11202e`). To keep a one-command path back to v1,
    create a `v1` branch at `161fff1` (`docs/release/rollback.md`, Level 2).
-3. Run Lighthouse against production from a machine that can reach it, and record the result
-   next to `docs/audit/lighthouse-before/`.
+3. Done 2026-10-23: Lighthouse on production after the release. Every page meets the budgets
+   (LCP 0.94–1.85 s, accessibility 100); `docs/audit/lighthouse-production-v2/summary.md`.
 4. Decide on Global Voices, `perf/explore-lcp` (built on v1; it needs porting to v2) and the
    off-by-default features.
